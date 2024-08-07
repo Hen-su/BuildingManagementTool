@@ -9,5 +9,13 @@ namespace BuildingManagementTool.Services
         {
             _blobServiceClient = blobServiceClient;
         }
+
+        public async Task UploadBlobAsync(string containerName, string blobName, Stream data)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            await containerClient.CreateIfNotExistsAsync();
+            var blobClient = containerClient.GetBlobClient(blobName);
+            await blobClient.UploadAsync(data);
+        }
     }
 }
