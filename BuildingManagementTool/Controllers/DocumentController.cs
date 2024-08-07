@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BuildingManagementTool.Controllers
 {
-    public class FilesController : Controller
+    public class DocumentController : Controller
     {
-        private readonly IFileRepository _fileRepository;
-        public FilesController(IFileRepository fileRepository)
+        private readonly IDocumentRepository _fileRepository;
+        public DocumentController(IDocumentRepository fileRepository)
         {
             _fileRepository = fileRepository;
         }

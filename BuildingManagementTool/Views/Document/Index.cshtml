@@ -1,4 +1,4 @@
-﻿@model File
+﻿@model Document
 
 <h1>Files</h1>
 <button id="uploadModalBtn" class="btn-primary">Upload</button>
@@ -9,7 +9,7 @@
 <script>
     $(document).ready(function () {
         $("#uploadModalBtn").click(function () {
-            $("#modalContainer").load("/Files/UploadFormPartial", function () {
+            $("#modalContainer").load("/Document/UploadFormPartial", function () {
                 $("#modalContainer").modal("show");
             });
         });

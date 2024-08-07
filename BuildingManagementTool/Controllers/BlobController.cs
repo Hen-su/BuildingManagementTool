@@ -8,20 +8,19 @@ namespace BuildingManagementTool.Controllers
 {
     public class BlobController : Controller
     {
-        private readonly IFileRepository _fileRepository;
+        private readonly IDocumentRepository _documentRepository;
         private readonly BlobService _blobService;
-        public BlobController(BlobService blobService, IFileRepository fileRepository)
+        public BlobController(BlobService blobService, IDocumentRepository documentRepository)
         {
             _blobService = blobService;
-            _fileRepository = fileRepository;
+            _documentRepository = documentRepository;
         }
 
         [HttpPost]
-        public async Task<IActionResult> UploadBlob(IFormFile file)
+        public async Task<IActionResult> UploadBlob(IList<IFormFile> files)
         {
             var containerName = "test1";
-            string blobName = $"{containerName}/{file.FileName}";
-            if (file == null || file.Length == 0)
+            if (files == null || files.Count == 0)
             {
                 var problemDetails = new ProblemDetails
                 {
@@ -32,55 +31,60 @@ namespace BuildingManagementTool.Controllers
                 return BadRequest(problemDetails);
             }
 
-            bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
-            if (blobExists)
+            foreach (var file in files) 
             {
-                return Conflict("File already exists in blob storage.");
-            }
-
-            using (var stream = file.OpenReadStream())
-            {
-                bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream);
-                if (!isUploaded)
+                string blobName = $"{containerName}/{file.FileName}";
+                bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
+                if (blobExists)
                 {
+                    return Conflict("File already exists in blob storage.");
+                }
+
+                using (var stream = file.OpenReadStream())
+                {
+                    bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream);
+                    if (!isUploaded)
+                    {
+                        var problemDetails = new ProblemDetails
+                        {
+                            Title = "Upload Error",
+                            Detail = "Failed to upload the file to blob storage",
+                            Status = StatusCodes.Status500InternalServerError
+                        };
+                        return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
+                    }
+
+                }
+
+                var metadata = new Models.Document
+                {
+                    FileName = file.FileName,
+                    BlobName = blobName,
+                    ContentType = file.ContentType,
+                    FileSize = file.Length,
+                    UploadDate = DateTime.UtcNow
+                };
+                try
+                {
+                    await _documentRepository.AddDocumentData(metadata);
+                }
+                catch (Exception ex)
+                {
+                    await _blobService.DeleteBlobAsync(containerName, blobName);
+
                     var problemDetails = new ProblemDetails
                     {
-                        Title = "Upload Error",
-                        Detail = "Failed to upload the file to blob storage",
+                        Title = "Database Error",
+                        Detail = "Failed to save metadata in database. The uploaded blob will be removed.",
                         Status = StatusCodes.Status500InternalServerError
                     };
                     return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
                 }
-
             }
-
-            var metadata = new Models.File
-            {
-                FileName = file.FileName,
-                BlobName = blobName,
-                ContentType = file.ContentType,
-                FileSize = file.Length,
-                UploadDate = DateTime.UtcNow
-            };
-            try
-            {
-                await _fileRepository.AddFileData(metadata);
-            }
-            catch (Exception ex)
-            {
-                await _blobService.DeleteBlobAsync(containerName, blobName);
-
-                var problemDetails = new ProblemDetails
-                {
-                    Title = "Database Error",
-                    Detail = "Failed to save metadata in database. The uploaded blob will be removed.",
-                    Status = StatusCodes.Status500InternalServerError
-                };
-                return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
-            }
+            
             return Ok(new
             {
-                Message = "File uploaded successfully."
+                Message = "Upload Successful"
             });
         }
     }

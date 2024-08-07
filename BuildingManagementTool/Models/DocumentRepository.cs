@@ -1,29 +1,29 @@
 ﻿
 namespace BuildingManagementTool.Models
 {
-    public class FileRepository : IFileRepository
+    public class DocumentRepository : IDocumentRepository
     {
         private readonly BuildingManagementToolDbContext _buildingManagementToolDbContext;
-        public FileRepository(BuildingManagementToolDbContext buildingManagementToolDbContext)
+        public DocumentRepository(BuildingManagementToolDbContext buildingManagementToolDbContext)
         {
             _buildingManagementToolDbContext = buildingManagementToolDbContext;
         }
 
-        public IEnumerable<File> AllFiles
+        public IEnumerable<Document> AllDocuments
         {
             get
             {
-                return _buildingManagementToolDbContext.Files;
+                return _buildingManagementToolDbContext.Documents;
             }
         }
 
-        public async Task AddFileData(File file)
+        public async Task AddDocumentData(Document file)
         {
             await _buildingManagementToolDbContext.AddAsync(file);
             await _buildingManagementToolDbContext.SaveChangesAsync();
         }
 
-        public IEnumerable<File> GetById(int id)
+        public IEnumerable<Document> GetById(int id)
         {
             throw new NotImplementedException();
         }

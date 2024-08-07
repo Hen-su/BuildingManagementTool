@@ -7,7 +7,7 @@
         <div class="modal-body">
             <div>
                 <form asp-controller="Blob" asp-action="UploadBlob" method="post" enctype="multipart/form-data">
-                    <input type="file" name="file" id="fileInput">
+                    <input type="file" name="files" id="fileInput" multiple>
                     <button class="btn-primary" type="submit">Upload Now</button>
                 </form>
             </div>

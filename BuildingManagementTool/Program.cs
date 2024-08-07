@@ -19,7 +19,7 @@ builder.Services.AddDbContext<BuildingManagementToolDbContext>(options =>
 
 // Add BlobService class
 builder.Services.AddScoped<BlobService>();
-builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
 var app = builder.Build();
 
