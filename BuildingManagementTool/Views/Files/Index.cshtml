@@ -1,0 +1,17 @@
+﻿@model File
+
+<h1>Files</h1>
+<button id="uploadModalBtn" class="btn-primary">Upload</button>
+<div id="modalContainer" class="modal shadow" role="dialog">
+
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#uploadModalBtn").click(function () {
+            $("#modalContainer").load("/Files/UploadFormPartial", function () {
+                $("#modalContainer").modal("show");
+            });
+        });
+    });
+</script>

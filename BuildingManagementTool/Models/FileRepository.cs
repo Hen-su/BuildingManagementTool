@@ -9,11 +9,18 @@ namespace BuildingManagementTool.Models
             _buildingManagementToolDbContext = buildingManagementToolDbContext;
         }
 
-        public IEnumerable<File> AllFiles => throw new NotImplementedException();
-
-        public void AddFileData(File file)
+        public IEnumerable<File> AllFiles
         {
-            _buildingManagementToolDbContext.Add(file);
+            get
+            {
+                return _buildingManagementToolDbContext.Files;
+            }
+        }
+
+        public async Task AddFileData(File file)
+        {
+            await _buildingManagementToolDbContext.AddAsync(file);
+            await _buildingManagementToolDbContext.SaveChangesAsync();
         }
 
         public IEnumerable<File> GetById(int id)

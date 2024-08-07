@@ -4,6 +4,7 @@ namespace BuildingManagementTool.Models
 {
     public class BuildingManagementToolDbContext : DbContext
     {
-        DbSet<File> Files { get; set; }
+        public BuildingManagementToolDbContext(DbContextOptions<BuildingManagementToolDbContext> options) : base(options) { }
+        public DbSet<File> Files { get; set; }
     }
 }
