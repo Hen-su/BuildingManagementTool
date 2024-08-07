@@ -1,4 +1,6 @@
+using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,8 +11,15 @@ builder.Services.AddAzureClients(clientBuilder =>
     clientBuilder.AddBlobServiceClient(builder.Configuration["StorageConnectionString:blob"]!, preferMsi: true);
 });
 
+builder.Services.AddDbContext<BuildingManagementToolDbContext>(options =>
+{
+    options.UseSqlServer(
+        builder.Configuration["ConnectionStrings:BuildingManagementToolDbContextConnection"]);
+});
+
 // Add BlobService class
 builder.Services.AddScoped<BlobService>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
 var app = builder.Build();
 
