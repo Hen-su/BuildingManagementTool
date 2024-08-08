@@ -9,8 +9,8 @@ namespace BuildingManagementTool.Controllers
     public class BlobController : Controller
     {
         private readonly IDocumentRepository _documentRepository;
-        private readonly BlobService _blobService;
-        public BlobController(BlobService blobService, IDocumentRepository documentRepository)
+        private readonly IBlobService _blobService;
+        public BlobController(IBlobService blobService, IDocumentRepository documentRepository)
         {
             _blobService = blobService;
             _documentRepository = documentRepository;
@@ -81,7 +81,7 @@ namespace BuildingManagementTool.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
                 }
             }
-            TempData["response"] = "Upload Successful";
+            //TempData["response"] = "Upload Successful";
             return RedirectToAction("Index", "Document");
         }
     }
