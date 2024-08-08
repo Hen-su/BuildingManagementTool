@@ -81,11 +81,8 @@ namespace BuildingManagementTool.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
                 }
             }
-            
-            return Ok(new
-            {
-                Message = "Upload Successful"
-            });
+            TempData["response"] = "Upload Successful";
+            return RedirectToAction("Index", "Document");
         }
     }
 }
