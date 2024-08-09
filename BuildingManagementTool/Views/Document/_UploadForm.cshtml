@@ -1,4 +1,4 @@
-﻿<div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+﻿<div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered" role="document">
     <div class="modal-content px-4">
         <div class="modal-header">
             <h2>Upload Files</h2>
@@ -7,8 +7,11 @@
         <div class="modal-body">
                 <form asp-controller="Blob" asp-action="UploadBlob" id="uploadForm" method="post" enctype="multipart/form-data">
                     <div class="row justify-content-between">
-                        <div class="col-4">
+                        <div class="col-5">
                             <input type="file" name="files" id="fileInput" multiple>
+                            <p id="noFiles" class="mt-2">No Files Selected</p>
+                            <ul id="fileList" class="list-group p-0 m-0 w-100">
+                            </u>
                         </div>
                     <div class="col-7" style="border: 2px dashed #ccc;">
                             <div class="d-flex justify-content-center align-items-center" id="dropArea" style="height:150px;">
@@ -28,55 +31,121 @@
 </div>
 
 <script>
-    const dropBox = () => {
-        const dropArea = document.querySelector('#dropArea')
+    $(document).ready(function () {
+        //track existing list
+        let previousList = new DataTransfer();
+        //handle file dropbox events
+        const dropBox = () => {
+            const dropArea = document.querySelector('#dropArea')
 
-        if (!dropArea) {
-            console.error('Element with id #dropArea not found');
-            return;
-        }
-
-        const active = () => {
-            dropArea.style.backgroundColor = "#bbb";
-        };
-
-        const inactive = () => {
-            dropArea.style.backgroundColor = "";
-        };
-
-        const prevents = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
-            dropArea.addEventListener(evtName, prevents);
-        });
-        ['dragenter', 'dragover'].forEach(evtName => {
-            dropArea.addEventListener(evtName, active);
-        });
-        ['dragleave', 'drop'].forEach(evtName => {
-            dropArea.addEventListener(evtName, inactive)
-        });
-
-        dropArea.addEventListener('drop', handleDrop);
-    };
-
-    const handleDrop = (e) => {
-        const fileInput = document.querySelector('#fileInput')
-        const dt = e.dataTransfer;
-        if (dt && dt.files) {
-            const files = Array.from(dt.files);
-            const dataTransfer = new DataTransfer();
-            for (const file of fileInput.files) {
-                dataTransfer.items.add(file);
+            if (!dropArea) {
+                console.error('Element with id #dropArea not found');
+                return;
             }
-            for (const file of dt.files) {
-                dataTransfer.items.add(file);
-            }
-            fileInput.files = dataTransfer.files;
-        }
-    }
 
-    dropBox();
+            const active = () => {
+                dropArea.style.backgroundColor = "#bbb";
+            };
+
+            const inactive = () => {
+                dropArea.style.backgroundColor = "";
+            };
+
+            const prevents = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
+                dropArea.addEventListener(evtName, prevents);
+            });
+
+            ['dragenter', 'dragover'].forEach(evtName => {
+                dropArea.addEventListener(evtName, active);
+            });
+
+            ['dragleave', 'drop'].forEach(evtName => {
+                dropArea.addEventListener(evtName, inactive)
+            });
+
+            dropArea.addEventListener('drop', handleDrop);
+        };
+        //handle file selection
+        const handleDrop = (e) => {
+            const dt = e.dataTransfer;
+            if (dt && dt.files) { 
+                updateFileList(dt.files)
+            }
+        }
+        //handle file selection with input
+        const upDateFileInput = () => {
+            const fileInput = document.querySelector('#fileInput');
+            const fileList = document.querySelector('#fileList');
+            fileInput.addEventListener('change', (e) => {
+                console.log(e)
+                //new file
+                const newfiles = Array.from(e.target.files);
+                //get previously selected
+                updateFileList(newfiles);
+            })
+        }
+        //updates input FileList and Lists files
+        const updateFileList = (newList) => {
+            const fileInput = document.querySelector('#fileInput');
+            const fileList = document.querySelector('#fileList');
+            let fileNames = new Set();
+            let list = new DataTransfer();
+            for (const file of previousList.files) {
+                if (!fileNames.has(file.name)) {
+                    fileNames.add(file.name);
+                    list.items.add(file);
+                }
+            }
+            for (const file of newList) {
+                if (!fileNames.has(file.name)) {
+                    fileNames.add(file.name);
+                    list.items.add(file);
+                }
+            }
+            fileInput.files = list.files;
+            previousList = list;
+            fileList.innerHTML = '';
+
+            if (list.files.length === 0) {
+                document.querySelector('#noFiles').classList.remove('d-none');
+            } else {
+                document.querySelector('#noFiles').classList.add('d-none');
+                for (const file of list.files) {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item d-flex justify-content-between';
+                    listItem.textContent = file.name;
+                    
+                    const removeButton = document.createElement('button');
+                    removeButton.type = 'button'
+                    removeButton.textContent = 'X';
+                    removeButton.style.border = 'none';
+                    removeButton.style.backgroundColor = 'transparent';
+                    removeButton.onclick = () => {
+                        handleRemoveFile(file.name)
+                    }
+                    
+                    listItem.appendChild(removeButton)
+                    fileList.appendChild(listItem);
+                }
+            }
+            console.log(fileInput.files)
+            console.log(list.files)
+        }
+
+        const handleRemoveFile = (filename) => {
+            const updatedFiles = Array.from(previousList.files).filter(file => file.name !== filename);
+            const updatedDataTransfer = new DataTransfer();
+            updatedFiles.forEach(file => updatedDataTransfer.items.add(file));
+            previousList = updatedDataTransfer;
+            updateFileList(updatedDataTransfer.files)
+            console.log(updatedDataTransfer.files);
+        }
+        upDateFileInput();
+        dropBox();
+    });
 </script>
