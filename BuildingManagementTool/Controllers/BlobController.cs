@@ -2,6 +2,7 @@
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Azure;
 
 namespace BuildingManagementTool.Controllers
@@ -31,7 +32,7 @@ namespace BuildingManagementTool.Controllers
                 return BadRequest(problemDetails);
             }
 
-            foreach (var file in files) 
+            foreach (var file in files)
             {
                 string blobName = $"{containerName}/{file.FileName}";
                 bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
@@ -81,11 +82,32 @@ namespace BuildingManagementTool.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
                 }
             }
-            
+
             return Ok(new
             {
                 Message = "Upload Successful"
             });
         }
+        [HttpGet]
+        public async Task<IActionResult> ListBlobs()
+        {
+            var containerName = "test1";
+            var blobNames = await _blobService.ListBlobsAsync(containerName);
+
+            if (blobNames == null)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Unable to retrieve blobs.");
+            }
+
+            var documents = blobNames.Select(blobName => new BuildingManagementTool.Models.Document
+            {
+                FileName = Path.GetFileName(blobName), 
+                BlobName = blobName
+            }).ToList();
+
+            return PartialView("_DocumentCardPartial", documents);
+        }
+
+
     }
 }
