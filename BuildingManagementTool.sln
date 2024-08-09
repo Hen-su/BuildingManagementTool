@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35004.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingManagementTool", "BuildingManagementTool\BuildingManagementTool.csproj", "{8930DBC1-FCC9-4C04-B285-343962CEC488}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BuildingManagementTool", "BuildingManagementTool\BuildingManagementTool.csproj", "{8930DBC1-FCC9-4C04-B285-343962CEC488}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingManagementTool.Tests", "BuildingManagementTool.Tests\BuildingManagementTool.Tests.csproj", "{D8948940-D616-4EB3-A9A9-D30C1098FBAF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{8930DBC1-FCC9-4C04-B285-343962CEC488}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8930DBC1-FCC9-4C04-B285-343962CEC488}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8930DBC1-FCC9-4C04-B285-343962CEC488}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8948940-D616-4EB3-A9A9-D30C1098FBAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8948940-D616-4EB3-A9A9-D30C1098FBAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8948940-D616-4EB3-A9A9-D30C1098FBAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8948940-D616-4EB3-A9A9-D30C1098FBAF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
