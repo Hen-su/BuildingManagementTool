@@ -18,7 +18,7 @@ builder.Services.AddDbContext<BuildingManagementToolDbContext>(options =>
 });
 
 // Add BlobService class
-builder.Services.AddScoped<BlobService>();
+builder.Services.AddScoped<IBlobService, BlobService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
 var app = builder.Build();

@@ -1,8 +1,9 @@
 ﻿using Azure.Storage.Blobs;
+using BuildingManagementTool.Models;
 
 namespace BuildingManagementTool.Services
 {
-    public class BlobService
+    public class BlobService : IBlobService
     {
         private readonly BlobServiceClient _blobServiceClient;
         public BlobService(BlobServiceClient blobServiceClient)
@@ -19,6 +20,10 @@ namespace BuildingManagementTool.Services
 
         public async Task<bool> UploadBlobAsync(string containerName, string blobName, Stream data)
         {
+            if (data == null) 
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
             try
             {
                 var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
@@ -42,7 +47,7 @@ namespace BuildingManagementTool.Services
                 await blobClient.DeleteIfExistsAsync();
                 return true;
             }
-            catch
+            catch 
             {
                 return false;
             }
