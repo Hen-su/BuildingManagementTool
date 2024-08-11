@@ -1,0 +1,20 @@
+﻿@model Document
+
+<partial name="_ToastNotification" />
+
+<h1>Files</h1>
+<button id="uploadModalBtn" class="btn-primary">Upload</button>
+<button type="button" id="downloadButton"></button>
+<div id="modalContainer" class="modal shadow" role="dialog">
+
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#uploadModalBtn").click(function () {
+            $("#modalContainer").load("/Document/UploadFormPartial", function () {
+                $("#modalContainer").modal("show");
+            });
+        });
+    });
+</script>
