@@ -25,24 +25,27 @@ namespace BuildingManagementTool.Models
             await _buildingManagementToolDbContext.SaveChangesAsync();
         }
 
-        public async Task<Document> GetById(int id)
+        public async Task<Document> GetById(int? id)
         {
              return await _buildingManagementToolDbContext.Documents.FirstOrDefaultAsync(d => d.DocumentId == id);
         }
 
         public async Task<bool> DeleteDocumentData(Document document)
         {
-            try
+            if (document != null) 
             {
-                _buildingManagementToolDbContext.Remove(document);
-                await _buildingManagementToolDbContext.SaveChangesAsync();
-                return true;
+                try
+                {
+                    _buildingManagementToolDbContext.Remove(document);
+                    await _buildingManagementToolDbContext.SaveChangesAsync();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
             }
-            catch
-            {
-                return false;
-            }
-            
+            return false;
         }
     }
 }

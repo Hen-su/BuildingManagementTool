@@ -86,15 +86,17 @@ namespace BuildingManagementTool.Controllers
             return RedirectToAction("Index", "Document");
         }
 
-        public async Task<IActionResult> DeleteBlob(int id)
+        public async Task<IActionResult> DeleteBlob(int? id)
         {
+            //test container
             var containerName = "test1";
+            //testid
             var document = await _documentRepository.GetById(id);
             if (document == null)
             {
                 var problemDetails = new ProblemDetails
                 {
-                    Title = "File Not Found",
+                    Title = "Metadata Not Found",
                     Detail = "The File MetaData was not found",
                     Status = StatusCodes.Status404NotFound
                 };
@@ -106,7 +108,7 @@ namespace BuildingManagementTool.Controllers
                 var problemDetails = new ProblemDetails
                 {
                     Title = "Deletion Error",
-                    Detail = "Failed to delete the file in blob storage",
+                    Detail = "An error occurred when deleting the file",
                     Status = StatusCodes.Status500InternalServerError
                 };
                 return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);

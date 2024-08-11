@@ -64,6 +64,35 @@ namespace BuildingManagementTool.Tests
             await _documentRepository.AddDocumentData(document));
         }
 
+        [Test]
+        public async Task DeleteDocumentData_Success()
+        {
+            var document = new Document
+            {
+                DocumentId = 1,
+                FileName = "text.txt",
+                BlobName = "category/text.txt",
+                ContentType = "text/plain",
+                FileSize = 1,
+                UploadDate = DateTime.UtcNow
+            };
+
+            await _documentRepository.AddDocumentData(document);
+            var result = await _documentRepository.DeleteDocumentData(document);
+            var savedDocument = await _dbContext.Documents.FindAsync(1);
+            Assert.That(savedDocument == null);
+            Assert.True(result);
+        }
+
+        [Test]
+        public async Task DeleteDocumentData_FileNotExist_Fail()
+        {
+            var document = new Document();
+
+            var result = await _documentRepository.DeleteDocumentData(document);
+            Assert.False(result);
+        }
+
         [TearDown]
         public void TearDown()
         {
