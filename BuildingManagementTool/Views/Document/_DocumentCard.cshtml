@@ -1,72 +1,42 @@
-﻿@model IEnumerable<BuildingManagementTool.Models.Document>
+﻿@model BuildingManagementTool.Models.Document
 
 <style>
-    .doc-card-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1rem; 
-    }
-
     .doc-card {
         align-items: center;
         border-radius: 10px;
-        overflow: hidden;
         border: 1px solid #ddd;
         background: #fff;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        width: 100%;
-        height: auto;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+=       justify-content: center;
         text-align: center;
+        margin-bottom: 1rem;  }
+
+    .doc-card img {
+        width: auto;
+        height: 150px;
+        object-fit: cover; 
+        border-bottom: 1px solid #ddd;
     }
 
-        .doc-card img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover; 
-            border-bottom: 1px solid #ddd;
-        }
-
-    .doc-card-content {
-        padding: 1rem;
+    .doc-card-content h3,a {
+        margin: 0.5rem 0;
+        font-size: 1rem;
     }
 
-        .doc-card-content h3 {
-            margin: 0.5rem 0;
-            font-size: 1rem; 
-        }
 
-        .doc-card-content a {
-            text-decoration: none;
-            color: #007bff;
-            font-size: 1rem; 
-        }
-
-            .doc-card-content a:hover {
-                text-decoration: underline;
-            }
 </style>
 
-<div class="doc-card-list">
-    @if (Model != null && Model.Any())
-    {
-        @foreach (var document in Model)
-        {
-            <div class="doc-card">
-                <img src="/imgs/pdf.svg" alt="Document Thumbnail" />
-                <div class="doc-card-content">
-                    <h3>@document.FileName</h3>
-                    <a href="" target="">
-                        View Document
-                    </a>
-                </div>
-            </div>
-        }
-    }
-    else
-    {
-        <p>No documents available.</p>
-    }
+
+
+<div class="doc-card">
+    <img src="/imgs/pdf.svg" alt="Document Thumbnail" />
+    <div class="doc-card-content">
+        <h3>@Model.FileName</h3>
+        <a href="/container-name/@Model.BlobName" target="_blank" class="btn btn-primary">
+            View Document
+        </a>
+
+    </div>
 </div>
+
+

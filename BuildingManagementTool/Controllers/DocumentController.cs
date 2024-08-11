@@ -1,5 +1,6 @@
 ﻿using BuildingManagementTool.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.IO.Pipelines;
 
 namespace BuildingManagementTool.Controllers
 {
@@ -12,7 +13,8 @@ namespace BuildingManagementTool.Controllers
         }
         public IActionResult Index()
         {
-            return View();
+            var documents = _fileRepository.AllDocuments;
+            return View(documents);
         }
 
         public IActionResult UploadFormPartial()
@@ -23,5 +25,7 @@ namespace BuildingManagementTool.Controllers
         {
             return PartialView("_DocumentCard");
         }
+
+
     }
 }
