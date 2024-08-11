@@ -1,4 +1,6 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
+
 namespace BuildingManagementTool.Models
 {
     public class DocumentRepository : IDocumentRepository
@@ -23,9 +25,8 @@ namespace BuildingManagementTool.Models
             await _buildingManagementToolDbContext.SaveChangesAsync();
         }
 
-        public IEnumerable<Document> GetById(int id)
+        public async Task<Document> GetById(int id)
         {
-            throw new NotImplementedException();
         }
     }
 }
