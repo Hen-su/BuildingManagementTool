@@ -32,11 +32,20 @@
     <img src="/imgs/pdf.svg" alt="Document Thumbnail" />
     <div class="doc-card-content">
         <h3>@Model.FileName</h3>
-        <a href="/container-name/@Model.BlobName" target="_blank" class="btn btn-primary">
-            View Document
-        </a>
-
+        <button class="viewBtn" data-id="@Model.DocumentId">View Document</button>
     </div>
 </div>
+
+<script>
+    $(document).ready(function () {
+
+        $(".viewBtn").click(function () {
+            var documentId = $(this).data("id");
+            $("#modalContainer").load("/Blob/PDFViewerPartial?id=" + documentId, function () {
+                $("#modalContainer").modal("show");
+            });
+        })
+    })
+</script>
 
 

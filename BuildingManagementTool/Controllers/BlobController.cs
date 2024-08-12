@@ -117,5 +117,34 @@ namespace BuildingManagementTool.Controllers
             await _documentRepository.DeleteDocumentData(document);
             return RedirectToAction("Index", "Document");
         }
+
+        public async Task<IActionResult> PDFViewerPartial(int id)
+        {
+            var containerName = "test1";
+            var document = await _documentRepository.GetById(id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Metadata Not Found",
+                    Detail = "The File MetaData was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+            var blobName = document.BlobName;
+            var blobUrl = await _blobService.GetBlobUrlAsync(containerName, blobName);
+            if (blobUrl == null) 
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "File Not Found",
+                    Detail = "The file was not found in blob storage",
+                    Status = StatusCodes.Status500InternalServerError
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+            return PartialView("_PDFViewer", blobUrl);
+        }
     }
 }

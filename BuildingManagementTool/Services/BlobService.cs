@@ -73,6 +73,21 @@ namespace BuildingManagementTool.Services
 
             }
         }
+
+        public async Task<string> GetBlobUrlAsync(string containerName, string blobName)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blobClient = containerClient.GetBlobClient(blobName);
+            bool blobExists = await blobClient.ExistsAsync();
+            if (!blobExists)
+            {
+                return null;
+            }
+            var blobUrl = blobClient.Uri.ToString();
+            return blobUrl;
+        }
+            
+
         /*
         [HttpGet]
         public async Task<IActionResult> Download(string blobName)
