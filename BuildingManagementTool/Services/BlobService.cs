@@ -1,5 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 using BuildingManagementTool.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BuildingManagementTool.Services
 {
@@ -52,5 +53,36 @@ namespace BuildingManagementTool.Services
                 return false;
             }
         }
-    }
+
+        public async Task<IEnumerable<string>> ListBlobsAsync(string containerName)
+        {
+            try { var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+                List<string> blobNames = new List<string>();
+
+                await foreach (var blobItem in containerClient.GetBlobsAsync())
+                {
+                    blobNames.Add(blobItem.Name);
+                }
+
+                return blobNames;
+            }
+            catch
+            {
+                return null;
+
+
+
+            }
+        }
+        /*
+        [HttpGet]
+        public async Task<IActionResult> Download(string blobName)
+        {
+            if (string.IsNullOrEmpty(blobName))
+            {
+                return BadRequest("Invalid document identifier.");
+            }
+
+*/
+        }
 }

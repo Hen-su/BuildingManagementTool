@@ -1,0 +1,42 @@
+﻿@model BuildingManagementTool.Models.Document
+
+<style>
+    .doc-card {
+        align-items: center;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        background: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+=       justify-content: center;
+        text-align: center;
+        margin-bottom: 1rem;  }
+
+    .doc-card img {
+        width: auto;
+        height: 150px;
+        object-fit: cover; 
+        border-bottom: 1px solid #ddd;
+    }
+
+    .doc-card-content h3,a {
+        margin: 0.5rem 0;
+        font-size: 1rem;
+    }
+
+
+</style>
+
+
+
+<div class="doc-card">
+    <img src="/imgs/pdf.svg" alt="Document Thumbnail" />
+    <div class="doc-card-content">
+        <h3>@Model.FileName</h3>
+        <a href="/container-name/@Model.BlobName" target="_blank" class="btn btn-primary">
+            View Document
+        </a>
+
+    </div>
+</div>
+
+
