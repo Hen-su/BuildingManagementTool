@@ -56,6 +56,7 @@ namespace BuildingManagementTool.Controllers
                     }
 
                 }
+                /*Switch Case for the image url using the content type*/
 
                 var metadata = new Models.Document
                 {
@@ -64,6 +65,8 @@ namespace BuildingManagementTool.Controllers
                     ContentType = file.ContentType,
                     FileSize = file.Length,
                     UploadDate = DateTime.UtcNow
+                    
+
                 };
                 try
                 {

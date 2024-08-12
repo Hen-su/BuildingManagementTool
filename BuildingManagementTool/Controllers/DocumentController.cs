@@ -21,10 +21,7 @@ namespace BuildingManagementTool.Controllers
         {
             return PartialView("_UploadForm");
         }
-        public IActionResult DocumentCardPartial()
-        {
-            return PartialView("_DocumentCard");
-        }
+     
 
 
     }
