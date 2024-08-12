@@ -3,6 +3,7 @@ using BuildingManagementTool.Controllers;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System;
@@ -89,6 +90,71 @@ namespace BuildingManagementTool.Tests
 
             _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>()), Times.Exactly(0));
             Assert.IsInstanceOf<BadRequestObjectResult>(result);
+        }
+
+        [Test]
+        public async Task DeleteBlob_FileExists_Success()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "category/test.txt"
+            };
+        
+            _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
+            _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
+
+            var result = await _blobController.DeleteBlob(document.DocumentId) as RedirectToActionResult;
+
+            _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            Assert.AreEqual("Index", result.ActionName);
+            Assert.AreEqual("Document", result.ControllerName);
+        }
+
+        [Test]
+        public async Task DeleteBlob_FileNotExists_Fail()
+        {
+            var documentId = 1;
+            var document = new Document();
+
+            _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
+            _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
+
+            var result = await _blobController.DeleteBlob(document.DocumentId);
+
+            _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            var objectResult = (ObjectResult)result;
+            var problemDetails = (ProblemDetails)objectResult.Value;
+            Assert.AreEqual("The File MetaData was not found", problemDetails.Detail);
+            Assert.AreEqual("Metadata Not Found", problemDetails.Title);
+            Assert.AreEqual(StatusCodes.Status404NotFound, problemDetails.Status);
+        }
+
+        [Test]
+        public async Task DeleteBlob_BlobDeleteFailed_Fail()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "category/test.txt"
+            };
+
+            _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
+            _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(false);
+
+            var result = await _blobController.DeleteBlob(document.DocumentId);
+
+            _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            var objectResult = (ObjectResult)result;
+            var problemDetails = (ProblemDetails)objectResult.Value;
+            Assert.AreEqual("An error occurred when deleting the file", problemDetails.Detail);
+            Assert.AreEqual("Deletion Error", problemDetails.Title);
+            Assert.AreEqual(StatusCodes.Status500InternalServerError, problemDetails.Status);
         }
 
         [TearDown]

@@ -21,6 +21,7 @@ namespace BuildingManagementTool.Controllers
         public async Task<IActionResult> UploadBlob(IList<IFormFile> files)
         {
             var containerName = "test1";
+            //Check submitted file list isn't empty
             if (files == null || files.Count == 0)
             {
                 var problemDetails = new ProblemDetails
@@ -69,7 +70,7 @@ namespace BuildingManagementTool.Controllers
                 {
                     await _documentRepository.AddDocumentData(metadata);
                 }
-                catch (Exception ex)
+                catch
                 {
                     await _blobService.DeleteBlobAsync(containerName, blobName);
 
@@ -85,26 +86,36 @@ namespace BuildingManagementTool.Controllers
             //TempData["response"] = "Upload Successful";
             return RedirectToAction("Index", "Document");
         }
-        [HttpGet]
-        public async Task<IActionResult> ListBlobs()
+
+        public async Task<IActionResult> DeleteBlob(int? id)
         {
+            //test container
             var containerName = "test1";
-            var blobNames = await _blobService.ListBlobsAsync(containerName);
-
-            if (blobNames == null)
+            //testid
+            var document = await _documentRepository.GetById(id);
+            if (document == null)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Unable to retrieve blobs.");
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Metadata Not Found",
+                    Detail = "The File MetaData was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-
-            var documents = blobNames.Select(blobName => new BuildingManagementTool.Models.Document
+            bool isDeleted = await _blobService.DeleteBlobAsync(containerName, document.BlobName);
+            if (!isDeleted)
             {
-                FileName = Path.GetFileName(blobName), 
-                BlobName = blobName
-            }).ToList();
-
-            return PartialView("_DocumentCardPartial", documents);
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Deletion Error",
+                    Detail = "An error occurred when deleting the file",
+                    Status = StatusCodes.Status500InternalServerError
+                };
+                return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
+            }
+            await _documentRepository.DeleteDocumentData(document);
+            return RedirectToAction("Index", "Document");
         }
-
-
     }
 }

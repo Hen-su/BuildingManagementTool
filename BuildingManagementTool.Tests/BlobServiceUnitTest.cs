@@ -95,5 +95,39 @@ namespace BuildingManagementTool.Tests
             _mockBlobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>()), Times.Never);
             Assert.False(response);
         }
+
+        [Test]
+        public async Task DeleteBlobAsync_FileExists_Success()
+        {
+            var containerName = "test";
+            var blobName = "category/test.txt";
+            var mockResponse = new Mock<Response<bool>>();
+            mockResponse.Setup(m => m.Value).Returns(true);
+
+            _mockBlobClient.Setup(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
+           .ReturnsAsync(mockResponse.Object);
+
+            var response = await _blobService.DeleteBlobAsync(containerName, blobName);
+
+            _mockBlobClient.Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Once);
+            Assert.True(response);
+        }
+
+        [Test]
+        public async Task DeleteBlobAsync_FileNotExists_Fail()
+        {
+            var containerName = "test";
+            var blobName = "category/test.txt";
+            var mockResponse = new Mock<Response<bool>>();
+            mockResponse.Setup(m => m.Value).Returns(false);
+
+            _mockBlobClient.Setup(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
+           .ReturnsAsync(mockResponse.Object);
+
+            var response = await _blobService.DeleteBlobAsync(containerName, blobName);
+
+            _mockBlobClient.Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Once);
+            Assert.True(response);
+        }
     }
 }

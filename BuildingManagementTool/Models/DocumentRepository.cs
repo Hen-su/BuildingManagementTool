@@ -1,4 +1,6 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
+
 namespace BuildingManagementTool.Models
 {
     public class DocumentRepository : IDocumentRepository
@@ -23,9 +25,27 @@ namespace BuildingManagementTool.Models
             await _buildingManagementToolDbContext.SaveChangesAsync();
         }
 
-        public IEnumerable<Document> GetById(int id)
+        public async Task<Document> GetById(int? id)
         {
-            throw new NotImplementedException();
+             return await _buildingManagementToolDbContext.Documents.FirstOrDefaultAsync(d => d.DocumentId == id);
+        }
+
+        public async Task<bool> DeleteDocumentData(Document document)
+        {
+            if (document != null) 
+            {
+                try
+                {
+                    _buildingManagementToolDbContext.Remove(document);
+                    await _buildingManagementToolDbContext.SaveChangesAsync();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            return false;
         }
     }
 }
