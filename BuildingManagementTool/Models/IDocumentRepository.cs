@@ -3,7 +3,8 @@
     public interface IDocumentRepository
     {
         IEnumerable<Document> AllDocuments { get; }
-        IEnumerable<Document> GetById (int id);
-        Task AddDocumentData(Document file);
+        Task<Document> GetById (int? id);
+        Task AddDocumentData(Document document);
+        Task<bool> DeleteDocumentData(Document document);
     }
 }
