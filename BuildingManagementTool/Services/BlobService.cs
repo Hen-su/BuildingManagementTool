@@ -68,20 +68,27 @@ namespace BuildingManagementTool.Services
             catch
             {
                 return null;
-
-
-
             }
-        }
-        /*
-        [HttpGet]
-        public async Task<IActionResult> Download(string blobName)
+        }        
+        public async Task<Stream> DownloadBlobAsync(string containerName, string blobName)
         {
-            if (string.IsNullOrEmpty(blobName))
-            {
-                return BadRequest("Invalid document identifier.");
-            }
+            try 
+            { 
+                var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+                var blobClient = containerClient.GetBlobClient(blobName);
 
-*/
+                if (!await blobClient.ExistsAsync())
+                {
+                    return null;
+                }
+
+                var downloadInfo = await blobClient.DownloadAsync();
+                return downloadInfo.Value.Content;
+            }
+            catch
+            {
+                return null; 
+            }
         }
+    }
 }
