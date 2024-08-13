@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Controllers;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
@@ -43,12 +44,12 @@ namespace BuildingManagementTool.Tests
 
             var mockFiles = new List<IFormFile> { formFile.Object };
 
-            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>()))
+            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()))
                 .ReturnsAsync(true);
 
             var result = await _blobController.UploadBlob(mockFiles) as RedirectToActionResult;
 
-            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>()), Times.Once);
+            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Once);
             Assert.AreEqual("Index", result.ActionName);
             Assert.AreEqual("Document", result.ControllerName);
         }
@@ -68,12 +69,12 @@ namespace BuildingManagementTool.Tests
 
             var mockFiles = new List<IFormFile> { formFile.Object, formFile.Object };
 
-            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>()))
+            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()))
                 .ReturnsAsync(true);
 
             var result = await _blobController.UploadBlob(mockFiles) as RedirectToActionResult;
 
-            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>()), Times.Exactly(2));
+            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Exactly(2));
             Assert.AreEqual("Index", result.ActionName);
             Assert.AreEqual("Document", result.ControllerName);
         }
@@ -83,12 +84,12 @@ namespace BuildingManagementTool.Tests
         {
             var mockFiles = new List<IFormFile>();
 
-            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>()))
+            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()))
                 .ReturnsAsync(false);
 
             var result = await _blobController.UploadBlob(mockFiles);
 
-            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>()), Times.Exactly(0));
+            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Exactly(0));
             Assert.IsInstanceOf<BadRequestObjectResult>(result);
         }
 
@@ -155,6 +156,13 @@ namespace BuildingManagementTool.Tests
             Assert.AreEqual("An error occurred when deleting the file", problemDetails.Detail);
             Assert.AreEqual("Deletion Error", problemDetails.Title);
             Assert.AreEqual(StatusCodes.Status500InternalServerError, problemDetails.Status);
+        }
+
+        [Test]
+        public async Task PDFViewerPartial()
+        {
+            var documentId = 1;
+
         }
 
         [TearDown]

@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,7 @@ namespace BuildingManagementTool.Services
             return await blobClient.ExistsAsync();
         }
 
-        public async Task<bool> UploadBlobAsync(string containerName, string blobName, Stream data)
+        public async Task<bool> UploadBlobAsync(string containerName, string blobName, Stream data, BlobHttpHeaders headers)
         {
             if (data == null) 
             {
@@ -30,7 +31,7 @@ namespace BuildingManagementTool.Services
                 var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
                 await containerClient.CreateIfNotExistsAsync();
                 var blobClient = containerClient.GetBlobClient(blobName);
-                await blobClient.UploadAsync(data);
+                await blobClient.UploadAsync(data, headers);
                 return true;
             }
             catch

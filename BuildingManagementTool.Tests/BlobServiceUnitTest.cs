@@ -1,6 +1,8 @@
 ﻿using Azure;
+using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using Castle.Components.DictionaryAdapter.Xml;
@@ -42,12 +44,16 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
-        public async Task UploadBlobAsync_File_Success()
+        public async Task UploadBlobAsync_FileExists_Success()
         {
             var containerName = "test";
             var blobName = "category/test.txt";
             var data = new byte[] { 1, 2, 3, 4, 5 };
             var content = new MemoryStream(data);
+            BlobHttpHeaders headers = new BlobHttpHeaders
+            {
+                ContentType = "text/plain"
+            };
 
             var mockBlobContentInfo = BlobsModelFactory.BlobContentInfo(
                 eTag: new ETag(""),
@@ -60,12 +66,30 @@ namespace BuildingManagementTool.Tests
                ); 
             var mockResponse = Response.FromValue(mockBlobContentInfo, null);
 
-            _mockBlobClient.Setup(x => x.UploadAsync(It.IsAny<Stream>()))
-           .ReturnsAsync(mockResponse);
+            _mockBlobClient.Setup(x => x.UploadAsync(
+                It.IsAny<Stream>(),                           
+                It.Is<BlobHttpHeaders>(h => h.ContentType == "text/plain"), 
+                It.IsAny<IDictionary<string, string>>(),    
+                It.IsAny<BlobRequestConditions>(),           
+                It.IsAny<IProgress<long>>(),              
+                It.IsAny<AccessTier?>(),                    
+                It.IsAny<StorageTransferOptions>(),       
+                It.IsAny<CancellationToken>()))            
+                .ReturnsAsync(mockResponse);
 
-            var response = await _blobService.UploadBlobAsync(containerName, blobName, content);
+            var response = await _blobService.UploadBlobAsync(containerName, blobName, content, headers);
 
-            _mockBlobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>()), Times.Once);
+            _mockBlobClient.Verify(x => x.UploadAsync(
+                It.IsAny<Stream>(),
+                It.Is<BlobHttpHeaders>(h => h.ContentType == "text/plain"),
+                It.IsAny<IDictionary<string, string>>(),
+                It.IsAny<BlobRequestConditions>(),
+                It.IsAny<IProgress<long>>(),
+                It.IsAny<AccessTier?>(),
+                It.IsAny<StorageTransferOptions>(),
+                It.IsAny<CancellationToken>()), 
+                Times.Once());
+
             Assert.True(response);
         }
 
@@ -75,6 +99,7 @@ namespace BuildingManagementTool.Tests
             var containerName = "test";
             var blobName = "category/test.txt";
             Stream content = null;
+            BlobHttpHeaders headers = null;
 
             var mockBlobContentInfo = BlobsModelFactory.BlobContentInfo(
                 eTag: new ETag(""),
@@ -87,13 +112,31 @@ namespace BuildingManagementTool.Tests
                );
             var mockResponse = Response.FromValue(mockBlobContentInfo, null);
 
-            _mockBlobClient.Setup(x => x.UploadAsync(It.IsAny<Stream>()))
-           .ReturnsAsync(mockResponse);
+            _mockBlobClient.Setup(x => x.UploadAsync(
+                It.IsAny<Stream>(),
+                It.Is<BlobHttpHeaders>(h => h.ContentType == "text/plain"),
+                It.IsAny<IDictionary<string, string>>(),
+                It.IsAny<BlobRequestConditions>(),
+                It.IsAny<IProgress<long>>(),
+                It.IsAny<AccessTier?>(),
+                It.IsAny<StorageTransferOptions>(),
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mockResponse);
 
-            var response = await _blobService.UploadBlobAsync(containerName, blobName, content);
+            var ex = Assert.ThrowsAsync<ArgumentNullException>(async () =>
+                await _blobService.UploadBlobAsync(containerName, blobName, content, headers));
 
-            _mockBlobClient.Verify(x => x.UploadAsync(It.IsAny<Stream>()), Times.Never);
-            Assert.False(response);
+            _mockBlobClient.Verify(x => x.UploadAsync(
+                It.IsAny<Stream>(),
+                It.Is<BlobHttpHeaders>(h => h.ContentType == "text/plain"),
+                It.IsAny<IDictionary<string, string>>(),
+                It.IsAny<BlobRequestConditions>(),
+                It.IsAny<IProgress<long>>(),
+                It.IsAny<AccessTier?>(),
+                It.IsAny<StorageTransferOptions>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+
+            Assert.That(ex.Message, Does.Contain("Value cannot be null"));
         }
 
         [Test]
@@ -128,6 +171,42 @@ namespace BuildingManagementTool.Tests
 
             _mockBlobClient.Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Once);
             Assert.True(response);
+        }
+
+        [Test]
+        public async Task GetBlobUrlAsync_BlobExists_Success()
+        {
+            var containerName = "test";
+            var blobName = "category/test.txt";
+            var expectedUrl = "https://example.com/test/test.txt";
+            var mockResponse = new Mock<Response<bool>>();
+            mockResponse.Setup(m => m.Value).Returns(true);
+
+            _mockBlobClient.Setup(x => x.ExistsAsync(It.IsAny<CancellationToken>()))
+           .ReturnsAsync(mockResponse.Object);
+            _mockBlobClient.SetupGet(x => x.Uri)
+            .Returns(new Uri(expectedUrl));
+
+            var result = await _blobService.GetBlobUrlAsync(containerName, blobName);
+            Assert.AreEqual(result, expectedUrl);
+        }
+
+        [Test]
+        public async Task GetBlobUrlAsync_BlobNotExist_Success()
+        {
+            var containerName = "test";
+            var blobName = "category/test.txt";
+            var expectedUrl = "https://example.com/test/test.txt";
+            var mockResponse = new Mock<Response<bool>>();
+            mockResponse.Setup(m => m.Value).Returns(false);
+
+            _mockBlobClient.Setup(x => x.ExistsAsync(It.IsAny<CancellationToken>()))
+           .ReturnsAsync(mockResponse.Object);
+            _mockBlobClient.SetupGet(x => x.Uri)
+            .Returns(new Uri(expectedUrl));
+
+            var result = await _blobService.GetBlobUrlAsync(containerName, blobName);
+            Assert.AreEqual(result, null);
         }
     }
 }

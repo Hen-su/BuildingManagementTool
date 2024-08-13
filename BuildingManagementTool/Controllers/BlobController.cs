@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +45,8 @@ namespace BuildingManagementTool.Controllers
 
                 using (var stream = file.OpenReadStream())
                 {
-                    bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream);
+                    BlobHttpHeaders blobHttpHeaders = new BlobHttpHeaders { ContentType = file.ContentType };
+                    bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream, blobHttpHeaders);
                     if (!isUploaded)
                     {
                         var problemDetails = new ProblemDetails

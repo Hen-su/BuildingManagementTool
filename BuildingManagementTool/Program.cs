@@ -17,6 +17,7 @@ builder.Services.AddDbContext<BuildingManagementToolDbContext>(options =>
         builder.Configuration["ConnectionStrings:BuildingManagementToolDbContextConnection"]);
 });
 
+
 // Add BlobService class
 builder.Services.AddScoped<IBlobService, BlobService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
