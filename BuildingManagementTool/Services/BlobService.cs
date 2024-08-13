@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,7 @@ namespace BuildingManagementTool.Services
             return await blobClient.ExistsAsync();
         }
 
-        public async Task<bool> UploadBlobAsync(string containerName, string blobName, Stream data)
+        public async Task<bool> UploadBlobAsync(string containerName, string blobName, Stream data, BlobHttpHeaders headers)
         {
             if (data == null) 
             {
@@ -30,7 +31,7 @@ namespace BuildingManagementTool.Services
                 var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
                 await containerClient.CreateIfNotExistsAsync();
                 var blobClient = containerClient.GetBlobClient(blobName);
-                await blobClient.UploadAsync(data);
+                await blobClient.UploadAsync(data, headers);
                 return true;
             }
             catch
@@ -69,6 +70,25 @@ namespace BuildingManagementTool.Services
             {
                 return null;
             }
+        }
+
+        public async Task<string> GetBlobUrlAsync(string containerName, string blobName)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blobClient = containerClient.GetBlobClient(blobName);
+            bool blobExists = await blobClient.ExistsAsync();
+            if (!blobExists)
+            {
+                return null;
+            }
+            var blobUrl = blobClient.Uri.ToString();
+            return blobUrl;
+        }
+            
+
+        /*
+        [HttpGet]
+        public async Task<IActionResult> Download(string blobName)
         }        
         public async Task<Stream> DownloadBlobAsync(string containerName, string blobName)
         {

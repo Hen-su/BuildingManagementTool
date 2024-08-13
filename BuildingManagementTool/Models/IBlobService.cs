@@ -1,10 +1,13 @@
-﻿namespace BuildingManagementTool.Models
+﻿using Azure.Storage.Blobs.Models;
+
+namespace BuildingManagementTool.Models
 {
     public interface IBlobService
     {
         Task<bool> BlobExistsAsync(string containerName, string blobName);
-        Task<bool> UploadBlobAsync(string containerName, string blobName, Stream data);
+        Task<bool> UploadBlobAsync(string containerName, string blobName, Stream data, BlobHttpHeaders headers);
         Task<bool> DeleteBlobAsync(string containerName, string blobName);
+        Task<string> GetBlobUrlAsync(string containerName, string blobName);
         Task<IEnumerable<string>> ListBlobsAsync(string containerName);
         Task<Stream> DownloadBlobAsync(string containerName, string blobName);
     }
