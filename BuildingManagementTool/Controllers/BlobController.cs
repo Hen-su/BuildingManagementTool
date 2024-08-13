@@ -117,5 +117,38 @@ namespace BuildingManagementTool.Controllers
             await _documentRepository.DeleteDocumentData(document);
             return RedirectToAction("Index", "Document");
         }
+
+        [HttpGet] 
+        public async Task<IActionResult> Download(int id)
+        {
+            //test container
+            var containerName = "test1";
+
+            var document = await _documentRepository.GetById(id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found",
+                    Detail = "The Document was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            var stream = await _blobService.DownloadBlobAsync(containerName, document.BlobName);
+            if (stream == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found in Blob Storage",
+                    Detail = "Document Not Found in the Blob Storage",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            return File(stream, document.ContentType, document.FileName);
+        }
     }
 }
