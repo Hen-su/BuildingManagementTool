@@ -1,42 +1,49 @@
 ﻿@model BuildingManagementTool.Models.Document
 
+@{
+    // Check if the current document is the selected document
+    var isSelected = ViewBag.SelectedDocumentId != null && ViewBag.SelectedDocumentId == Model.DocumentId;
+}
+
 <style>
     .doc-card {
         align-items: center;
         border-radius: 10px;
-        border: 1px solid #ddd;
         background: #fff;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-=       justify-content: center;
+        justify-content: center;
         text-align: center;
-        margin-bottom: 1rem;  }
+        margin-bottom: 1rem;
+    }
+    
+   .doc-card.selected{
+      border-style: solid;
+    border-width: 4px;
+    
+   }
 
     .doc-card img {
         width: auto;
         height: 150px;
-        object-fit: cover; 
+        object-fit: cover;
         border-bottom: 1px solid #ddd;
     }
 
     .doc-card-content h3,a {
-        margin: 0.5rem 0;
+        text-decoration: none;
+        margin: 0.5rem ;
         font-size: 1rem;
     }
 
-
+    .doc-card:hover {
+        background-color: #f0f0f0;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
 </style>
 
-
-
-<div class="doc-card">
+<div class="doc-card @(isSelected ? "selected" : "")">
     <img src="/imgs/pdf.svg" alt="Document Thumbnail" />
     <div class="doc-card-content">
         <h3>@Model.FileName</h3>
-        <a href="/container-name/@Model.BlobName" target="_blank" class="btn btn-primary">
-            View Document
-        </a>
-
     </div>
 </div>
-
-

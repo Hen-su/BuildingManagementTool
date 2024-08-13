@@ -1,24 +1,44 @@
-﻿@model IEnumerable<BuildingManagementTool.Models.Document>
+﻿@model (IEnumerable<BuildingManagementTool.Models.Document>, BuildingManagementTool.Models.Document)
 
 <h1>Files</h1>
-<button id="uploadModalBtn" class="btn-success btn-lg">Upload</button>
+<button id="uploadModalBtn" class="btn-success btn-md">Upload</button>
+<div class="container-fluid row justify-content-between">
+    <div class="col-md-8 mt-3">
+        <div id="documentCardsContainer" class="row row-cols-1 row-cols-md-3">
+           @if (Model.Item1 != null && Model.Item1.Any()) // Item1 is the documents list from the controller
+{
+    foreach (var document in Model.Item1)
+    {
+        // Checking if this document is selected by iterating all documents and matching it to the selectedDocument(Item2)
+        var isSelected = Model.Item2 != null && Model.Item2.DocumentId == document.DocumentId; // Item2 is the selectedItem from the controller
+        
+        <div class="mb-3">
+            <a href="@Url.Action("Index", new { selectedDocumentId = document.DocumentId })">@*this link sends the selectedDocumentId to the Index action through a URL parameter.*@
+                <div class="doc-card @(isSelected ? "selected" : "")">@*An extended class in the document card to show the border for selected items*@
+                    @await Html.PartialAsync("_DocumentCard", document)
+                </div>
+            </a>
+        </div>
+    }
+}
+            else
+            {
+                <p>No documents available.</p>
+            }
+        </div>
+    </div>
 
-<div id="documentCardsContainer" class="row row-cols-1 row-cols-md-4 g-4 mt-2">
-    @if (Model != null && Model.Any())
-    {
-        foreach (var document in Model)
+    <div class="col-md-3 mt-3 float-right" style=" transition: 5s;">
+        @if (Model.Item2 != null) //Only display the preview if any item is selected or selectedDocument(Item2) !=null
         {
-            <div class="col">
-                @Html.Partial("_DocumentCard", document)
-            </div>
+            @await Html.PartialAsync("_DocumentPreview", Model.Item2)
         }
-    }
-    else
-    {
-        <p>No documents available.</p>
-    }
+      
+    </div>
 </div>
 
+
+                            
 <div id="modalContainer" class="modal shadow" role="dialog"></div>
 
 <script>
