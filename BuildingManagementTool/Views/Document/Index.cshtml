@@ -28,7 +28,7 @@
         </div>
     </div>
 
-    <div class="col-md-3 mt-3 float-right" style=" transition: 5s;">
+    <div class="col-md-3 mt-3 float-right">
         @if (Model.Item2 != null) //Only display the preview if any item is selected or selectedDocument(Item2) !=null
         {
             @await Html.PartialAsync("_DocumentPreview", Model.Item2)
