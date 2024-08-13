@@ -45,5 +45,28 @@
     <img src="/imgs/pdf.svg" alt="Document Thumbnail" />
     <div class="doc-card-content">
         <h3>@Model.FileName</h3>
+        <a  data-id = "@Model.DocumentId" class="viewBtn btn btn-primary">
+            View Document
+        </a>
+
+        <a href="/Blob/Download/@Model.DocumentId" class="btn btn-primary">
+            Download Document
+        </a>
+
+
     </div>
 </div>
+
+<script>
+    $(document).ready(function () {
+
+        $(".viewBtn").click(function () {
+            var documentId = $(this).data("id");
+            $("#modalContainer").load("/Blob/PDFViewerPartial?id=" + documentId, function () {
+                $("#modalContainer").modal("show");
+            });
+        })
+    })
+</script>
+
+

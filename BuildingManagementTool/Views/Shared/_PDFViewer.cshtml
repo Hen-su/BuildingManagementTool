@@ -1,0 +1,127 @@
+﻿@model string
+
+<div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" style="background-color: #696969;">
+        <div class="modal-body" style="position: relative">
+            
+            <canvas id="pdfCanvas" class="w-100"></canvas>
+            <button id="nextPageBtn" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%) scaleY(2); background: trasparent; border: none; font-size: 3rem; line-height: 4rem; font-stretch:expanded;" class="btn">
+                &#62
+            </button>
+            <button id="prevPageBtn" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%) scaleY(2); background: trasparent; border: none; font-size: 3rem; line-height: 4rem; font-stretch:expanded;" class="btn">
+                &#60
+            </button>
+            <button type="button" class="btn-close btn-lg" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+            </button>
+        </div>
+        <div class="modal-footer d-flex justify-content-center">
+            <div class="d-flex bg-white rounded">
+                <p id="currentPage" class="fw-bold m-1"></p>
+                <p class="fw-bold m-1">/</p>
+                <p id="totalPage" class="fw-bold m-1"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    //PDF.js module
+    import * as pdfjsDist from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+    
+    let pdfDoc = null; 
+    let currentPage;
+    let totalPage;
+    
+    function renderPDF(pdfUrl) {
+        const canvas = document.getElementById('pdfCanvas');
+        const context = canvas.getContext('2d');
+
+        //Get document from URL and Render the first page
+        pdfjsDist.getDocument(pdfUrl).promise.then(pdf => {
+            pdfDoc = pdf;
+            pdf.getPage(1).then(page => {
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                page.render(renderContext).promise.then(() => {
+                    console.log('Page rendered');
+                });
+                currentPage = 1;
+                totalPage = pdfDoc.numPages;
+                updatePageNumbers(currentPage, totalPage)
+            });
+        });
+    };
+    
+    //Render the specified page of the PDF
+    function goToPage(pageNumber) {
+        if (pdfDoc && pageNumber > 0 && pageNumber <= pdfDoc.numPages) {
+            currentPage = pageNumber;
+            updatePageNumbers(currentPage, pdfDoc.numPages);
+
+            pdfDoc.getPage(currentPage).then(page => {
+                const canvas = document.getElementById('pdfCanvas');
+                const context = canvas.getContext('2d');
+                const viewport = page.getViewport({ scale: 1.5 });
+
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                page.render(renderContext).promise.then(() => {
+                    console.log('Page rendered');
+                });
+            });
+        }
+    }
+        //Updates the current page in the PDF Viewer
+        function updatePageNumbers(currentPage, totalPage) {
+            $('#currentPage').text(currentPage);
+            $('#totalPage').text(totalPage);
+        }
+    
+    $(document).ready(function () {
+        
+        const pdfUrl = '@Model';
+        console.log(pdfUrl);
+        renderPDF(pdfUrl);
+        var nextBtn = document.getElementById('nextPageBtn');
+        var prevBtn = document.getElementById('prevPageBtn');
+
+        //Change pages of PDF
+        nextBtn.addEventListener('click', () => {
+            goToPage(currentPage + 1);
+        });
+
+        prevPageBtn.addEventListener('click', () => {
+            goToPage(currentPage - 1);
+        });
+
+        //Change colors of arrows on mouse hover
+        nextBtn.addEventListener('mouseover', () => {
+            nextBtn.style.color = "#D3D3D3";
+        });
+
+        prevBtn.addEventListener('mouseover', () => {
+            prevBtn.style.color = "#D3D3D3";
+        });
+
+        //Remove color of arrows when mouse passes
+        nextBtn.addEventListener('mouseout', () => {
+            nextBtn.style.color = ""
+        });
+
+        prevBtn.addEventListener('mouseout', () => {
+            prevBtn.style.color = ""
+        });
+    });
+</script>

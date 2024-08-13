@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +45,8 @@ namespace BuildingManagementTool.Controllers
 
                 using (var stream = file.OpenReadStream())
                 {
-                    bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream);
+                    BlobHttpHeaders blobHttpHeaders = new BlobHttpHeaders { ContentType = file.ContentType };
+                    bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream, blobHttpHeaders);
                     if (!isUploaded)
                     {
                         var problemDetails = new ProblemDetails
@@ -119,6 +121,68 @@ namespace BuildingManagementTool.Controllers
             }
             await _documentRepository.DeleteDocumentData(document);
             return RedirectToAction("Index", "Document");
+        }
+
+        public async Task<IActionResult> PDFViewerPartial(int id)
+        {
+            var containerName = "test1";
+            var document = await _documentRepository.GetById(id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Metadata Not Found",
+                    Detail = "The File MetaData was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+            var blobName = document.BlobName;
+            var blobUrl = await _blobService.GetBlobUrlAsync(containerName, blobName);
+            if (blobUrl == null) 
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "File Not Found",
+                    Detail = "The file was not found in blob storage",
+                    Status = StatusCodes.Status500InternalServerError
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+            return PartialView("_PDFViewer", blobUrl);
+        }
+
+        [HttpGet] 
+        public async Task<IActionResult> Download(int id)
+        {
+            //test container
+            var containerName = "test1";
+
+            var document = await _documentRepository.GetById(id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found",
+                    Detail = "The Document was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            var stream = await _blobService.DownloadBlobAsync(containerName, document.BlobName);
+            if (stream == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found in Blob Storage",
+                    Detail = "Document Not Found in the Blob Storage",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            return File(stream, document.ContentType, document.FileName);
         }
     }
 }
