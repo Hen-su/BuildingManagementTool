@@ -14,11 +14,14 @@
         justify-content: center;
         text-align: center;
         margin-bottom: 1rem;
+        
     }
     
    .doc-card.selected{
       border-style: solid;
     border-width: 4px;
+         overflow:hidden;
+
     
    }
 
@@ -27,8 +30,13 @@
         height: 150px;
         object-fit: cover;
         border-bottom: 1px solid #ddd;
+        
     }
-
+    
+    .doc-card-content h3{
+        overflow:hidden;
+    }
+    
     .doc-card-content h3,a {
         text-decoration: none;
         margin: 0.5rem ;
@@ -41,32 +49,11 @@
     }
 </style>
 
-<div class="doc-card @(isSelected ? "selected" : "")">
-    <img src="/imgs/pdf.svg" alt="Document Thumbnail" />
+<div class="doc-card pt-3 @(isSelected ? "selected" : "")">
+    <img src="/imgs/pdf.svg" alt="Document Thumbnail" class="img-fluid" />
     <div class="doc-card-content">
-        <h3>@Model.FileName</h3>
-        <a  data-id = "@Model.DocumentId" class="viewBtn btn btn-primary">
-            View Document
-        </a>
-
-        <a href="/Blob/Download/@Model.DocumentId" class="btn btn-primary">
-            Download Document
-        </a>
-
-
+        <h3 class="pb-1">@Model.FileName</h3>
+     
     </div>
 </div>
-
-<script>
-    $(document).ready(function () {
-
-        $(".viewBtn").click(function () {
-            var documentId = $(this).data("id");
-            $("#modalContainer").load("/Blob/PDFViewerPartial?id=" + documentId, function () {
-                $("#modalContainer").modal("show");
-            });
-        })
-    })
-</script>
-
 
