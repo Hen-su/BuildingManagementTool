@@ -86,10 +86,8 @@ namespace BuildingManagementTool.Services
         }
             
 
-        /*
-        [HttpGet]
-        public async Task<IActionResult> Download(string blobName)
-        }        
+        
+     
         public async Task<Stream> DownloadBlobAsync(string containerName, string blobName)
         {
             try 
