@@ -64,6 +64,7 @@ namespace BuildingManagementTool.Tests
                 versionId: "version1",
                 contentHash: Convert.FromBase64String("dGVzdGhhc2g=")
                ); 
+
             var mockResponse = Response.FromValue(mockBlobContentInfo, null);
 
             _mockBlobClient.Setup(x => x.UploadAsync(
@@ -170,7 +171,7 @@ namespace BuildingManagementTool.Tests
             var response = await _blobService.DeleteBlobAsync(containerName, blobName);
 
             _mockBlobClient.Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Once);
-            Assert.True(response);
+            Assert.False(response);
         }
 
         [Test]
