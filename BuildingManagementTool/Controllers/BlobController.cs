@@ -142,7 +142,7 @@ namespace BuildingManagementTool.Controllers
                 {
                     Title = "File Not Found",
                     Detail = "The file was not found in blob storage",
-                    Status = StatusCodes.Status500InternalServerError
+                    Status = StatusCodes.Status404NotFound
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
