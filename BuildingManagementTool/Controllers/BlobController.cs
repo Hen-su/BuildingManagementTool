@@ -157,12 +157,17 @@ namespace BuildingManagementTool.Controllers
 
             return File(stream, document.ContentType, document.FileName);
         }
-     
+        //Renders Partial Views to Modal container
         public async Task<IActionResult> VideoPlayerPartial(string blobUrl)
         {
             return PartialView("_VideoPlayer", blobUrl);
         }
 
+        public async Task<IActionResult> ImageViewerPartial(string blobUrl)
+        {
+            return PartialView("_ImageViewer", blobUrl);
+        }
+        //Gets Url of blobs and handles rendering based on content type
         public async Task<IActionResult> RenderFile(int id)
         {
             var containerName = "test1";
@@ -197,11 +202,11 @@ namespace BuildingManagementTool.Controllers
             else if (document.ContentType.StartsWith("video"))
             {
                 return await VideoPlayerPartial(blobUrl);
-            }/*
+            }
             else if (document.ContentType.StartsWith("image"))
             {
                 return await ImageViewerPartial(blobUrl);
-            }*/
+            }
             else
             {
                 var problemDetails = new ProblemDetails

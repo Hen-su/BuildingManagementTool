@@ -206,6 +206,30 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
+        public async Task RenderFile_ImageExists_Success()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "category/test.jpg",
+                ContentType = "image/jpg"
+            };
+
+            var blobUrl = "https://devstoreaccount1/test/category/test.jpg";
+
+            _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(blobUrl);
+
+            var result = await _blobController.RenderFile(documentId) as PartialViewResult;
+
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            Assert.AreEqual("_ImageViewer", result.ViewName);
+            Assert.AreEqual(blobUrl, result.Model);
+        }
+
+        [Test]
         public async Task RenderFile_FileDataNotFound_Fail()
         {
             var documentId = 1;
