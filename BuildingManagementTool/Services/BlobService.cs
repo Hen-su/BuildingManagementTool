@@ -45,8 +45,7 @@ namespace BuildingManagementTool.Services
             {
                 var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
                 var blobClient = containerClient.GetBlobClient(blobName);
-                await blobClient.DeleteIfExistsAsync();
-                return true;
+                return await blobClient.DeleteIfExistsAsync();
             }
             catch 
             {

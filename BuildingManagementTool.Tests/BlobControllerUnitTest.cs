@@ -115,7 +115,7 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
-        public async Task DeleteBlob_FileNotExists_Fail()
+        public async Task DeleteBlob_FileDataNotExists_Fail()
         {
             var documentId = 1;
             var document = new Document();
@@ -159,10 +159,60 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
-        public async Task PDFViewerPartial()
+        public async Task PDFViewerPartial_FileExists_Success()
         {
             var documentId = 1;
+            var url = "https://example.com/test/test.txt";
+            var document = new Document
+            {
+                DocumentId = 1,
+            };
 
+            _mockDocumentRepository.Setup(m => m.GetById(documentId)).ReturnsAsync(document);
+            _mockBlobService.Setup(b => b.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(url);
+
+            var result = await _blobController.PDFViewerPartial(documentId) as PartialViewResult;
+            Assert.NotNull(result);
+            Assert.AreEqual("_PDFViewer", result.ViewName);
+        }
+
+        [Test]
+        public async Task PDFViewerPartial_FileDataNotExists_Fail()
+        {
+            var documentId = 1;
+            Document document = null;
+
+            _mockDocumentRepository.Setup(m => m.GetById(documentId)).ReturnsAsync(document);
+            _mockBlobService.Setup(b => b.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((string)null);
+
+            var result = await _blobController.PDFViewerPartial(documentId);
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            var objectResult = (ObjectResult)result;
+            var problemDetails = (ProblemDetails)objectResult.Value;
+            Assert.AreEqual("The File MetaData was not found", problemDetails.Detail);
+            Assert.AreEqual("Metadata Not Found", problemDetails.Title);
+            Assert.AreEqual(StatusCodes.Status404NotFound, problemDetails.Status);
+        }
+
+        [Test]
+        public async Task PDFViewerPartial_FileNotExists_Fail()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = 1,
+            };
+
+            _mockDocumentRepository.Setup(m => m.GetById(documentId)).ReturnsAsync(document);
+            _mockBlobService.Setup(b => b.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((string)null);
+
+            var result = await _blobController.PDFViewerPartial(documentId);
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            var objectResult = (ObjectResult) result;
+            var problemDetails = (ProblemDetails)objectResult.Value;
+            Assert.AreEqual("The file was not found in blob storage", problemDetails.Detail);
+            Assert.AreEqual("Metadata Not Found", problemDetails.Title);
+            Assert.AreEqual(StatusCodes.Status404NotFound, problemDetails.Status);
         }
 
         [TearDown]
