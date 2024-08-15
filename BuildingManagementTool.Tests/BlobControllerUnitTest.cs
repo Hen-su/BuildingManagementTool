@@ -159,10 +159,93 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
-        public async Task PDFViewerPartial()
+        public async Task RenderFile_PDFExists_Success()
         {
             var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "category/test.pdf",
+                ContentType = "application/pdf"
+            };
 
+            var blobUrl = "https://devstoreaccount1/test/category/test.pdf";
+
+            _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(blobUrl);
+
+            var result = await _blobController.RenderFile(documentId) as PartialViewResult;
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            Assert.AreEqual("_PDFViewer", result.ViewName);
+            Assert.AreEqual(blobUrl, result.Model);
+        }
+
+        [Test]
+        public async Task RenderFile_VideoExists_Success()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "category/test.pdf",
+                ContentType = "video/mp4"
+            };
+
+            var blobUrl = "https://devstoreaccount1/test/category/test.mp4";
+
+            _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(blobUrl);
+
+            var result = await _blobController.RenderFile(documentId) as PartialViewResult;
+
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            Assert.AreEqual("_VideoPlayer", result.ViewName);
+            Assert.AreEqual(blobUrl, result.Model);
+        }
+
+        [Test]
+        public async Task RenderFile_FileDataNotFound_Fail()
+        {
+            var documentId = 1;
+            Document document = null;
+
+            _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync((string) null);
+
+            var result = await _blobController.RenderFile(documentId);
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            var objectResult = (ObjectResult)result;
+            var problemDetails = (ProblemDetails)objectResult.Value;
+            Assert.AreEqual("The File MetaData was not found", problemDetails.Detail);
+            Assert.AreEqual("Metadata Not Found", problemDetails.Title);
+            Assert.AreEqual(StatusCodes.Status404NotFound, problemDetails.Status);
+        }
+
+        [Test]
+        public async Task RenderFile_FileNotExists_Fail()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "category/test.pdf",
+                ContentType = "video/mp4"
+            };
+
+            _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync((string)null);
+
+            var result = await _blobController.RenderFile(documentId);
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            var objectResult = (ObjectResult)result;
+            var problemDetails = (ProblemDetails)objectResult.Value;
+            Assert.AreEqual("The file was not found in blob storage", problemDetails.Detail);
+            Assert.AreEqual("File Not Found", problemDetails.Title);
+            Assert.AreEqual(StatusCodes.Status404NotFound, problemDetails.Status);
         }
 
         [TearDown]

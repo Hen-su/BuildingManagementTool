@@ -120,32 +120,8 @@ namespace BuildingManagementTool.Controllers
             return RedirectToAction("Index", "Document");
         }
 
-        public async Task<IActionResult> PDFViewerPartial(int id)
+        public async Task<IActionResult> PDFViewerPartial(string blobUrl)
         {
-            var containerName = "test1";
-            var document = await _documentRepository.GetById(id);
-            if (document == null)
-            {
-                var problemDetails = new ProblemDetails
-                {
-                    Title = "Metadata Not Found",
-                    Detail = "The File MetaData was not found",
-                    Status = StatusCodes.Status404NotFound
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
-            }
-            var blobName = document.BlobName;
-            var blobUrl = await _blobService.GetBlobUrlAsync(containerName, blobName);
-            if (blobUrl == null) 
-            {
-                var problemDetails = new ProblemDetails
-                {
-                    Title = "File Not Found",
-                    Detail = "The file was not found in blob storage",
-                    Status = StatusCodes.Status500InternalServerError
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
-            }
             return PartialView("_PDFViewer", blobUrl);
         }
 
@@ -180,6 +156,77 @@ namespace BuildingManagementTool.Controllers
             }
 
             return File(stream, document.ContentType, document.FileName);
+        }
+     
+        public async Task<IActionResult> VideoPlayerPartial(string blobUrl)
+        {
+            return PartialView("_VideoPlayer", blobUrl);
+        }
+
+        public async Task<IActionResult> RenderFile(int id)
+        {
+            var containerName = "test1";
+            var document = await _documentRepository.GetById(id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Metadata Not Found",
+                    Detail = "The File MetaData was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+            var blobName = document.BlobName;
+            var blobUrl = await _blobService.GetBlobUrlAsync(containerName, blobName);
+            if (blobUrl == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "File Not Found",
+                    Detail = "The file was not found in blob storage",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+            /*
+            switch (document.ContentType){
+                case "application/pdf":
+                    return await PDFViewerPartial(blobUrl);
+                case "video/mp4":
+                    return await VideoPlayerPartial(blobUrl);
+                default:
+                    var problemDetails = new ProblemDetails
+                    {
+                        Title = "Unsupported File Type",
+                        Detail = "The content type is not supported for rendering",
+                        Status = StatusCodes.Status415UnsupportedMediaType
+                    };
+                    return StatusCode(StatusCodes.Status415UnsupportedMediaType, problemDetails);
+            }
+            */
+            if (document.ContentType == "application/pdf")
+            {
+                return await PDFViewerPartial(blobUrl);
+            }
+            else if (document.ContentType.StartsWith("video"))
+            {
+                return await VideoPlayerPartial(blobUrl);
+            }/*
+            else if (document.ContentType.StartsWith("image"))
+            {
+                return await ImageViewerPartial(blobUrl);
+            }*/
+            else
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Unsupported File Type",
+                    Detail = "The content type is not supported for rendering",
+                    Status = StatusCodes.Status415UnsupportedMediaType
+                };
+                return StatusCode(StatusCodes.Status415UnsupportedMediaType, problemDetails);
+            }
         }
     }
 }

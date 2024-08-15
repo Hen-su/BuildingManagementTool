@@ -22,7 +22,7 @@ namespace BuildingManagementTool.Services
 
         public async Task<bool> UploadBlobAsync(string containerName, string blobName, Stream data, BlobHttpHeaders headers)
         {
-            if (data == null) 
+            if (data == null)
             {
                 throw new ArgumentNullException(nameof(data));
             }
@@ -48,7 +48,7 @@ namespace BuildingManagementTool.Services
                 await blobClient.DeleteIfExistsAsync();
                 return true;
             }
-            catch 
+            catch
             {
                 return false;
             }
@@ -82,14 +82,10 @@ namespace BuildingManagementTool.Services
                 return null;
             }
             var blobUrl = blobClient.Uri.ToString();
+            //blobUrl = blobUrl.StartsWith("http") ? blobUrl.Replace("http", "https") : blobUrl;
             return blobUrl;
-        }
-            
-
-        /*
-        [HttpGet]
-        public async Task<IActionResult> Download(string blobName)
-        }        
+        } 
+        
         public async Task<Stream> DownloadBlobAsync(string containerName, string blobName)
         {
             try 

@@ -32,7 +32,7 @@
     <img src="/imgs/pdf.svg" alt="Document Thumbnail" />
     <div class="doc-card-content">
         <h3>@Model.FileName</h3>
-        <a href="/container-name/@Model.BlobName" target="_blank" class="btn btn-primary">
+        <a data-id="@Model.DocumentId" class="viewBtn btn btn-primary">
             View Document
         </a>
 
@@ -49,7 +49,7 @@
 
         $(".viewBtn").click(function () {
             var documentId = $(this).data("id");
-            $("#modalContainer").load("/Blob/PDFViewerPartial?id=" + documentId, function () {
+            $("#modalContainer").load("/Blob/RenderFile?id=" + documentId, function () {
                 $("#modalContainer").modal("show");
             });
         })
