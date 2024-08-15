@@ -85,7 +85,7 @@ namespace BuildingManagementTool.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
                 }
             }
-            //TempData["response"] = "Upload Successful";
+            TempData["response"] = "Upload Successful";
             return RedirectToAction("Index", "Document");
         }
 
@@ -189,22 +189,7 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-            /*
-            switch (document.ContentType){
-                case "application/pdf":
-                    return await PDFViewerPartial(blobUrl);
-                case "video/mp4":
-                    return await VideoPlayerPartial(blobUrl);
-                default:
-                    var problemDetails = new ProblemDetails
-                    {
-                        Title = "Unsupported File Type",
-                        Detail = "The content type is not supported for rendering",
-                        Status = StatusCodes.Status415UnsupportedMediaType
-                    };
-                    return StatusCode(StatusCodes.Status415UnsupportedMediaType, problemDetails);
-            }
-            */
+            
             if (document.ContentType == "application/pdf")
             {
                 return await PDFViewerPartial(blobUrl);
