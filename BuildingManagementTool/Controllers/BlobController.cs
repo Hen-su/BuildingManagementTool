@@ -120,6 +120,11 @@ namespace BuildingManagementTool.Controllers
             return RedirectToAction("Index", "Document");
         }
 
+        public async Task<IActionResult> DeleteConfirmationPartial(int id)
+        {
+            return PartialView("_DeleteConfirmation", id);
+        }
+
         public async Task<IActionResult> PDFViewerPartial(string blobUrl)
         {
             return PartialView("_PDFViewer", blobUrl);
