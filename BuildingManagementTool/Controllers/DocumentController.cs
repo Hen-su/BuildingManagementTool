@@ -20,7 +20,8 @@ namespace BuildingManagementTool.Controllers
 
             // only selection of documents on clicks
             if (selectedDocumentId.HasValue)
-            {// if selectedDocumentId is not null it will match the documentId's of all documents to the selected one and pass it to selectedDocument
+            {
+                // if selectedDocumentId is not null it will match the documentId's of all documents to the selected one and pass it to selectedDocument
                 selectedDocument = documents.FirstOrDefault(d => d.DocumentId == selectedDocumentId.Value);
             }
 
@@ -28,10 +29,20 @@ namespace BuildingManagementTool.Controllers
             return View((documents, selectedDocument));
         }
 
-
         public IActionResult UploadFormPartial()
         {
             return PartialView("_UploadForm");
+        }
+
+        [HttpGet]
+        public IActionResult GetDocumentPreview(int documentId)
+        {
+            var document = _fileRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
+            if (document == null)
+            {
+                return NotFound();
+            }
+            return PartialView("_DocumentPreview", document);
         }
     }
 }

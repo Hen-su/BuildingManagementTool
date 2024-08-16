@@ -4,23 +4,18 @@
 <button id="uploadModalBtn" class="btn-success btn-md">Upload</button>
 <div class="container-fluid p-0 row justify-content-between">
     <div class="col-md-10 mt-3">
-        <div id="documentCardsContainer" class="row row-cols-1 row-col-sm-2 row-cols-md-4 ">
-           @if (Model.Item1 != null && Model.Item1.Any()) // Item1 is the documents list from the controller
-{
-    foreach (var document in Model.Item1)
-    {
-        // Checking if this document is selected by iterating all documents and matching it to the selectedDocument(Item2)
-        var isSelected = Model.Item2 != null && Model.Item2.DocumentId == document.DocumentId; // Item2 is the selectedItem from the controller
-        
-        <div class="mb-3">
-            <a href="@Url.Action("Index", new { selectedDocumentId = document.DocumentId })">@*this link sends the selectedDocumentId to the Index action through a URL parameter.*@
-                <div class="doc-card @(isSelected ? "selected" : "")">@*An extended class in the document card to show the border for selected items*@
-                    @await Html.PartialAsync("_DocumentCard", document)
-                </div>
-            </a>
-        </div>
-    }
-}
+        <div id="documentCardsContainer" class="row row-cols-1 row-col-sm-2 row-cols-md-4">
+            @if (Model.Item1 != null && Model.Item1.Any())
+            {
+                foreach (var document in Model.Item1)
+                {
+                    <div class="mb-3">
+                        <div class="doc-card" onclick="selectUnselect(@document.DocumentId)">
+                            @await Html.PartialAsync("_DocumentCard", document)
+                        </div>
+                    </div>
+                }
+            }
             else
             {
                 <p>No documents available.</p>
@@ -28,18 +23,18 @@
         </div>
     </div>
 
-    <div class="col-auto mt-3 float-right" style=" position: fixed; right:1.5rem; ">
-        @if (Model.Item2 != null) //Only display the preview if any item is selected or selectedDocument(Item2) !=null
-        {
-            @await Html.PartialAsync("_DocumentPreview", Model.Item2)
-        }
-      
+    <div class="col-auto mt-3 float-right" style="position: fixed; right:1.5rem;">
+        <div id="documentPreviewContainer">
+            @if (Model.Item2 != null)
+            {
+                @await Html.PartialAsync("_DocumentPreview", Model.Item2)
+            }
+        </div>
     </div>
 </div>
 
-
-                            
 <div id="modalContainer" class="modal shadow" role="dialog"></div>
+
 
 <script>
     $(document).ready(function () {
@@ -49,4 +44,31 @@
             });
         });
     });
+
+    function selectUnselect(documentId) {
+        // finding clicked card
+        var clickedCard = document.querySelector('.doc-card[onclick="selectUnselect(' + documentId + ')"]');
+
+        // if clicked card is already selected
+        if (clickedCard.classList.contains('selected')) {
+            // If yes remove the selected class
+            clickedCard.classList.remove('selected');
+            document.getElementById('documentPreviewContainer').innerHTML = '';
+        } else {
+            // if not, deselect any other selected card
+            document.querySelectorAll('.doc-card').forEach(function (card) {
+                card.classList.remove('selected');
+            });
+
+            // Adding 'selected' class to the clicked card
+            clickedCard.classList.add('selected');
+
+            // Loading the DocumentPreview partial view for the selected document using AJAX
+            $.get('/Document/GetDocumentPreview', { documentId: documentId }, function (response) {
+                $('#documentPreviewContainer').html(response);
+            });
+        }
+    }
+
+    
 </script>
