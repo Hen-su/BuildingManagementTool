@@ -33,20 +33,21 @@ namespace BuildingManagementTool.Controllers
                 };
                 return BadRequest(problemDetails);
             }
-
+            //Check if a blob with the same name exists
             foreach (var file in files)
             {
                 string blobName = $"{containerName}/{file.FileName}";
                 bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
                 if (blobExists)
                 {
-                    return Conflict("File already exists in blob storage.");
+                    return Conflict($"A blob with the same name already exists. {blobName}");
                 }
-
+                //Upload to blob storage
                 using (var stream = file.OpenReadStream())
                 {
                     BlobHttpHeaders blobHttpHeaders = new BlobHttpHeaders { ContentType = file.ContentType };
                     bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream, blobHttpHeaders);
+                    //Check if upload was successful
                     if (!isUploaded)
                     {
                         var problemDetails = new ProblemDetails
@@ -59,7 +60,7 @@ namespace BuildingManagementTool.Controllers
                     }
 
                 }
-
+                //Create metadata
                 var metadata = new Models.Document
                 {
                     FileName = file.FileName,
@@ -68,10 +69,12 @@ namespace BuildingManagementTool.Controllers
                     FileSize = file.Length,
                     UploadDate = DateTime.UtcNow
                 };
+                //Add record to SQL Server
                 try
                 {
                     await _documentRepository.AddDocumentData(metadata);
                 }
+                //Remove blob if metadata was not added
                 catch
                 {
                     await _blobService.DeleteBlobAsync(containerName, blobName);
@@ -93,7 +96,7 @@ namespace BuildingManagementTool.Controllers
         {
             //test container
             var containerName = "test1";
-            //testid
+            //Check metadata exists
             var document = await _documentRepository.GetById(id);
             if (document == null)
             {
@@ -105,7 +108,9 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
+            //Delete from blob storage
             bool isDeleted = await _blobService.DeleteBlobAsync(containerName, document.BlobName);
+            //Check if succcessful
             if (!isDeleted)
             {
                 var problemDetails = new ProblemDetails
@@ -116,8 +121,14 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
             }
+            //Delete metadata if blob is deleted
             await _documentRepository.DeleteDocumentData(document);
             return RedirectToAction("Index", "Document");
+        }
+
+        public async Task<IActionResult> DeleteConfirmationPartial(int id)
+        {
+            return PartialView("_DeleteConfirmation", id);
         }
 
         public async Task<IActionResult> PDFViewerPartial(string blobUrl)
@@ -130,7 +141,7 @@ namespace BuildingManagementTool.Controllers
         {
             //test container
             var containerName = "test1";
-
+            //Check metadata exists
             var document = await _documentRepository.GetById(id);
             if (document == null)
             {
@@ -142,7 +153,7 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-
+            //Download blob
             var stream = await _blobService.DownloadBlobAsync(containerName, document.BlobName);
             if (stream == null)
             {
@@ -157,15 +168,21 @@ namespace BuildingManagementTool.Controllers
 
             return File(stream, document.ContentType, document.FileName);
         }
-     
+        //Renders Partial Views to Modal container
         public async Task<IActionResult> VideoPlayerPartial(string blobUrl)
         {
             return PartialView("_VideoPlayer", blobUrl);
         }
 
+        public async Task<IActionResult> ImageViewerPartial(string blobUrl)
+        {
+            return PartialView("_ImageViewer", blobUrl);
+        }
+        //Gets Url of blobs and handles rendering based on content type
         public async Task<IActionResult> RenderFile(int id)
         {
             var containerName = "test1";
+            //Check if metadata exists
             var document = await _documentRepository.GetById(id);
             if (document == null)
             {
@@ -178,6 +195,7 @@ namespace BuildingManagementTool.Controllers
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
             var blobName = document.BlobName;
+            //Get URL of blob by name and container
             var blobUrl = await _blobService.GetBlobUrlAsync(containerName, blobName);
             if (blobUrl == null)
             {
@@ -189,7 +207,7 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-            
+            //Handle rendering of blob by MIME content type
             if (document.ContentType == "application/pdf")
             {
                 return await PDFViewerPartial(blobUrl);
@@ -197,11 +215,11 @@ namespace BuildingManagementTool.Controllers
             else if (document.ContentType.StartsWith("video"))
             {
                 return await VideoPlayerPartial(blobUrl);
-            }/*
+            }
             else if (document.ContentType.StartsWith("image"))
             {
                 return await ImageViewerPartial(blobUrl);
-            }*/
+            }
             else
             {
                 var problemDetails = new ProblemDetails

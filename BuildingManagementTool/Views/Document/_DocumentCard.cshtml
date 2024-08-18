@@ -40,6 +40,10 @@
             Download Document
         </a>
 
+        <a data-id="@Model.DocumentId" class="btn btn-danger deleteBtn">
+            Delete
+        </a>
+
 
     </div>
 </div>
@@ -50,6 +54,13 @@
         $(".viewBtn").click(function () {
             var documentId = $(this).data("id");
             $("#modalContainer").load("/Blob/RenderFile?id=" + documentId, function () {
+                $("#modalContainer").modal("show");
+            });
+        })
+
+        $(".deleteBtn").click(function () {
+            var documentId = $(this).data("id");
+            $("#modalContainer").load("/Blob/DeleteConfirmationPartial?id=" + documentId, function () {
                 $("#modalContainer").modal("show");
             });
         })
