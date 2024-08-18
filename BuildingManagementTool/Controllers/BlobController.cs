@@ -128,7 +128,18 @@ namespace BuildingManagementTool.Controllers
 
         public async Task<IActionResult> DeleteConfirmationPartial(int id)
         {
-            return PartialView("_DeleteConfirmation", id);
+            var document = await _documentRepository.GetById(id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Metadata Not Found",
+                    Detail = "The File MetaData was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+            return PartialView("_DeleteConfirmation", document);
         }
 
         public async Task<IActionResult> PDFViewerPartial(string blobUrl)
