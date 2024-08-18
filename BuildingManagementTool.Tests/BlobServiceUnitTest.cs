@@ -207,7 +207,7 @@ namespace BuildingManagementTool.Tests
             .Returns(new Uri(expectedUrl));
 
             var result = await _blobService.GetBlobUrlAsync(containerName, blobName);
-            Assert.AreEqual(result, null);
+            Assert.AreEqual(null, result);
         }
     }
 }

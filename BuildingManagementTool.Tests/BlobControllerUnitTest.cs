@@ -32,7 +32,6 @@ namespace BuildingManagementTool.Tests
         [Test]
         public async Task UploadBlob_ValidInputSingle_Success()
         {
-            var fileName = "test.txt";
             var content = "Hello World";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
             var formFile = new Mock<IFormFile>();
@@ -57,7 +56,6 @@ namespace BuildingManagementTool.Tests
         [Test]
         public async Task UploadBlob_ValidInputMultiple_Success()
         {
-            var fileName = "test.txt";
             var content = "Hello World";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
             var formFile = new Mock<IFormFile>();
@@ -117,7 +115,6 @@ namespace BuildingManagementTool.Tests
         [Test]
         public async Task DeleteBlob_FileDataNotExists_Fail()
         {
-            var documentId = 1;
             var document = new Document();
 
             _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
