@@ -21,6 +21,10 @@ builder.Services.AddDbContext<BuildingManagementToolDbContext>(options =>
 // Add BlobService class
 builder.Services.AddScoped<IBlobService, BlobService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
+builder.Services.AddScoped<IPropertyCategoryRepository, PropertyCategoryRepository>();
 
 var app = builder.Build();
 
@@ -42,5 +46,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+DbInitialiser.Seed(app);
 
 app.Run();

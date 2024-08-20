@@ -4,6 +4,7 @@ using BuildingManagementTool.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BuildingManagementTool.Migrations
 {
     [DbContext(typeof(BuildingManagementToolDbContext))]
-    partial class BuildingManagementToolDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240818161559_AddedCategoryEntity")]
+    partial class AddedCategoryEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,65 +75,6 @@ namespace BuildingManagementTool.Migrations
                     b.HasKey("DocumentId");
 
                     b.ToTable("Documents");
-                });
-
-            modelBuilder.Entity("BuildingManagementTool.Models.Property", b =>
-                {
-                    b.Property<int>("PropertyId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PropertyId"));
-
-                    b.Property<string>("PropertyName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("PropertyId");
-
-                    b.ToTable("Properties");
-                });
-
-            modelBuilder.Entity("BuildingManagementTool.Models.PropertyCategory", b =>
-                {
-                    b.Property<int>("PropertyCategoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PropertyCategoryId"));
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PropertyId")
-                        .HasColumnType("int");
-
-                    b.HasKey("PropertyCategoryId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("PropertyId");
-
-                    b.ToTable("PropertyCategories");
-                });
-
-            modelBuilder.Entity("BuildingManagementTool.Models.PropertyCategory", b =>
-                {
-                    b.HasOne("BuildingManagementTool.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BuildingManagementTool.Models.Property", "Property")
-                        .WithMany()
-                        .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Property");
                 });
 #pragma warning restore 612, 618
         }

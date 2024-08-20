@@ -142,7 +142,7 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_DeleteConfirmation", document);
         }
 
-        public async Task<IActionResult> PDFViewerPartial(string blobUrl)
+        public IActionResult PDFViewerPartial(string blobUrl)
         {
             return PartialView("_PDFViewer", blobUrl);
         }
@@ -180,12 +180,12 @@ namespace BuildingManagementTool.Controllers
             return File(stream, document.ContentType, document.FileName);
         }
         //Renders Partial Views to Modal container
-        public async Task<IActionResult> VideoPlayerPartial(string blobUrl)
+        public IActionResult VideoPlayerPartial(string blobUrl)
         {
             return PartialView("_VideoPlayer", blobUrl);
         }
 
-        public async Task<IActionResult> ImageViewerPartial(string blobUrl)
+        public IActionResult ImageViewerPartial(string blobUrl)
         {
             return PartialView("_ImageViewer", blobUrl);
         }
@@ -221,15 +221,15 @@ namespace BuildingManagementTool.Controllers
             //Handle rendering of blob by MIME content type
             if (document.ContentType == "application/pdf")
             {
-                return await PDFViewerPartial(blobUrl);
+                return PDFViewerPartial(blobUrl);
             }
             else if (document.ContentType.StartsWith("video"))
             {
-                return await VideoPlayerPartial(blobUrl);
+                return VideoPlayerPartial(blobUrl);
             }
             else if (document.ContentType.StartsWith("image"))
             {
-                return await ImageViewerPartial(blobUrl);
+                return ImageViewerPartial(blobUrl);
             }
             else
             {

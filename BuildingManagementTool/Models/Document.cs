@@ -16,5 +16,6 @@ namespace BuildingManagementTool.Models
         public long FileSize { get; set; }
         [Required]
         public DateTime UploadDate { get; set; }
+        public string FileImageUrl { get; set; }
     }
 }
