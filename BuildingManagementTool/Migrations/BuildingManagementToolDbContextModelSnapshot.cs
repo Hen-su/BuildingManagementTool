@@ -66,6 +66,9 @@ namespace BuildingManagementTool.Migrations
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("IconUrl")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");
 
