@@ -157,6 +157,79 @@ namespace BuildingManagementTool.Tests
             Assert.AreEqual(StatusCodes.Status500InternalServerError, problemDetails.Status);
         }
 
+        [Test]
+        public async Task Download_DocumentNotFound()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "category/test.txt"
+            };
+
+            _mockDocumentRepository.Setup(repo => repo.GetById(document.DocumentId))
+            .ReturnsAsync((Document)null);
+
+            var result = await _blobController.Download(document.DocumentId);
+
+            _mockDocumentRepository.Verify(repo => repo.GetById(documentId), Times.Once);
+            var objectResult = (ObjectResult)result;
+            var problemDetails = (ProblemDetails)objectResult.Value;
+            Assert.AreEqual("Document Not Found", problemDetails.Title);
+            Assert.AreEqual("The Document was not found", problemDetails.Detail);
+            Assert.AreEqual(StatusCodes.Status404NotFound, problemDetails.Status);
+        }
+
+        [Test]
+        public async Task Download_BlobNotFound()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "category/test.txt"
+            };
+
+            _mockDocumentRepository.Setup(repo => repo.GetById(documentId))
+                .ReturnsAsync(document);
+
+            _mockBlobService.Setup(service => service.DownloadBlobAsync("test1", document.BlobName))
+                .ReturnsAsync((Stream)null);
+
+            var result = await _blobController.Download(documentId);
+
+            _mockDocumentRepository.Verify(repo => repo.GetById(documentId), Times.Once);
+            var objectResult = (ObjectResult)result;
+            var problemDetails = (ProblemDetails)objectResult.Value;
+            Assert.AreEqual("Document Not Found in Blob Storage", problemDetails.Title);
+            Assert.AreEqual("Document Not Found in the Blob Storage", problemDetails.Detail);
+            Assert.AreEqual(StatusCodes.Status404NotFound, problemDetails.Status);
+        }
+
+        [Test]
+        public async Task Download_Success()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "category/test.txt",
+                ContentType = "text/plain",
+                FileName = "test.txt"
+            };
+            var ms = new MemoryStream();
+
+            _mockDocumentRepository.Setup(repo => repo.GetById(documentId))
+            .ReturnsAsync(document);
+
+            _mockBlobService.Setup(service => service.DownloadBlobAsync("test1", document.BlobName))
+                .ReturnsAsync(ms);
+
+            var result = await _blobController.Download(documentId);
+        }
+
+
+
         [TearDown]
         public void Teardown()
         {

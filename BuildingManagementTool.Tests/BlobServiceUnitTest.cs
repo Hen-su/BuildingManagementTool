@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Mime;
 using System.Text;
@@ -128,6 +129,62 @@ namespace BuildingManagementTool.Tests
 
             _mockBlobClient.Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Once);
             Assert.True(response);
+        }
+
+        [Test]
+        public async Task DownloadBlobAsync_BlobExists_ReturnsStream()
+        {
+            var containerName = "test-container";
+            var blobName = "test-blob";
+            var mockStream = new MemoryStream();
+            var mockBlobDownloadInfo = BlobsModelFactory.BlobDownloadInfo(content: mockStream);
+
+            _mockBlobClient
+                .Setup(blob => blob.ExistsAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Response.FromValue(true, null));
+
+            _mockBlobClient
+                .Setup(blob => blob.DownloadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Response.FromValue(mockBlobDownloadInfo, null));
+
+            var result = await _blobService.DownloadBlobAsync(containerName, blobName);
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(mockStream, result);
+        }
+
+        [Test]
+        public async Task DownloadBlobAsync_BlobDoesNotExist_Fail_ReturnsNull()
+        {
+            var containerName = "test";
+            var blobName = "category/test.txt";
+
+            _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(containerName))
+                .Returns(_mockBlobContainerClient.Object);
+
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(blobName))
+                .Returns(_mockBlobClient.Object);
+
+            _mockBlobClient.Setup(client => client.ExistsAsync(default))
+                .ReturnsAsync(Response.FromValue(false, null));
+
+            var result = await _blobService.DownloadBlobAsync(containerName, blobName);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public async Task DownloadBlobAsync_ExceptionThrown_ReturnsNull()
+        {
+            var containerName = "test";
+            var blobName = "category/test.txt";
+
+            _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(containerName))
+                .Throws(new Exception("Test exception"));
+
+            var result = await _blobService.DownloadBlobAsync(containerName, blobName);
+
+            Assert.IsNull(result);
         }
     }
 }
