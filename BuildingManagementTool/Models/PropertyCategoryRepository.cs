@@ -15,6 +15,10 @@ namespace BuildingManagementTool.Models
             return await _dbContext.PropertyCategories.ToListAsync();
         }
 
+        public async Task<PropertyCategory> GetById(int id)
+        {
+            return await _dbContext.PropertyCategories.Include(pc => pc.Category).FirstOrDefaultAsync(pc => pc.PropertyCategoryId == id);
+        }
 
         public async Task<IEnumerable<PropertyCategory>> GetByPropertyId(int? id)
         {

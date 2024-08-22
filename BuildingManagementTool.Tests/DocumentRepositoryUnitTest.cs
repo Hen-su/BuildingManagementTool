@@ -31,13 +31,14 @@ namespace BuildingManagementTool.Tests
                 BlobName = "category/text.txt",
                 ContentType = "text/plain",
                 FileSize = 1,
-                UploadDate = DateTime.UtcNow
+                UploadDate = DateTime.UtcNow,
+                FileImageUrl = "/imgs/text.svg"
             };
 
             await _documentRepository.AddDocumentData(document);
             var savedDocument = await _dbContext.Documents.FindAsync(1);
             Assert.That(savedDocument != null);
-            Assert.AreEqual(document.FileName, savedDocument.FileName);
+            Assert.That(savedDocument.FileName.Equals(document.FileName));
         }
 
         [Test]
@@ -74,7 +75,8 @@ namespace BuildingManagementTool.Tests
                 BlobName = "category/text.txt",
                 ContentType = "text/plain",
                 FileSize = 1,
-                UploadDate = DateTime.UtcNow
+                UploadDate = DateTime.UtcNow,
+                FileImageUrl = "/imgs/text.svg"
             };
 
             await _documentRepository.AddDocumentData(document);

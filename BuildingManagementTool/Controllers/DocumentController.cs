@@ -1,4 +1,5 @@
 ﻿using BuildingManagementTool.Models;
+using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
@@ -6,43 +7,47 @@ namespace BuildingManagementTool.Controllers
 {
     public class DocumentController : Controller
     {
-        private readonly IDocumentRepository _fileRepository;
+        private readonly IDocumentRepository _documentRepository;
+        private readonly IPropertyCategoryRepository _propertyCategoryRepository;
 
-        public DocumentController(IDocumentRepository fileRepository)
+        public DocumentController(IDocumentRepository fileRepository, IPropertyCategoryRepository propertyCategoryRepository)
         {
-            _fileRepository = fileRepository;
+            _documentRepository = fileRepository;
+            _propertyCategoryRepository = propertyCategoryRepository;
         }
 
-        public IActionResult Index(int? selectedDocumentId)
+        public async Task<IActionResult> Index(int id)
         {
-            var documents = _fileRepository.AllDocuments;
-            Document selectedDocument = null; //no document selected 
+            var currentCategory = await _propertyCategoryRepository.GetById(id);
+            IEnumerable<Document> documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == id).ToList();
 
-            // only selection of documents on clicks
-            if (selectedDocumentId.HasValue)
-            {
-                // if selectedDocumentId is not null it will match the documentId's of all documents to the selected one and pass it to selectedDocument
-                selectedDocument = documents.FirstOrDefault(d => d.DocumentId == selectedDocumentId.Value);
-            }
-
-            // Pass documents and selectedDocument to the view 
-            return View((documents, selectedDocument));
+            var viewModel = new DocumentViewModel(documents, currentCategory);
+            return View(viewModel);
         }
 
-        public IActionResult UploadFormPartial()
+        public async Task<IActionResult> UpdateList(int id)
         {
-            return PartialView("_UploadForm");
+            var currentCategory = await _propertyCategoryRepository.GetById(id);
+            IEnumerable<Document> documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == id).ToList();
+            return PartialView("_DocumentList", documents);
         }
 
         [HttpGet]
-        public IActionResult GetDocumentPreview(int documentId)
+        public async Task<IActionResult> UploadFormPartial(int id)
         {
-            var document = _fileRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
+            var propertyCategory = await _propertyCategoryRepository.GetById(id);
+            return PartialView("_UploadForm", propertyCategory);
+        }
+
+        [HttpGet]
+        public IActionResult GetDocumentOptions(int documentId)
+        {
+            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
             if (document == null)
             {
                 return NotFound();
             }
-            return PartialView("_DocumentPreview", document);
+            return PartialView("_DocumentOptions", document);
         }
     }
 }

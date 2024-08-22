@@ -11,16 +11,19 @@ namespace BuildingManagementTool.Controllers
     public class BlobController : Controller
     {
         private readonly IDocumentRepository _documentRepository;
+        private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IBlobService _blobService;
-        public BlobController(IBlobService blobService, IDocumentRepository documentRepository)
+        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository)
         {
             _blobService = blobService;
             _documentRepository = documentRepository;
+            _propertyCategoryRepository = propertyCategoryRepository;
         }
 
         [HttpPost]
-        public async Task<IActionResult> UploadBlob(IList<IFormFile> files)
+        public async Task<IActionResult> UploadBlob(IList<IFormFile> files, int id)
         {
+            var propertyCategory = await _propertyCategoryRepository.GetById(id);
             var containerName = "test1";
             //Check submitted file list isn't empty
             if (files == null || files.Count == 0)
@@ -36,7 +39,7 @@ namespace BuildingManagementTool.Controllers
             //Check if a blob with the same name exists
             foreach (var file in files)
             {
-                string blobName = $"{containerName}/{file.FileName}";
+                string blobName = $"{propertyCategory.Category.CategoryName}/{file.FileName}";
                 bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
                 if (blobExists)
                 {
@@ -61,6 +64,36 @@ namespace BuildingManagementTool.Controllers
 
                 }
                 /*Switch Case for the image url using the content type*/
+                string imageUrl;
+
+                switch (file.ContentType)
+                {
+                    case "image/jpeg":
+                    case "image/jpg":
+                        imageUrl = "/imgs/jpg.svg";
+                        break;
+
+                    case "image/png":
+                        imageUrl = "/imgs/pngpng";
+                        break;
+
+                    case "application/pdf":
+                        imageUrl = "/imgs/pdf.svg";
+                        break;
+
+                    case "application/msword":
+                    case "application/vnd.openxmlformats-officedocument.wordprocessingml.document": // .docx
+                        imageUrl = "/imgs/file-word.svg";
+                        break;
+
+                    case "text/plain":
+                        imageUrl = "/imgs/txt.svg";
+                        break;
+
+                    default:
+                        imageUrl = "/imgs/generic.png"; // Fallback image for unknown content types
+                        break;
+                }
 
                 //Create metadata
                 var metadata = new Models.Document
@@ -69,9 +102,9 @@ namespace BuildingManagementTool.Controllers
                     BlobName = blobName,
                     ContentType = file.ContentType,
                     FileSize = file.Length,
-                    UploadDate = DateTime.UtcNow
-                    
-
+                    UploadDate = DateTime.UtcNow,
+                    FileImageUrl = imageUrl,
+                    PropertyCategoryId = propertyCategory.PropertyCategoryId
                 };
                 //Add record to SQL Server
                 try
@@ -92,10 +125,10 @@ namespace BuildingManagementTool.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
                 }
             }
-            TempData["response"] = "Upload Successful";
-            return RedirectToAction("Index", "Document");
+            return Json(new { success = true });
         }
 
+        [HttpPost]
         public async Task<IActionResult> DeleteBlob(int? id)
         {
             //test container
@@ -127,7 +160,7 @@ namespace BuildingManagementTool.Controllers
             }
             //Delete metadata if blob is deleted
             await _documentRepository.DeleteDocumentData(document);
-            return RedirectToAction("Index", "Document");
+            return Json(new { success = true }); ;
         }
 
         public async Task<IActionResult> DeleteConfirmationPartial(int id)

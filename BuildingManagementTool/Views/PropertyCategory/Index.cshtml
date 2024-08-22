@@ -7,6 +7,7 @@
         border: 1px solid #ddd;
         max-width: 24%;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background-color: skyblue;
     }
 
     .sideBox{
@@ -14,6 +15,7 @@
         border-radius: 10px;
         border: 1px solid #ddd;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background-color: skyblue;
     }
 
     .sideBoxContainer{
@@ -26,31 +28,41 @@
         border: 1px solid #ddd
     }
 
+    .categoryBox:hover, .sideBox:hover {
+        background-color: #f0f0f0;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    h4 {
+        margin-top: 1rem;
+    }
+
 </style>
 
 <a class="btn btn-primary">Add Category</a>
 
 <div class="container">
     <div class="row my-3 d-flex justify-content-between">
-        @for (int i = 0; i < 4 && i < Model.Categories.Count(); i++)
+        @for (int i = 0; i < 4 && i < Model.PropertyCategories.Count(); i++)
         {
-            <div class="col-lg-3 categoryBox"><h4>@Model.Categories.ElementAt(i).Category.CategoryName</h4></div>
+            <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId"><h4>@Model.PropertyCategories.ElementAt(i).Category.CategoryName</h4></div>
         }
     </div>
     
     <div class="row my-3 d-flex justify-content-between">
         <div class="col-lg-3 p-0 sideBoxContainer">
             
-                @if (Model.Categories.Count() > 4)
-                {<div class="sideBox px-2 mb-2">
-                    <h4>@Model.Categories.ElementAt(4).Category.CategoryName</h4>
+                @if (Model.PropertyCategories.Count() > 4)
+            {
+                <div class="sideBox px-2 mb-2" data-id=" @Model.PropertyCategories.ElementAt(4).PropertyCategoryId">
+                    <h4>@Model.PropertyCategories.ElementAt(4).Category.CategoryName</h4>
                 </div>
                 }
             
-                @if (Model.Categories.Count() > 5)
-                { 
-                    <div class="sideBox px-2">
-                    <h4>@Model.Categories.ElementAt(5).Category.CategoryName</h4>
+                @if (Model.PropertyCategories.Count() > 5)
+                {
+                <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(5).PropertyCategoryId">
+                        <h4>@Model.PropertyCategories.ElementAt(5).Category.CategoryName</h4>
                     </div>
                 }
         </div>
@@ -61,26 +73,42 @@
         </div>
         <div class="col-lg-3 p-0 sideBoxContainer">
             
-                @if (Model.Categories.Count() > 6)
+                @if (Model.PropertyCategories.Count() > 6)
                 {
-                    <div class="sideBox px-2 mb-2">
-                    <h4>@Model.Categories.ElementAt(6).Category.CategoryName</h4>
+                <div class="sideBox px-2 mb-2" data-id="@Model.PropertyCategories.ElementAt(6).PropertyCategoryId">
+                    <h4>@Model.PropertyCategories.ElementAt(6).Category.CategoryName</h4>
                     </div>
                 }
             
             
-                @if (Model.Categories.Count() > 7)
+                @if (Model.PropertyCategories.Count() > 7)
                 {
-                    <div class="sideBox px-2">
-                    <h4>@Model.Categories.ElementAt(7).Category.CategoryName</h4>
+                <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(7).PropertyCategoryId">
+                    <h4>@Model.PropertyCategories.ElementAt(7).Category.CategoryName</h4>
                     </div>
                 }
         </div>
     </div>
     <div class="row my-3 d-flex justify-content-between">
-        @for (int i = 8; i < Model.Categories.Count(); i++)
+        @for (int i = 8; i < Model.PropertyCategories.Count(); i++)
         {
-            <div class="col-lg-3 categoryBox"><h4>@Model.Categories.ElementAt(i).Category.CategoryName</h4></div>
+            <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId">
+                <h4>@Model.PropertyCategories.ElementAt(i).Category.CategoryName</h4>
+                </div>
         }
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {   
+        // Select all elements with class .categoryBox or .sidebox
+        document.querySelectorAll(".categoryBox, .sideBox").forEach(function (div) {
+            div.addEventListener("click", function () {
+                var pcId = this.getAttribute("data-id");
+                var url = '/Document/Index?id=' + pcId;
+                window.location.href = url;
+            });
+        });
+    });
+    
+</script>

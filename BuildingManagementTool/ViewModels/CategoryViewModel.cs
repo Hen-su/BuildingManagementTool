@@ -4,11 +4,11 @@ namespace BuildingManagementTool.ViewModels
 {
     public class CategoryViewModel
     {
-        public IEnumerable<PropertyCategory> Categories { get; }
+        public IEnumerable<PropertyCategory> PropertyCategories { get; } = new List<PropertyCategory>();
         public string? PropertyImageUrl { get; }
-        public CategoryViewModel(IEnumerable<PropertyCategory> categories, string? propertyImageUrl) 
+        public CategoryViewModel(IEnumerable<PropertyCategory> propertyCategories, string? propertyImageUrl) 
         {
-            Categories = categories;
+            PropertyCategories = propertyCategories;
             PropertyImageUrl = propertyImageUrl;
         }
     }

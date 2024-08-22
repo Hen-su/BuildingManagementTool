@@ -69,10 +69,15 @@ namespace BuildingManagementTool.Migrations
                     b.Property<long>("IconUrl")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("PropertyCategoryId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("DocumentId");
+
+                    b.HasIndex("PropertyCategoryId");
 
                     b.ToTable("Documents");
                 });
@@ -115,6 +120,17 @@ namespace BuildingManagementTool.Migrations
                     b.HasIndex("PropertyId");
 
                     b.ToTable("PropertyCategories");
+                });
+
+            modelBuilder.Entity("BuildingManagementTool.Models.Document", b =>
+                {
+                    b.HasOne("BuildingManagementTool.Models.PropertyCategory", "PropertyCategory")
+                        .WithMany()
+                        .HasForeignKey("PropertyCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PropertyCategory");
                 });
 
             modelBuilder.Entity("BuildingManagementTool.Models.PropertyCategory", b =>

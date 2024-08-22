@@ -15,9 +15,9 @@ namespace BuildingManagementTool.Models
         [Required]
         public long FileSize { get; set; }
         [Required]
-        public long IconUrl { get; set; }
-        [Required]
         public DateTime UploadDate { get; set; }
         public string FileImageUrl { get; set; }
+        public int PropertyCategoryId { get; set; }
+        public PropertyCategory PropertyCategory { get; set; }
     }
 }

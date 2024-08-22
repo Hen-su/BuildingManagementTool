@@ -17,7 +17,7 @@ namespace BuildingManagementTool.Controllers
             id = 1;
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
-            CategoryViewModel viewModel = new CategoryViewModel(categories, img);
+            var viewModel = new CategoryViewModel(categories, img);
             return View(viewModel);
         }
     }
