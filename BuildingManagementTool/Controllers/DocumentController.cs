@@ -22,7 +22,7 @@ namespace BuildingManagementTool.Controllers
             IEnumerable<Document> documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == id).ToList();
 
             var viewModel = new DocumentViewModel(documents, currentCategory);
-            return View(viewModel);
+            return PartialView("_DocumentIndex", viewModel);
         }
 
         public async Task<IActionResult> UpdateList(int id)
