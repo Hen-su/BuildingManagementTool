@@ -87,8 +87,8 @@ namespace BuildingManagementTool.Services
         
         public async Task<Stream> DownloadBlobAsync(string containerName, string blobName)
         {
-            try 
-            { 
+            try
+            {
                 var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
                 var blobClient = containerClient.GetBlobClient(blobName);
 
@@ -97,13 +97,16 @@ namespace BuildingManagementTool.Services
                     return null;
                 }
 
-                var downloadInfo = await blobClient.DownloadAsync();
-                return downloadInfo.Value.Content;
+                var memoryStream = new MemoryStream();
+                await blobClient.DownloadToAsync(memoryStream);
+                memoryStream.Position = 0; 
+                return memoryStream;
             }
             catch
             {
-                return null; 
+                return null;
             }
         }
+
     }
 }
