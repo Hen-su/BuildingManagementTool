@@ -1,0 +1,116 @@
+﻿@page
+@model RegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<style>
+    /*--------Sign Up---------*/
+    #sign-up {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px; 
+        margin-bottom: 10%;
+
+    }
+    #sign-up h1, h3 {
+        margin: 25px 0;
+    }
+    .sign-up-container {
+        width: 100%;
+        max-width: 480px; 
+        padding: 20px;
+    }
+
+    .sign-up-container h1, h2 {
+        text-align: center;
+    }
+
+    .sign-up-form {
+        background: #fff; 
+        padding: 30px;
+        border-radius: 8px; 
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 100%;
+    }
+
+    .sign-up-form h1 {
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    .sign-up-form p {
+        margin: 10px 0;
+        font-size: 14px; 
+    }
+
+    .sign-up-form input {
+        width: 100%;
+        border: 0;
+        outline: none;
+        padding: 12px; 
+        margin: 8px 0;
+        font-size: 14px; 
+        border-radius: 6px;
+    }
+
+    .sign-up-form a {
+        text-decoration: underline;
+        color: #007bff; 
+        margin: 25px 0;
+    }
+
+    .sign-up-form input {
+        background: #f0f0f0; 
+        color: #333; 
+    }
+
+    #register-submit {
+        width:100%;
+        background: #000; 
+        color: #fff; 
+        cursor: pointer;
+        font-size: 16px;
+        padding: 12px; 
+        margin: 25px 0;
+        transition: background 0.3s;
+    }
+
+    #register-submit:hover {
+        background: #333;
+    }
+
+</style>
+
+<section id="sign-up">
+    <div class="sign-up-container">
+        <h1>Building Management Canvas</h1>
+        <div class="sign-up-form">
+            <h2>Register</h2>
+            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <h4>Email</h4>
+                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+
+                <h4>Password</h4>
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+
+                <h4>Confirm Password</h4>
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+
+                <button id="register-submit" type="submit">Register</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

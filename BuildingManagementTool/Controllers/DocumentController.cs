@@ -1,4 +1,5 @@
 ﻿using BuildingManagementTool.Models;
+using Microsoft.AspNetCore.Authorization;
 using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
