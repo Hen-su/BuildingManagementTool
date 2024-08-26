@@ -1,0 +1,21 @@
+﻿@model IEnumerable<Document>
+
+<div class="col-md-10 mt-3">
+    <div id="documentCardsContainer" class="row row-cols-1 row-col-sm-6 row-cols-md-4">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var document in Model)
+            {
+                <div class="mb-3">
+                    <div class="doc-card" onclick="selectUnselect(@document.DocumentId)">
+                        @await Html.PartialAsync("_DocumentCard", document)
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>No documents available.</p>
+        }
+    </div>
+</div>

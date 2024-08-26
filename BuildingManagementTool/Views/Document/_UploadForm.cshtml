@@ -1,4 +1,6 @@
-﻿<div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered" role="document">
+﻿@model PropertyCategory
+
+<div id="uploadModal" class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered" role="document">
     <div class="modal-content px-4">
         <div class="modal-header">
             <h2>Upload Files</h2>
@@ -6,7 +8,7 @@
         </div>
 
         <div class="modal-body">
-                <form asp-controller="Blob" asp-action="UploadBlob" id="uploadForm" method="post" enctype="multipart/form-data">
+                <form id="uploadForm" method="post" enctype="multipart/form-data">
                     <div class="row justify-content-between">
                         <div class="col-5">
                         <input type="file" name="files" id="fileInput" multiple class="w">
@@ -26,7 +28,7 @@
             <div class="row justify-content-end">
                 <div class="col-auto">
                     <button type="button" class="btn-secondary rounded me-2" data-bs-dismiss="modal">Close</button>
-                    <button form="uploadForm" class="btn-primary rounded" type="submit">Upload Now</button>
+                    <button id="submitBtn" form="uploadForm" class="btn-primary rounded" type="button">Upload Now</button>
                 </div>
                 
             </div>

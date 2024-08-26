@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Newtonsoft.Json.Linq;
+using NuGet.Protocol;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -20,18 +22,23 @@ namespace BuildingManagementTool.Tests
     {
         private Mock<IBlobService> _mockBlobService;
         private Mock<IDocumentRepository> _mockDocumentRepository;
+        private Mock<IPropertyCategoryRepository> _mockPropertyCategoryRepository;
         private BlobController _blobController;
+
         [SetUp]
         public void Setup()
         {
             _mockDocumentRepository = new Mock<IDocumentRepository>();
             _mockBlobService = new Mock<IBlobService>();
-            _blobController = new BlobController(_mockBlobService.Object, _mockDocumentRepository.Object);
+            _mockPropertyCategoryRepository = new Mock<IPropertyCategoryRepository>();
+            _blobController = new BlobController(_mockBlobService.Object, _mockDocumentRepository.Object, _mockPropertyCategoryRepository.Object);
         }
 
         [Test]
         public async Task UploadBlob_ValidInputSingle_Success()
         {
+            var propertyCategory = 1;
+            Category category = new Category { CategoryId = 1, CategoryName = "Plumbing" };
             var content = "Hello World";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
             var formFile = new Mock<IFormFile>();
@@ -43,19 +50,22 @@ namespace BuildingManagementTool.Tests
 
             var mockFiles = new List<IFormFile> { formFile.Object };
 
+            _mockPropertyCategoryRepository.Setup(pc => pc.GetById(It.IsAny<int>())).ReturnsAsync(new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1, Category = category });
             _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()))
                 .ReturnsAsync(true);
 
-            var result = await _blobController.UploadBlob(mockFiles) as RedirectToActionResult;
+            var result = await _blobController.UploadBlob(mockFiles, propertyCategory) as JsonResult;
 
             _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Once);
-            Assert.AreEqual("Index", result.ActionName);
-            Assert.AreEqual("Document", result.ControllerName);
+            Assert.That(result.Value.ToString().Equals("{ success = True }"));
         }
-
+    
+    
         [Test]
         public async Task UploadBlob_ValidInputMultiple_Success()
         {
+            var propertyCategory = 1;
+            Category category = new Category { CategoryId = 1, CategoryName = "Plumbing" };
             var content = "Hello World";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
             var formFile = new Mock<IFormFile>();
@@ -67,25 +77,28 @@ namespace BuildingManagementTool.Tests
 
             var mockFiles = new List<IFormFile> { formFile.Object, formFile.Object };
 
+            _mockPropertyCategoryRepository.Setup(pc => pc.GetById(It.IsAny<int>())).ReturnsAsync(new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1, Category = category });
             _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()))
                 .ReturnsAsync(true);
 
-            var result = await _blobController.UploadBlob(mockFiles) as RedirectToActionResult;
+            var result = await _blobController.UploadBlob(mockFiles, propertyCategory) as JsonResult;
 
             _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Exactly(2));
-            Assert.AreEqual("Index", result.ActionName);
-            Assert.AreEqual("Document", result.ControllerName);
+            Assert.That(result.Value.ToString().Equals("{ success = True }"));
         }
-
+        
         [Test]
         public async Task UploadBlob_NoInput_Fail()
         {
+            var propertyCategory = 1;
+            Category category = new Category { CategoryId = 1, CategoryName = "Plumbing" };
             var mockFiles = new List<IFormFile>();
 
+            _mockPropertyCategoryRepository.Setup(pc => pc.GetById(It.IsAny<int>())).ReturnsAsync(new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1, Category = category });
             _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()))
                 .ReturnsAsync(false);
 
-            var result = await _blobController.UploadBlob(mockFiles);
+            var result = await _blobController.UploadBlob(mockFiles, propertyCategory);
 
             _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Exactly(0));
             Assert.IsInstanceOf<BadRequestObjectResult>(result);
@@ -105,13 +118,12 @@ namespace BuildingManagementTool.Tests
             _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
 
-            var result = await _blobController.DeleteBlob(document.DocumentId) as RedirectToActionResult;
+            var result = await _blobController.DeleteBlob(document.DocumentId) as JsonResult;
 
             _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            Assert.AreEqual("Index", result.ActionName);
-            Assert.AreEqual("Document", result.ControllerName);
+            Assert.That(result.Value.ToString().Equals("{ success = True }"));
         }
-
+        
         [Test]
         public async Task DeleteBlob_FileDataNotExists_Fail()
         {
@@ -126,11 +138,11 @@ namespace BuildingManagementTool.Tests
             _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             var objectResult = (ObjectResult)result;
             var problemDetails = (ProblemDetails)objectResult.Value;
-            Assert.AreEqual("The File MetaData was not found", problemDetails.Detail);
-            Assert.AreEqual("Metadata Not Found", problemDetails.Title);
-            Assert.AreEqual(StatusCodes.Status404NotFound, problemDetails.Status);
+            Assert.That(problemDetails.Detail.Equals("The File MetaData was not found"));
+            Assert.That(problemDetails.Title.Equals("Metadata Not Found"));
+            Assert.That(problemDetails.Status.Equals(StatusCodes.Status404NotFound));
         }
-
+        
         [Test]
         public async Task DeleteBlob_BlobDeleteFailed_Fail()
         {
@@ -150,11 +162,11 @@ namespace BuildingManagementTool.Tests
             _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             var objectResult = (ObjectResult)result;
             var problemDetails = (ProblemDetails)objectResult.Value;
-            Assert.AreEqual("An error occurred when deleting the file", problemDetails.Detail);
-            Assert.AreEqual("Deletion Error", problemDetails.Title);
-            Assert.AreEqual(StatusCodes.Status500InternalServerError, problemDetails.Status);
+            Assert.That(problemDetails.Detail.Equals("An error occurred when deleting the file"));
+            Assert.That(problemDetails.Title.Equals("Deletion Error"));
+            Assert.That(problemDetails.Status.Equals(StatusCodes.Status500InternalServerError));
         }
-
+        
         [Test]
         public async Task RenderFile_PDFExists_Success()
         {
@@ -174,10 +186,10 @@ namespace BuildingManagementTool.Tests
 
             var result = await _blobController.RenderFile(documentId) as PartialViewResult;
             _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            Assert.AreEqual("_PDFViewer", result.ViewName);
-            Assert.AreEqual(blobUrl, result.Model);
+            Assert.That(result.ViewName.Equals("_PDFViewer"));
+            Assert.That(result.Model.Equals(blobUrl));
         }
-
+        
         [Test]
         public async Task RenderFile_VideoExists_Success()
         {
@@ -198,8 +210,8 @@ namespace BuildingManagementTool.Tests
             var result = await _blobController.RenderFile(documentId) as PartialViewResult;
 
             _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            Assert.AreEqual("_VideoPlayer", result.ViewName);
-            Assert.AreEqual(blobUrl, result.Model);
+            Assert.That(result.ViewName.Equals("_VideoPlayer"));
+            Assert.That(result.Model.Equals(blobUrl));
         }
 
         [Test]
@@ -222,8 +234,8 @@ namespace BuildingManagementTool.Tests
             var result = await _blobController.RenderFile(documentId) as PartialViewResult;
 
             _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            Assert.AreEqual("_ImageViewer", result.ViewName);
-            Assert.AreEqual(blobUrl, result.Model);
+            Assert.That(result.ViewName.Equals("_ImageViewer"));
+            Assert.That(result.Model.Equals(blobUrl));
         }
 
         [Test]
@@ -264,11 +276,11 @@ namespace BuildingManagementTool.Tests
             _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             var objectResult = (ObjectResult)result;
             var problemDetails = (ProblemDetails)objectResult.Value;
-            Assert.AreEqual("The file was not found in blob storage", problemDetails.Detail);
-            Assert.AreEqual("File Not Found", problemDetails.Title);
-            Assert.AreEqual(StatusCodes.Status404NotFound, problemDetails.Status);
+            Assert.That(problemDetails.Detail.Equals("The file was not found in blob storage"));
+            Assert.That(problemDetails.Title.Equals("File Not Found"));
+            Assert.That(problemDetails.Status.Equals(StatusCodes.Status404NotFound));
         }
-
+    
         [TearDown]
         public void Teardown()
         {
