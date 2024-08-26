@@ -84,7 +84,7 @@ namespace BuildingManagementTool.Services
 
                 var memoryStream = new MemoryStream();
                 await blobClient.DownloadToAsync(memoryStream);
-                memoryStream.Position = 0; // Reset stream position to the beginning
+                memoryStream.Position = 0; 
                 return memoryStream;
             }
             catch
