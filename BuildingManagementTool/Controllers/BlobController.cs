@@ -11,16 +11,19 @@ namespace BuildingManagementTool.Controllers
     public class BlobController : Controller
     {
         private readonly IDocumentRepository _documentRepository;
+        private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IBlobService _blobService;
-        public BlobController(IBlobService blobService, IDocumentRepository documentRepository)
+        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository)
         {
             _blobService = blobService;
             _documentRepository = documentRepository;
+            _propertyCategoryRepository = propertyCategoryRepository;
         }
 
         [HttpPost]
-        public async Task<IActionResult> UploadBlob(IList<IFormFile> files)
+        public async Task<IActionResult> UploadBlob(IList<IFormFile> files, int id)
         {
+            var propertyCategory = await _propertyCategoryRepository.GetById(id);
             var containerName = "test1";
             //Check submitted file list isn't empty
             if (files == null || files.Count == 0)
@@ -36,7 +39,7 @@ namespace BuildingManagementTool.Controllers
             //Check if a blob with the same name exists
             foreach (var file in files)
             {
-                string blobName = $"{containerName}/{file.FileName}";
+                string blobName = $"{propertyCategory.Category.CategoryName}/{file.FileName}";
                 bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
                 if (blobExists)
                 {
@@ -60,6 +63,38 @@ namespace BuildingManagementTool.Controllers
                     }
 
                 }
+                /*Switch Case for the image url using the content type*/
+                string imageUrl;
+
+                switch (file.ContentType)
+                {
+                    case "image/jpeg":
+                    case "image/jpg":
+                        imageUrl = "/imgs/jpg.svg";
+                        break;
+
+                    case "image/png":
+                        imageUrl = "/imgs/pngpng";
+                        break;
+
+                    case "application/pdf":
+                        imageUrl = "/imgs/pdf.svg";
+                        break;
+
+                    case "application/msword":
+                    case "application/vnd.openxmlformats-officedocument.wordprocessingml.document": // .docx
+                        imageUrl = "/imgs/file-word.svg";
+                        break;
+
+                    case "text/plain":
+                        imageUrl = "/imgs/txt.svg";
+                        break;
+
+                    default:
+                        imageUrl = "/imgs/generic.png"; // Fallback image for unknown content types
+                        break;
+                }
+
                 //Create metadata
                 var metadata = new Models.Document
                 {
@@ -67,7 +102,9 @@ namespace BuildingManagementTool.Controllers
                     BlobName = blobName,
                     ContentType = file.ContentType,
                     FileSize = file.Length,
-                    UploadDate = DateTime.UtcNow
+                    UploadDate = DateTime.UtcNow,
+                    FileImageUrl = imageUrl,
+                    PropertyCategoryId = propertyCategory.PropertyCategoryId
                 };
                 //Add record to SQL Server
                 try
@@ -88,10 +125,10 @@ namespace BuildingManagementTool.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
                 }
             }
-            TempData["response"] = "Upload Successful";
-            return RedirectToAction("Index", "Document");
+            return Json(new { success = true });
         }
 
+        [HttpPost]
         public async Task<IActionResult> DeleteBlob(int? id)
         {
             //test container
@@ -123,7 +160,7 @@ namespace BuildingManagementTool.Controllers
             }
             //Delete metadata if blob is deleted
             await _documentRepository.DeleteDocumentData(document);
-            return RedirectToAction("Index", "Document");
+            return Json(new { success = true }); ;
         }
 
         public async Task<IActionResult> DeleteConfirmationPartial(int id)
@@ -142,7 +179,7 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_DeleteConfirmation", document);
         }
 
-        public async Task<IActionResult> PDFViewerPartial(string blobUrl)
+        public IActionResult PDFViewerPartial(string blobUrl)
         {
             return PartialView("_PDFViewer", blobUrl);
         }
@@ -180,12 +217,12 @@ namespace BuildingManagementTool.Controllers
             return File(stream, document.ContentType, document.FileName);
         }
         //Renders Partial Views to Modal container
-        public async Task<IActionResult> VideoPlayerPartial(string blobUrl)
+        public IActionResult VideoPlayerPartial(string blobUrl)
         {
             return PartialView("_VideoPlayer", blobUrl);
         }
 
-        public async Task<IActionResult> ImageViewerPartial(string blobUrl)
+        public IActionResult ImageViewerPartial(string blobUrl)
         {
             return PartialView("_ImageViewer", blobUrl);
         }
@@ -221,15 +258,15 @@ namespace BuildingManagementTool.Controllers
             //Handle rendering of blob by MIME content type
             if (document.ContentType == "application/pdf")
             {
-                return await PDFViewerPartial(blobUrl);
+                return PDFViewerPartial(blobUrl);
             }
             else if (document.ContentType.StartsWith("video"))
             {
-                return await VideoPlayerPartial(blobUrl);
+                return VideoPlayerPartial(blobUrl);
             }
             else if (document.ContentType.StartsWith("image"))
             {
-                return await ImageViewerPartial(blobUrl);
+                return ImageViewerPartial(blobUrl);
             }
             else
             {

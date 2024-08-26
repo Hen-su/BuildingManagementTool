@@ -1,32 +1,121 @@
-﻿@model IEnumerable<BuildingManagementTool.Models.Document>
+﻿@model DocumentViewModel
 
-<h1>Files</h1>
-<button id="uploadModalBtn" class="btn-success btn-lg">Upload</button>
-
-<div id="documentCardsContainer" class="row row-cols-1 row-cols-md-4 g-4 mt-2">
-    @if (Model != null && Model.Any())
-    {
-        foreach (var document in Model)
-        {
-            <div class="col">
-                @Html.Partial("_DocumentCard", document)
-            </div>
-        }
-    }
-    else
-    {
-        <p>No documents available.</p>
-    }
+<h1>@Model.CurrentCategory.Category.CategoryName</h1>
+<button id="uploadModalBtn" class="btn-success btn-md">Upload</button>
+<div class="container-fluid p-0 row justify-content-between" id="documentContainer">
+    <partial name="_DocumentList" model="@Model.Documents"></partial>
+</div>
+<div class="col-auto mt-3 float-right" style="position: fixed; right:5rem; top: 11rem">
+    <div id="documentOptionsContainer">
+    </div>
 </div>
 
 <div id="modalContainer" class="modal shadow" role="dialog"></div>
 
+
 <script>
     $(document).ready(function () {
         $("#uploadModalBtn").click(function () {
-            $("#modalContainer").load("/Document/UploadFormPartial", function () {
+            var propertyCategoryId = @Model.CurrentCategory.PropertyCategoryId;
+            var url = "/Document/UploadFormPartial/" + encodeURIComponent(propertyCategoryId);
+            $("#modalContainer").load(url, function () {
                 $("#modalContainer").modal("show");
             });
         });
+
+        $(document).on("click", "#confirmDeleteBtn", function () {
+            console.log("confirm clicked")
+            var documentId = $(this).data("id")
+            $.ajax({
+                url: '/Blob/DeleteBlob',
+                type: 'POST',
+                data: { id: documentId },
+                success: function (response) {
+                    if (response.success) {
+                        $.ajax({
+                            url: '/Document/UpdateList',
+                            type: 'GET',
+                            data: { id: @Model.CurrentCategory.PropertyCategoryId },
+                            success: function (result) {
+                                // Replace the document list with the updated content
+                                $('#documentContainer').html(result);
+                                $('#modalContainer').modal('hide');
+                            },
+                            error: function () {
+                                alert('An error occurred while updating the document list.');
+                            }
+                        });
+                    } else {
+                        alert(response.message || 'An error occurred while deleting the document.');
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while deleting the document.');
+                }
+            });
+        })
+
+        $(document).on("click", "#submitBtn", function (ev) {
+            ev.preventDefault();
+            var form = $('#uploadForm')[0];
+            var formData = new FormData(form)
+            formData.append('id', @Model.CurrentCategory.PropertyCategoryId);
+            console.log("submit")
+
+            $.ajax({
+                url: '/Blob/UploadBlob',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.success) {
+                        $.ajax({
+                            url: '/Document/UpdateList',
+                            type: 'GET',
+                            data: { id: @Model.CurrentCategory.PropertyCategoryId },
+                            success: function (result) {
+                                // Replace the document list with the updated content
+                                $('#documentContainer').html(result);
+                                $('#modalContainer').modal('hide');
+                            },
+                            error: function () {
+                                alert('An error occurred while updating the document list.');
+                            }
+                        });
+                    } else {
+                        alert(response.message || 'An error occurred while deleting the document.');
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while deleting the document.');
+                }
+            });
+        })
     });
+
+    function selectUnselect(documentId) {
+        // finding clicked card
+        var clickedCard = document.querySelector('.doc-card[onclick="selectUnselect(' + documentId + ')"]');
+
+        // if clicked card is already selected
+        if (clickedCard.classList.contains('selected')) {
+            // If yes remove the selected class
+            clickedCard.classList.remove('selected');
+            document.getElementById('documentOptionsContainer').innerHTML = '';
+        } else {
+            // if not, deselect any other selected card
+            document.querySelectorAll('.doc-card').forEach(function (card) {
+                card.classList.remove('selected');
+            });
+
+            // Adding 'selected' class to the clicked card
+            clickedCard.classList.add('selected');
+
+            // Loading the DocumentPreview partial view for the selected document using AJAX
+            $.get('/Document/GetDocumentOptions', { documentId: documentId }, function (response) {
+                $('#documentOptionsContainer').html(response);
+            });
+        }
+    }
 </script>

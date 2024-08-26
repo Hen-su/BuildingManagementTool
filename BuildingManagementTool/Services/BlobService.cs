@@ -83,8 +83,8 @@ namespace BuildingManagementTool.Services
             var blobUrl = blobClient.Uri.ToString();
             //blobUrl = blobUrl.StartsWith("http") ? blobUrl.Replace("http", "https") : blobUrl;
             return blobUrl;
-        } 
-        
+        }
+
         public async Task<Stream> DownloadBlobAsync(string containerName, string blobName)
         {
             try
