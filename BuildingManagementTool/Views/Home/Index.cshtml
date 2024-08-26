@@ -1,8 +1,75 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
+<style>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+
+
+    h1,h2,h3{
+        font-weight:600;
+    }
+    .hero-section {
+        margin: 10%;
+        text-align: center;
+    }
+    .hero-section img {
+        margin-top: 20px;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .about-section{
+        width: 100%;
+        text-align:center;
+        color:white;
+        background:black;
+        padding: 6rem;
+            border: 0;
+    }
+    .about-section p{
+        font-size:2rem;
+    }
+
+    .feature-section {
+        margin: 10%;
+        text-align:center;
+    }
+  
+        .feature-section img {
+            margin-top: 20px;
+            max-width: 100%;
+            height: auto;
+        }
+</style>
+
+<section class="hero-section">
+    <div class="container">
+        <h1 class="display-4">Store and Manage Your House Documents All In One Place!</h1>
+        <img src="https://geekflare.com/wp-content/uploads/2022/10/What-are-the-things-to-include-in-a-Demo-Video.webp" alt="Canvas Image" />
+    </div>
+</section>
+
+<section class="about-section m-0">
+    <h1 class="mb-5">What is BMT?</h1>
+    <p>
+        Building Management Canvas is designed for property managers and home owners to enable them to manage all relevant housing documents in a centralised location.
+    </p>
+
+</section>
+
+<section class="feature-section">
+    <div class="container mt-5">
+        <h1 class="display-4 mb-5">Separate Documents By Category</h1>
+        <img src="~/imgs/canvas.png" alt="Canvas Image" />
+    </div>
+    <div class="container mt-5">
+        <h1>Handy Document Access</h1>
+        <img src="~/imgs/documents.png" alt="Canvas Image" />
+
+    </div>
+      <div class="container mt-5">
+        <h1>Easily Manage Your Document</h1>
+        <img src="~/imgs/preview.png" alt="Canvas Image" />
+
+    </div>
+    </section>
