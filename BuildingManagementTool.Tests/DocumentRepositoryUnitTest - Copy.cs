@@ -69,11 +69,11 @@ namespace BuildingManagementTool.Tests
         {
             var document = new Document
             {
-                DocumentId = 1,
+                DocumentId = 2,
                 FileName = "text.txt",
                 BlobName = "category/text.txt",
                 ContentType = "text/plain",
-                FileSize = 1,
+                FileSize = 2,
                 UploadDate = DateTime.UtcNow
             };
 

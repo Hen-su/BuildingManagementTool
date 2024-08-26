@@ -1,4 +1,5 @@
 ﻿using BuildingManagementTool.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
@@ -13,6 +14,7 @@ namespace BuildingManagementTool.Controllers
             _fileRepository = fileRepository;
         }
 
+        [Authorize]
         public IActionResult Index(int? selectedDocumentId)
         {
             var documents = _fileRepository.AllDocuments;

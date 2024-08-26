@@ -120,8 +120,7 @@ namespace BuildingManagementTool.Tests
 
         }
 
-
-
+        [TearDown]
         public void Teardown()
         {
             _documentController.Dispose();
