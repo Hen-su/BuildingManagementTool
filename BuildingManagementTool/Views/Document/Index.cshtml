@@ -3,7 +3,7 @@
 <h1>Files</h1>
 <button id="uploadModalBtn" class="btn-success btn-md">Upload</button>
 <div class="container-fluid p-0 row justify-content-between">
-    <div class="col-md-10 mt-3">
+    <div class="col-md-10 mt-5">
         <div id="documentCardsContainer" class="row row-cols-1 row-col-sm-2 row-cols-md-4">
             @if (Model.Item1 != null && Model.Item1.Any())
             {
@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    <div class="col-auto mt-3 float-right" style="position: fixed; right:1.5rem;">
+    <div class="col-auto mt-5 float-right" style="position: fixed; right:1.5rem;">
         <div id="documentPreviewContainer">
             @if (Model.Item2 != null)
             {

@@ -3,13 +3,19 @@
 }
 <style>
 
+    html, body {
+        padding: 0;
+        margin: 0;
+        overflow-x: hidden;
+    }
+
 
 
     h1,h2,h3{
         font-weight:600;
     }
     .hero-section {
-        margin: 10%;
+        margin: 15% 10%;
         text-align: center;
     }
     .hero-section img {
@@ -18,14 +24,16 @@
         height: auto;
     }
 
-    .about-section{
-        width: 100%;
-        text-align:center;
-        color:white;
-        background:black;
-        padding: 6rem;
-            border: 0;
+    .about-section {
+        width: 100vw; 
+        margin: 0 calc(-50vw + 50%); 
+        padding: 6rem 0;
+        text-align: center;
+        color: white;
+        background: black;
+        border: 0;
     }
+
     .about-section p{
         font-size:2rem;
     }
@@ -45,31 +53,38 @@
 <section class="hero-section">
     <div class="container">
         <h1 class="display-4">Store and Manage Your House Documents All In One Place!</h1>
-        <img src="https://geekflare.com/wp-content/uploads/2022/10/What-are-the-things-to-include-in-a-Demo-Video.webp" alt="Canvas Image" />
-    </div>
+       
+        <img src="https://geekflare.com/wp-content/uploads/2022/10/What-are-the-things-to-include-in-a-Demo-Video.webp" alt="Canvas Image" class="mb-5" />
+    </div> <button id="btn-register" class="btn btn-primary mt-6" type="button" onclick="window.location.href='@Url.Page("/Account/Register", new { area = "Identity" })'">
+            Get Started >
+        </button>
 </section>
 
-<section class="about-section m-0">
+<section class="about-section">
     <h1 class="mb-5">What is BMT?</h1>
     <p>
-        Building Management Canvas is designed for property managers and home owners to enable them to manage all relevant housing documents in a centralised location.
+        Building Management Canvas is designed for property managers and homeowners to enable them to manage all relevant housing documents in a centralized location.
     </p>
-
 </section>
 
+
 <section class="feature-section">
-    <div class="container mt-5">
+    <div class="container mt-5 ">
         <h1 class="display-4 mb-5">Separate Documents By Category</h1>
-        <img src="~/imgs/canvas.png" alt="Canvas Image" />
+        <img src="~/imgs/canvas.png" alt="Canvas Image" class="mb-5" />
     </div>
     <div class="container mt-5">
         <h1>Handy Document Access</h1>
         <img src="~/imgs/documents.png" alt="Canvas Image" />
 
     </div>
-      <div class="container mt-5">
+      <div class="container mt-5 mb-5">
         <h1>Easily Manage Your Document</h1>
         <img src="~/imgs/preview.png" alt="Canvas Image" />
+   
 
-    </div>
+
+    </div>     <button id="btn-register" class="btn btn-primary mt-6" type="button" onclick="window.location.href='@Url.Page("/Account/Register", new { area = "Identity" })'">
+        Get Started >
+    </button>
     </section>
