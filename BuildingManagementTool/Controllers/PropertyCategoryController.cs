@@ -1,9 +1,11 @@
 ﻿using BuildingManagementTool.Models;
 using BuildingManagementTool.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BuildingManagementTool.Controllers
 {
+    [Authorize]
     public class PropertyCategoryController : Controller
     {
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;

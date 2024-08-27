@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace BuildingManagementTool.Controllers
 {
+    [Authorize]
     public class DocumentController : Controller
     {
         private readonly IDocumentRepository _documentRepository;
@@ -19,7 +20,18 @@ namespace BuildingManagementTool.Controllers
 
         public async Task<IActionResult> Index(int id)
         {
+
             var currentCategory = await _propertyCategoryRepository.GetById(id);
+            if (currentCategory == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Category Not Found",
+                    Detail = "The selected category was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
             IEnumerable<Document> documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == id).ToList();
 
             var viewModel = new DocumentViewModel(documents, currentCategory);
@@ -29,6 +41,16 @@ namespace BuildingManagementTool.Controllers
         public async Task<IActionResult> UpdateList(int id)
         {
             var currentCategory = await _propertyCategoryRepository.GetById(id);
+            if (currentCategory == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Category Not Found",
+                    Detail = "The selected category was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
             IEnumerable<Document> documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == id).ToList();
             return PartialView("_DocumentList", documents);
         }
@@ -36,8 +58,18 @@ namespace BuildingManagementTool.Controllers
         [HttpGet]
         public async Task<IActionResult> UploadFormPartial(int id)
         {
-            var propertyCategory = await _propertyCategoryRepository.GetById(id);
-            return PartialView("_UploadForm", propertyCategory);
+            var currentCategory = await _propertyCategoryRepository.GetById(id);
+            if (currentCategory == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Category Not Found",
+                    Detail = "The selected category was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+            return PartialView("_UploadForm", currentCategory);
         }
 
         [HttpGet]
@@ -46,7 +78,13 @@ namespace BuildingManagementTool.Controllers
             var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
             if (document == null)
             {
-                return NotFound();
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Metadata Not Found",
+                    Detail = "The File MetaData was not found",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
             return PartialView("_DocumentOptions", document);
         }
