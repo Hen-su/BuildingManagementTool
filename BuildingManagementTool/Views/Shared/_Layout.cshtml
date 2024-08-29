@@ -16,6 +16,8 @@
 
         .navbar{
             position:fixed;
+            top: 0;
+            left: 0;
             width:100%;
         }
 
@@ -33,10 +35,7 @@
         footer a {
             margin: 0 10px;
         }
-
-    
-        
-        
+   
     </style>
 </head>
 <body>
@@ -66,7 +65,7 @@
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="container" style="margin: 5% auto">
         <main role="main" class="pb-5">
             @RenderBody()
         </main>
@@ -75,11 +74,7 @@
     <footer class="border-top footer text-muted">
         <div class="container">
             <h2>Bulding Management Canvas</h2>
-
-      
-    
-        <p> AHA &copy; 2024 - BuildingManagementTool </p>
-
+            <p> AHA &copy; 2024 - BuildingManagementTool </p>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

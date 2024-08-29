@@ -1,0 +1,19 @@
+﻿@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Register confirmation";
+}
+
+<div class="container d-flex flex-column justify-content-center align-items-center" style="padding-top: 10%;">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+    <p>
+        Thank you for registering! A confirmation email has been sent to <strong>@Model.Email</strong>. To complete your registration, please check your email to verify your account.
+        If you do not see the email in your inbox, be sure to check your spam or junk folder.
+    </p>
+    <p>
+        <strong>Note:</strong> If you have not received an email, make sure you entered the correct address or try registering again.
+    </p>
+</div>
+
+   
+
