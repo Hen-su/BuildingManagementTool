@@ -11,7 +11,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 100vh;
         padding: 20px; 
         margin-bottom: 10%;
 
@@ -97,8 +96,16 @@
                 <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
 
+                <h4>First Name</h4>
+                <input asp-for="Input.FirstName" class="form-control" autocomplete="given-name" aria-required="true" />
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+
+                <h4>Last Name</h4>
+                <input asp-for="Input.LastName" class="form-control" autocomplete="username" aria-required="true" />
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+
                 <h4>Password</h4>
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" />
+                <input asp-for="Input.Password" class="form-control" autocomplete="family-name" aria-required="true" />
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
 
                 <h4>Confirm Password</h4>
@@ -107,7 +114,9 @@
 
                 <button id="register-submit" type="submit">Register</button>
             </form>
+            <a asp-page="./ResendEmailConfirmation">Already registered? Confirm your email now!</a>
         </div>
+        
     </div>
 </section>
 
