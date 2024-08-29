@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -20,11 +21,11 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
 {
     public class ForgotPasswordModel : PageModel
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
         private readonly RazorViewToStringRenderer _viewToStringRenderer;
 
-        public ForgotPasswordModel(UserManager<IdentityUser> userManager, IEmailSender emailSender, RazorViewToStringRenderer razorViewToStringRenderer)
+        public ForgotPasswordModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender, RazorViewToStringRenderer razorViewToStringRenderer)
         {
             _userManager = userManager;
             _emailSender = emailSender;
@@ -75,7 +76,7 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
                     protocol: Request.Scheme);
 
                 var encodedCallbackUrl = HtmlEncoder.Default.Encode(callbackUrl);
-                var model = new EmailViewModel { Username = user.UserName, EmailLink = encodedCallbackUrl };
+                var model = new EmailViewModel { Username = user.FirstName, EmailLink = encodedCallbackUrl };
                 var viewPath = "Shared/EmailTemplates/ForgotPassword";
                 var htmlContent = await _viewToStringRenderer.RenderViewToStringAsync(viewPath, model, HttpContext);
 

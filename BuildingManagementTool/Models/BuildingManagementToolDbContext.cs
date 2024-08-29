@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BuildingManagementTool.Models
 {
-    public class BuildingManagementToolDbContext : IdentityDbContext
+    public class BuildingManagementToolDbContext : IdentityDbContext<ApplicationUser>
     {
         public BuildingManagementToolDbContext(DbContextOptions<BuildingManagementToolDbContext> options) : base(options) { }
         public DbSet<Document> Documents { get; set; }

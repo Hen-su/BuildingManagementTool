@@ -29,7 +29,7 @@ builder.Services.AddDbContext<BuildingManagementToolDbContext>(options =>
     options.UseSqlServer(connectionString);
 });
 
-builder.Services.AddDefaultIdentity<IdentityUser>()
+builder.Services.AddDefaultIdentity<ApplicationUser>()
     .AddEntityFrameworkStores<BuildingManagementToolDbContext>();
 
 builder.Services.Configure<IdentityOptions>(options =>
