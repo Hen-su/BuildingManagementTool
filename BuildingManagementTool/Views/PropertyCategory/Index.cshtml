@@ -71,6 +71,15 @@
 
 </style>
 
+@if (User.IsInRole("Manager"))
+{
+    <h2 class="mt-5 mb-5">You're in Manage Mode!</h2>
+    <a class="btn btn-primary">Add Category</a>
+}
+else
+{
+    <h2 class="mt-5 mb-5">You're in View Mode!</h2>
+}
 <a class="btn btn-primary mb-3">Add Category</a>
 
 <div class="container position-relative p-0">

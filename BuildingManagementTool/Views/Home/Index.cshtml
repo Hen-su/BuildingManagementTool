@@ -24,6 +24,11 @@
         height: auto;
     }
 
+    #typed-element {
+        font-weight: bold;
+        font-style:italic;
+    }
+
     .about-section {
         width: 100vw; 
         margin: 0 calc(-50vw + 50%); 
@@ -47,15 +52,17 @@
             margin-top: 20px;
             max-width: 100%;
             height: auto;
+
+
         }
 </style>
-
 <section class="hero-section">
     <div class="container">
         <h1 class="display-4 ">
             <span>Store and Manage Your Housing Documents</span>
             <span id="typed-element"></span>
         </h1>
+        <img src="https://geekflare.com/wp-content/uploads/2022/10/What-are-the-things-to-include-in-a-Demo-Video.webp" alt="Canvas Image" class="mb-5" />
         <video width="75%" class="mb-5" controls>
             <source src="~/videos/Sprint 2 demo.mov" type="video/mp4">
             
@@ -66,7 +73,6 @@
         Get Started >
     </button>
 </section>
-
 <section class="about-section">
     <h1 class="mb-5">What is BMT?</h1>
     <p>
@@ -95,3 +101,17 @@
         Get Started >
     </button>
     </section>
+
+
+
+<script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
+<script>
+    var typed = new Typed("#typed-element", {
+        strings: ["All In One Place!", "Simplified!", "Seamlessly!"],
+        typeSpeed: 50,
+        backSpeed: 25,
+        onComplete: (self) => {
+            self.stop(); 
+        }
+    });
+</script>

@@ -7,9 +7,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Facebook;
-using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Authentication.Twitter;
-
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("BuildingManagementToolDbContextConnection") ?? throw new InvalidOperationException("Connection string 'BuildingManagementToolDbContextConnection' not found.");
@@ -30,6 +28,7 @@ builder.Services.AddDbContext<BuildingManagementToolDbContext>(options =>
 });
 
 builder.Services.AddDefaultIdentity<ApplicationUser>()
+    .AddRoles<IdentityRole>() // Add this line to include roles
     .AddEntityFrameworkStores<BuildingManagementToolDbContext>();
 
 builder.Services.Configure<IdentityOptions>(options =>
@@ -49,7 +48,6 @@ builder.Services.AddSession(options =>
 builder.Services.AddScoped<IBlobService, BlobService>();
 // Add Model Repositories
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IPropertyCategoryRepository, PropertyCategoryRepository>();
@@ -74,18 +72,12 @@ builder.Services.AddAuthentication()
        options.ClientId = FBAuthNSection["ClientId"];
        options.ClientSecret = FBAuthNSection["ClientSecret"];
    })
-
    .AddTwitter(twitterOptions =>
    {
        twitterOptions.ConsumerKey = config["Authentication:Twitter:ConsumerAPIKey"];
        twitterOptions.ConsumerSecret = config["Authentication:Twitter:ConsumerSecret"];
        twitterOptions.RetrieveUserDetails = true;
-   })
-      /*.AddMicrosoftAccount(microsoftOptions =>
-      {
-          microsoftOptions.ClientId = config["Authentication:Microsoft:ClientId"];
-          microsoftOptions.ClientSecret = config["Authentication:Microsoft:ClientSecret"];
-      })*/;
+   });
 
 var app = builder.Build();
 
@@ -110,7 +102,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-DbInitialiser.Seed(app);
+DbInitializer.Seed(app);
 
 app.MapRazorPages();
 
