@@ -3,18 +3,17 @@ using BuildingManagementTool.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Twitter;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("BuildingManagementToolDbContextConnection") ?? throw new InvalidOperationException("Connection string 'BuildingManagementToolDbContextConnection' not found.");
 
 // Define the config object to access configuration settings
 var config = builder.Configuration;
-
-var connectionString = config.GetConnectionString("BuildingManagementToolDbContextConnection")
-                   ?? throw new InvalidOperationException("Connection string 'BuildingManagementToolDbContextConnection' not found.");
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -32,6 +31,11 @@ builder.Services.AddDefaultIdentity<ApplicationUser>()
     .AddRoles<IdentityRole>() // Add this line to include roles
     .AddEntityFrameworkStores<BuildingManagementToolDbContext>();
 
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = true;
+});
+
 // Add session services
 builder.Services.AddSession(options =>
 {
@@ -42,10 +46,15 @@ builder.Services.AddSession(options =>
 
 // Add BlobService class
 builder.Services.AddScoped<IBlobService, BlobService>();
+// Add Model Repositories
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IPropertyCategoryRepository, PropertyCategoryRepository>();
+// Add Email Sender
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("AuthMessageSenderOptions"));
+builder.Services.AddScoped<RazorViewToStringRenderer>();
 
 // Add external authentication providers
 builder.Services.AddAuthentication()

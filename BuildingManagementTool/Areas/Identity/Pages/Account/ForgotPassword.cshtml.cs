@@ -7,6 +7,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using BuildingManagementTool.Models;
+using BuildingManagementTool.Services;
+using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -18,13 +21,15 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
 {
     public class ForgotPasswordModel : PageModel
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
+        private readonly RazorViewToStringRenderer _viewToStringRenderer;
 
-        public ForgotPasswordModel(UserManager<IdentityUser> userManager, IEmailSender emailSender)
+        public ForgotPasswordModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender, RazorViewToStringRenderer razorViewToStringRenderer)
         {
             _userManager = userManager;
             _emailSender = emailSender;
+            _viewToStringRenderer = razorViewToStringRenderer;
         }
 
         /// <summary>
@@ -70,10 +75,15 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
                     values: new { area = "Identity", code },
                     protocol: Request.Scheme);
 
+                var encodedCallbackUrl = HtmlEncoder.Default.Encode(callbackUrl);
+                var model = new EmailViewModel { Username = user.FirstName, EmailLink = encodedCallbackUrl };
+                var viewPath = "Shared/EmailTemplates/ForgotPassword";
+                var htmlContent = await _viewToStringRenderer.RenderViewToStringAsync(viewPath, model, HttpContext);
+
                 await _emailSender.SendEmailAsync(
                     Input.Email,
                     "Reset Password",
-                    $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    htmlContent);
 
                 return RedirectToPage("./ForgotPasswordConfirmation");
             }
