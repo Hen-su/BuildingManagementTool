@@ -14,7 +14,7 @@
         </div>
 
         <div class="d-flex flex-column align-items-center">
-            @if (Model.ContentType.StartsWith("video") || Model.ContentType == "application/pdf" || Model.ContentType.StartsWith("image"))
+            @if (Model.ContentType.StartsWith("video") || Model.ContentType == "application/pdf" || Model.ContentType.StartsWith("image") || User.IsInRole("Viewer") || User.IsInRole("Manager"))
             {
                 <a id="viewBtn" data-id = "@Model.DocumentId" class="btn btn-dark mb-2" style="width: 150px;">View</a>
             }
@@ -31,9 +31,13 @@
                 Share
             </a>
             -->
-            <a id="deleteConfBtn" data-id="@Model.DocumentId" class="btn btn-danger" style="width: 150px;">
+            @if (User.IsInRole("Manager"))
+            {
+              <a id="deleteConfBtn" data-id="@Model.DocumentId" class="btn btn-danger" style="width: 150px;">
                 Delete
-            </a>
+            </a>   
+            }
+           
         </div>
     </div>
 </div>

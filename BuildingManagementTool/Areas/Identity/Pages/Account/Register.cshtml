@@ -83,6 +83,11 @@
         background: #333;
     }
 
+    #role{
+        width:100%;
+        height:35px;
+    }
+
 </style>
 
 <section id="sign-up">
@@ -103,6 +108,22 @@
                 <h4>Email</h4>
                 <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
+
+                <h4>First Name</h4>
+                <input asp-for="Input.FirstName" class="form-control" autocomplete="given-name" aria-required="true" />
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+
+                <h4>Last Name</h4>
+                <input asp-for="Input.LastName" class="form-control" autocomplete="username" aria-required="true" />
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+
+
+                <h4>Role</h4>
+                <select asp-for="Input.Role" aria-required="true" class=" form-control" asp-items="@(new SelectList(new[] { "Viewer", "Manager" })) ">
+                    <option value="">Select a role</option>
+                </select>
+                <span asp-validation-for="Input.Role" class="text-danger"></span>
+
 
                 <h4>Password</h4>
                 <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" />
