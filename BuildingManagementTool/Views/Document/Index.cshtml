@@ -57,6 +57,16 @@
 
         $(document).on("click", "#submitBtn", function (ev) {
             ev.preventDefault();
+            //disable upload button after first click
+            var $button = $(this); // Reference to the button
+
+            // Check if the button is already disabled to prevent further actions
+            if ($button.prop('disabled')) {
+                return;
+            }
+
+            console.log("submit clicked")
+
             var form = $('#uploadForm')[0];
             var formData = new FormData(form)
             formData.append('id', @Model.CurrentCategory.PropertyCategoryId);
@@ -78,17 +88,21 @@
                                 // Replace the document list with the updated content
                                 $('#documentContainer').html(result);
                                 $('#modalContainer').modal('hide');
+                                // re-enable upload button after success
+                                $('#submitBtn').prop('disabled', false).text('Upload');
                             },
                             error: function () {
                                 alert('An error occurred while updating the document list.');
                             }
                         });
                     } else {
-                        alert(response.message || 'An error occurred while deleting the document.');
+                        alert(response.message || 'An error occurred while uploading the document.');
+                        // re-enable upload button after success
+                        $('#submitBtn').prop('disabled', false).text('Upload');
                     }
                 },
                 error: function () {
-                    alert('An error occurred while deleting the document.');
+                    alert('An error occurred while uploading the document.');
                 }
             });
         })

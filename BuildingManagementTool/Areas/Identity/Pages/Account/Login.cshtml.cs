@@ -116,6 +116,7 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
+                    returnUrl = Url.Action("Index", "PropertyCategory");
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)

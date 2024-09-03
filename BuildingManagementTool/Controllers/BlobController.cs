@@ -28,13 +28,11 @@ namespace BuildingManagementTool.Controllers
             //Check submitted file list isn't empty
             if (files == null || files.Count == 0)
             {
-                var problemDetails = new ProblemDetails
+                return BadRequest(new
                 {
-                    Title = "File Upload Error",
-                    Detail = "No file was uploaded. Please select a file before submitting.",
-                    Status = StatusCodes.Status400BadRequest
-                };
-                return BadRequest(problemDetails);
+                    success = false,
+                    message = "No file was uploaded. Please select a file before submitting."
+                });
             }
             //Check if a blob with the same name exists
             foreach (var file in files)
@@ -43,7 +41,11 @@ namespace BuildingManagementTool.Controllers
                 bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
                 if (blobExists)
                 {
-                    return Conflict($"A blob with the same name already exists. {blobName}");
+                    return Conflict( new
+                    {
+                        success = false,
+                        message = $"A blob with the same name already exists. {blobName}"
+                    });
                 }
                 //Upload to blob storage
                 using (var stream = file.OpenReadStream())
@@ -53,15 +55,12 @@ namespace BuildingManagementTool.Controllers
                     //Check if upload was successful
                     if (!isUploaded)
                     {
-                        var problemDetails = new ProblemDetails
+                        return StatusCode(StatusCodes.Status500InternalServerError, new
                         {
-                            Title = "Upload Error",
-                            Detail = "Failed to upload the file to blob storage",
-                            Status = StatusCodes.Status500InternalServerError
-                        };
-                        return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
+                            success = false,
+                            message = "Failed to upload the file to blob storage."
+                        });
                     }
-
                 }
                 /*Switch Case for the image url using the content type*/
                 string imageUrl;
@@ -74,7 +73,7 @@ namespace BuildingManagementTool.Controllers
                         break;
 
                     case "image/png":
-                        imageUrl = "/imgs/pngpng";
+                        imageUrl = "/imgs/png.png";
                         break;
 
                     case "application/pdf":
@@ -116,13 +115,11 @@ namespace BuildingManagementTool.Controllers
                 {
                     await _blobService.DeleteBlobAsync(containerName, blobName);
 
-                    var problemDetails = new ProblemDetails
+                    return StatusCode(StatusCodes.Status500InternalServerError, new 
                     {
-                        Title = "Database Error",
-                        Detail = "Failed to save metadata in database. The uploaded blob will be removed.",
-                        Status = StatusCodes.Status500InternalServerError
-                    };
-                    return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
+                        success = false,
+                        message = "Failed to save metadata in database. The uploaded blob will be removed."
+                    });
                 }
             }
             return Json(new { success = true });
@@ -137,26 +134,22 @@ namespace BuildingManagementTool.Controllers
             var document = await _documentRepository.GetById(id);
             if (document == null)
             {
-                var problemDetails = new ProblemDetails
+                return StatusCode(StatusCodes.Status404NotFound, new
                 {
-                    Title = "Metadata Not Found",
-                    Detail = "The File MetaData was not found",
-                    Status = StatusCodes.Status404NotFound
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+                    success = false,
+                    message = "The File MetaData was not found"
+                });
             }
             //Delete from blob storage
             bool isDeleted = await _blobService.DeleteBlobAsync(containerName, document.BlobName);
             //Check if succcessful
             if (!isDeleted)
             {
-                var problemDetails = new ProblemDetails
+                return StatusCode(StatusCodes.Status500InternalServerError, new 
                 {
-                    Title = "Deletion Error",
-                    Detail = "An error occurred when deleting the file",
-                    Status = StatusCodes.Status500InternalServerError
-                };
-                return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
+                    success = false,
+                    message = "An error occurred when deleting the file"
+                });
             }
             //Delete metadata if blob is deleted
             await _documentRepository.DeleteDocumentData(document);

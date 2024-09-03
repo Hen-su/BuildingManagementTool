@@ -48,23 +48,27 @@
                                 // Replace the document list with the updated content
                                 $('#documentContainer').html(result);
                                 $('#modalContainer').modal('hide');
+                                $('#documentOptionsContainer').empty();
                             },
                             error: function () {
                                 alert('An error occurred while updating the document list.');
                             }
                         });
                     } else {
-                        alert(response.message || 'An error occurred while deleting the document.');
+                        displayErrorMessage(response);
                     }
                 },
-                error: function () {
-                    alert('An error occurred while deleting the document.');
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
                 }
             });
         })
 
         $(document).on("click", "#submitBtn", function (ev) {
             ev.preventDefault();
+
+            $('#submitBtn').prop('disabled', true).text('Uploading...');
+
             var form = $('#uploadForm')[0];
             var formData = new FormData(form)
             formData.append('id', @Model.CurrentCategory.PropertyCategoryId);
@@ -86,21 +90,39 @@
                                 // Replace the document list with the updated content
                                 $('#documentContainer').html(result);
                                 $('#modalContainer').modal('hide');
+                                $('#submitBtn').prop('disabled', false).text('Upload Now');
                             },
                             error: function () {
                                 alert('An error occurred while updating the document list.');
                             }
                         });
                     } else {
-                        alert(response.message || 'An error occurred while deleting the document.');
+                        displayErrorMessage(response);
+                        $('#submitBtn').prop('disabled', false).text('Upload Now');
                     }
                 },
-                error: function () {
-                    alert('An error occurred while deleting the document.');
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                    $('#submitBtn').prop('disabled', false).text('Upload Now');
                 }
             });
         })
     });
+
+    //Display error message in upload form
+    function displayErrorMessage(response) {
+        let message = 'An unexpected error occurred.';
+
+        if (response.responseJSON && response.responseJSON.message) {
+            message = response.responseJSON.message;
+        } else if (response.message) {
+            message = response.message;
+        } else if (response.statusText) {
+            message = response.statusText;
+        }
+
+        $('.errorContainer').text(message).show();
+    }
 
     function selectUnselect(documentId) {
         // finding clicked card
