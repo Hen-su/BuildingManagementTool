@@ -6,8 +6,8 @@
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
-        var currentUser = UserManager.GetUserAsync(User).Result;
-        <li class="nav-item">
+    var currentUser = UserManager.GetUserAsync(User).Result;
+    <li class="nav-item">
         <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @currentUser.FirstName!</a>
     </li>
     <li class="nav-item">
