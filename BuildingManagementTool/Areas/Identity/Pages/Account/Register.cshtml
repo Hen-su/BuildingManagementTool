@@ -97,13 +97,6 @@
             <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                <h4>First Name</h4>
-                <input asp-for="Input.FirstName" class="form-control" autocomplete="Fist Name" aria-required="true" />
-
-                <h4>Last Name</h4>
-                <input asp-for="Input.LastName" class="form-control" autocomplete="Last Name" />
-
-
                 <h4>Email</h4>
                 <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
