@@ -153,6 +153,10 @@ else
                     $(this).remove(); // Remove the content after sliding up
                     console.log('shrink')
                 });
+                if ($('#modalContainer').length) {
+                    $('#modalContainer').remove();
+                    console.log('Modal container removed');
+                }
                 catDiv.children('h4').first().show();
             }
         });

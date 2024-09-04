@@ -33,6 +33,10 @@
             });
         });
 
+        $('#modalContainer').on('hide.bs.modal', function () {
+            $(this).empty();
+        });
+
         $(document).on('shown.bs.modal', '.modal', function () {
             $('.modal-backdrop').before($(this));
         });
@@ -70,7 +74,7 @@
             });
         })
 
-        $(document).on("click", "#submitBtn", function (ev) {
+        $(document).off("click", "#submitBtn").on("click", "#submitBtn", function (ev) {
             ev.preventDefault();
 
             $('#submitBtn').prop('disabled', true).text('Uploading...');
@@ -96,6 +100,7 @@
                                 // Replace the document list with the updated content
                                 $('#documentContainer').html(result);
                                 $('#modalContainer').modal('hide');
+                                console.log($('#modalContainer'))
                                 $('#submitBtn').prop('disabled', false).text('Upload Now');
                             },
                             error: function () {

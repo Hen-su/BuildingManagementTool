@@ -42,8 +42,10 @@
     $(document).ready(function () {
         //track existing list
         let previousList = new DataTransfer();
+        console.log("first call"+previousList)
         //handle file dropbox events
         const dropBox = () => {
+            console.log("dropbox call")
             const dropArea = document.querySelector('#dropArea')
 
             if (!dropArea) {
@@ -87,8 +89,11 @@
         }
         //handle file selection with input
         const upDateFileInput = () => {
+            console.log("second call")
             const fileInput = document.querySelector('#fileInput');
+            console.log(fileInput)
             const fileList = document.querySelector('#fileList');
+            console.log(fileList)
             fileInput.addEventListener('change', (e) => {
                 console.log(e)
                 //new file
@@ -153,6 +158,7 @@
             updateFileList(updatedDataTransfer.files)
             console.log(updatedDataTransfer.files);
         }
+
         upDateFileInput();
         dropBox();
     });
