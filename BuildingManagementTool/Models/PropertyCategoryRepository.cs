@@ -24,5 +24,14 @@ namespace BuildingManagementTool.Models
         {
             return await _dbContext.PropertyCategories.Where(p => p.PropertyId == id).Include(pc => pc.Category).ToListAsync();
         }
+
+        public async Task AddPropertyCategory(PropertyCategory propertyCategory)
+        {
+            if (propertyCategory != null) 
+            { 
+                await _dbContext.PropertyCategories.AddAsync(propertyCategory);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
     }
 }

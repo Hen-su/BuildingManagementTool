@@ -1,0 +1,137 @@
+﻿@model CategoryViewModel
+
+<div class="container position-relative p-0">
+    <div class="canvasRow row w-100 mx-0 d-flex justify-content-around">
+        @for (int i = 0; i < 4 && i < Model.PropertyCategories.Count(); i++)
+        {
+            <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId">
+                <h4>@Model.PropertyCategories.ElementAt(i).Category.CategoryName</h4>
+                <div class="documentContent container"></div>
+            </div>
+        }
+    </div>
+
+    <div class="canvasRow row w-100 mx-0 d-flex justify-content-around">
+        <div class="col-lg-3 p-0 sideBoxContainer">
+
+            @if (Model.PropertyCategories.Count() > 4)
+            {
+                <div class="sideBox px-2" data-id=" @Model.PropertyCategories.ElementAt(4).PropertyCategoryId">
+                    <h4>@Model.PropertyCategories.ElementAt(4).Category.CategoryName</h4>
+                </div>
+            }
+
+            @if (Model.PropertyCategories.Count() > 5)
+            {
+                <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(5).PropertyCategoryId">
+                    <h4>@Model.PropertyCategories.ElementAt(5).Category.CategoryName</h4>
+                </div>
+            }
+        </div>
+        <div class="propertyBoxContainer col-lg-6 d-flex justify-content-between align-items-center">
+            <div class="w-100 h-auto propertyBox">
+                <img src="@Model.PropertyImageUrl" class="img-fluid" alt="Property Image" />
+            </div>
+        </div>
+        <div class="col-lg-3 p-0 sideBoxContainer">
+
+            @if (Model.PropertyCategories.Count() > 6)
+            {
+                <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(6).PropertyCategoryId">
+                    <h4>@Model.PropertyCategories.ElementAt(6).Category.CategoryName</h4>
+                </div>
+            }
+
+
+            @if (Model.PropertyCategories.Count() > 7)
+            {
+                <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(7).PropertyCategoryId">
+                    <h4>@Model.PropertyCategories.ElementAt(7).Category.CategoryName</h4>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="canvasRow row w-100 mx-0 d-flex justify-content-around">
+        @for (int i = 8; i < Model.PropertyCategories.Count(); i++)
+        {
+            if (@Model.PropertyCategories.ElementAt(i).CategoryId == null)
+            {
+                <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId">
+                    <h4>@Model.PropertyCategories.ElementAt(i).CustomCategory</h4>
+                </div>
+            }
+            else
+            {
+               <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId">
+                    <h4>@Model.PropertyCategories.ElementAt(i).Category.CategoryName</h4>
+                </div> 
+            }
+            
+        }
+    </div>
+
+    <div id="categoryModalContainer" class="modal shadow" role="dialog"></div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $(document).on('click', '.categoryBox, .sideBox', function () {
+            var catDiv = $(this)
+            var categoryId = catDiv.data('id');
+
+            $(document).on('click', '.collapseBtn', function (event) {
+                if (catDiv.hasClass('expanded')) {
+                    catDiv.removeClass('expanded').find('.documentContent').slideUp(function () {
+                        $(this).remove(); // Remove the content after sliding up
+                        console.log('shrink')
+                    });
+                    if ($('#modalContainer').length) {
+                        $('#modalContainer').remove();
+                        console.log('Modal container removed');
+                    }
+                    catDiv.children('h4').first().show();
+                }
+            });
+
+            //Collapse box if already opened
+            if (catDiv.hasClass('expanded')) {
+                catDiv.removeClass('expanded').find('.documentContent').slideUp(function () {
+                    $(this).remove(); // Remove the content after sliding up
+                    console.log('shrink')
+                });
+                catDiv.children('h4').first().show();
+            } else {
+                // Collapse any other expanded boxes
+                $('.categoryBox, .sideBox').removeClass('expanded').find('.documentContent').slideUp(function () {
+                    $(this).remove(); // Remove the content after sliding up
+                    console.log('shrink')
+                });
+                catDiv.children('h4').first().hide();
+                // Expand the clicked box
+                catDiv.addClass('expanded');
+                console.log('expand')
+                $.ajax({
+                    url: '/Document/Index',
+                    type: 'GET',
+                    data: { id: categoryId },
+                    success: function (result) {
+                        var $documentContent = $('<div class="documentContent container"></div>').html(result).hide();
+                        catDiv.append($documentContent); // Append the new content
+                        $documentContent.css('position', 'absolute');
+                        $documentContent.css('cursor', 'default');
+                        $documentContent.slideDown();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error loading documents: " + error);
+                    }
+                });
+            }
+        });
+
+        $(document).on('click', '.documentContent', function (event) {
+            event.stopPropagation(); // Prevents the click from bubbling up to parent elements
+        });
+
+        
+    });
+</script>
