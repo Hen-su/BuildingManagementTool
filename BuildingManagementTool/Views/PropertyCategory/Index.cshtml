@@ -15,7 +15,7 @@
         flex: 1 1 23%;
     }
 
-    .sideBoxContainer:last-child{
+    .sideBoxContainer:last-of-type {
         border-right: 5px solid skyblue;
     }
 
@@ -28,10 +28,10 @@
         border-left: 5px solid skyblue;
     }
 
-        .categoryBox:last-child {
-            border-left: 5px solid skyblue; 
-            border-right: 5px solid skyblue;
-        }
+    .canvasRow .categoryBox:last-of-type {
+        border-left: 5px solid skyblue;
+        border-right: 5px solid skyblue;
+    }
 
         .sideBox:first-child{
         border-bottom: 5px solid skyblue;
@@ -64,10 +64,10 @@
         border-top: 5px solid skyblue;
     }
 
-        .canvasRow:last-child {
-        border-top: 5px solid skyblue;
-            border-bottom: 5px solid skyblue;
+    .canvasRow:last-of-type {
+        border-bottom: 5px solid skyblue;
     }
+
 
 </style>
 
@@ -112,6 +112,8 @@ else
                                 // Replace the document list with the updated content
                                 $('#categoryContainer').html(result);
                                 $('#categoryModalContainer').modal('hide');
+                                $('.modal-backdrop').remove()
+                                $(document.body).removeClass("modal-open");
                             },
                             error: function () {
                                 alert('An error occurred while adding the category');

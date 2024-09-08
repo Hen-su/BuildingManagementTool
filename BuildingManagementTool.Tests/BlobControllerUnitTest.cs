@@ -5,6 +5,7 @@ using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -23,6 +24,7 @@ namespace BuildingManagementTool.Tests
         private Mock<IBlobService> _mockBlobService;
         private Mock<IDocumentRepository> _mockDocumentRepository;
         private Mock<IPropertyCategoryRepository> _mockPropertyCategoryRepository;
+        private Mock<UserManager<ApplicationUser>> _mockUserManager;
         private BlobController _blobController;
 
         [SetUp]
@@ -31,7 +33,8 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository = new Mock<IDocumentRepository>();
             _mockBlobService = new Mock<IBlobService>();
             _mockPropertyCategoryRepository = new Mock<IPropertyCategoryRepository>();
-            _blobController = new BlobController(_mockBlobService.Object, _mockDocumentRepository.Object, _mockPropertyCategoryRepository.Object);
+            _mockUserManager = new Mock<UserManager<ApplicationUser>>();
+            _blobController = new BlobController(_mockBlobService.Object, _mockDocumentRepository.Object, _mockPropertyCategoryRepository.Object, _mockUserManager.Object);
         }
 
         [Test]

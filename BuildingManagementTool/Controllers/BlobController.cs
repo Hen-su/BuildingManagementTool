@@ -2,29 +2,42 @@
 using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Azure;
 
 namespace BuildingManagementTool.Controllers
 {
+    [Authorize]
     public class BlobController : Controller
     {
         private readonly IDocumentRepository _documentRepository;
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IBlobService _blobService;
-        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository)
+        private readonly UserManager<ApplicationUser> _userManager;
+        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository, UserManager<ApplicationUser> userManager)
         {
             _blobService = blobService;
             _documentRepository = documentRepository;
             _propertyCategoryRepository = propertyCategoryRepository;
+            _userManager = userManager;
         }
 
         [HttpPost]
         public async Task<IActionResult> UploadBlob(IList<IFormFile> files, int id)
         {
             var propertyCategory = await _propertyCategoryRepository.GetById(id);
-            var containerName = "test1";
+            if (propertyCategory == null) 
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "The selected category was not found in the database"
+                });
+            }
+
             //Check submitted file list isn't empty
             if (files == null || files.Count == 0)
             {
@@ -34,10 +47,22 @@ namespace BuildingManagementTool.Controllers
                     message = "No file was uploaded. Please select a file before submitting."
                 });
             }
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-"+user.Id;
+
             //Check if a blob with the same name exists
             foreach (var file in files)
             {
-                string blobName = $"{propertyCategory.Category.CategoryName}/{file.FileName}";
+                string blobName;
+                if (propertyCategory.CategoryId != null)
+                {
+                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}/{file.FileName}".Trim().Replace(" ", "-"); 
+                }
+                else
+                {
+                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}/{file.FileName}".Trim().Replace(" ", "-");
+                }
+                 
                 bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
                 if (blobExists)
                 {
@@ -128,8 +153,8 @@ namespace BuildingManagementTool.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteBlob(int? id)
         {
-            //test container
-            var containerName = "test1";
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
             //Check metadata exists
             var document = await _documentRepository.GetById(id);
             if (document == null)
@@ -180,8 +205,8 @@ namespace BuildingManagementTool.Controllers
         [HttpGet] 
         public async Task<IActionResult> Download(int id)
         {
-            //test container
-            var containerName = "test1";
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
             //Check metadata exists
             var document = await _documentRepository.GetById(id);
             if (document == null)
@@ -222,7 +247,8 @@ namespace BuildingManagementTool.Controllers
         //Gets Url of blobs and handles rendering based on content type
         public async Task<IActionResult> RenderFile(int id)
         {
-            var containerName = "test1";
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
             //Check if metadata exists
             var document = await _documentRepository.GetById(id);
             if (document == null)

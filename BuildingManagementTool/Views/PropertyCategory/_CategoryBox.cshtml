@@ -1,0 +1,17 @@
+﻿@model PropertyCategory
+
+@if (Model.CategoryId != null)
+{
+    <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategoryId">
+        <h4>@Model.Category.CategoryName</h4>
+        <div class="documentContent container"></div>
+    </div>
+}
+else
+{
+    <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategoryId">
+        <h4>@Model.CustomCategory</h4>
+        <div class="documentContent container"></div>
+    </div>
+}
+

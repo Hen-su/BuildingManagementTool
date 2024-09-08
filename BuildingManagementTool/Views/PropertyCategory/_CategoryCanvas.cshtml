@@ -1,13 +1,10 @@
 ﻿@model CategoryViewModel
 
-<div class="container position-relative p-0">
+<div class="canvasContainer container position-relative p-0">
     <div class="canvasRow row w-100 mx-0 d-flex justify-content-around">
         @for (int i = 0; i < 4 && i < Model.PropertyCategories.Count(); i++)
         {
-            <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId">
-                <h4>@Model.PropertyCategories.ElementAt(i).Category.CategoryName</h4>
-                <div class="documentContent container"></div>
-            </div>
+            <partial name="_CategoryBox" model="Model.PropertyCategories.ElementAt(i)"></partial>
         }
     </div>
 
@@ -16,16 +13,12 @@
 
             @if (Model.PropertyCategories.Count() > 4)
             {
-                <div class="sideBox px-2" data-id=" @Model.PropertyCategories.ElementAt(4).PropertyCategoryId">
-                    <h4>@Model.PropertyCategories.ElementAt(4).Category.CategoryName</h4>
-                </div>
+                <partial name="_SideBox" model="Model.PropertyCategories.ElementAt(4)"></partial>
             }
 
             @if (Model.PropertyCategories.Count() > 5)
             {
-                <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(5).PropertyCategoryId">
-                    <h4>@Model.PropertyCategories.ElementAt(5).Category.CategoryName</h4>
-                </div>
+                <partial name="_SideBox" model="Model.PropertyCategories.ElementAt(5)"></partial>
             }
         </div>
         <div class="propertyBoxContainer col-lg-6 d-flex justify-content-between align-items-center">
@@ -37,41 +30,38 @@
 
             @if (Model.PropertyCategories.Count() > 6)
             {
-                <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(6).PropertyCategoryId">
-                    <h4>@Model.PropertyCategories.ElementAt(6).Category.CategoryName</h4>
-                </div>
+                <partial name="_SideBox" model="Model.PropertyCategories.ElementAt(6)"></partial>
             }
 
 
             @if (Model.PropertyCategories.Count() > 7)
             {
-                <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(7).PropertyCategoryId">
-                    <h4>@Model.PropertyCategories.ElementAt(7).Category.CategoryName</h4>
-                </div>
+                <partial name="_SideBox" model="Model.PropertyCategories.ElementAt(7)"></partial>
             }
         </div>
     </div>
-    <div class="canvasRow row w-100 mx-0 d-flex justify-content-around">
+    @{
+        var columnsPerRow = 4;
         @for (int i = 8; i < Model.PropertyCategories.Count(); i++)
         {
-            if (@Model.PropertyCategories.ElementAt(i).CategoryId == null)
+            // Start a new row every 4 columns
+            if ((i - 8) % columnsPerRow == 0)
             {
-                <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId">
-                    <h4>@Model.PropertyCategories.ElementAt(i).CustomCategory</h4>
-                </div>
+                if (i > 8)
+                {
+                    @:</div> 
+                }
+                @:<div class="canvasRow row w-100 mx-0 d-flex justify-content-around">
             }
-            else
-            {
-               <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId">
-                    <h4>@Model.PropertyCategories.ElementAt(i).Category.CategoryName</h4>
-                </div> 
-            }
-            
+            <partial name="_CategoryBox" model="Model.PropertyCategories.ElementAt(i)"></partial> 
         }
-    </div>
-
-    <div id="categoryModalContainer" class="modal shadow" role="dialog"></div>
+        @if ((Model.PropertyCategories.Count() - 8) % columnsPerRow != 0)
+        {
+            @:</div>
+        }
+    }   
 </div>
+<div id="categoryModalContainer" class="modal shadow" role="dialog"></div>
 
 <script>
     $(document).ready(function () {
@@ -120,6 +110,7 @@
                         $documentContent.css('position', 'absolute');
                         $documentContent.css('cursor', 'default');
                         $documentContent.slideDown();
+                        $('html, body').animate({ scrollTop: 0 }, 'fast');
                     },
                     error: function (xhr, status, error) {
                         console.error("Error loading documents: " + error);

@@ -6,6 +6,7 @@ namespace BuildingManagementTool.Models
     public class PropertyCategory
     {
         public int PropertyCategoryId { get; set; }
+        [Required]
         public int PropertyId {  get; set; }
         public int? CategoryId { get; set; }
         [StringLength(50)]

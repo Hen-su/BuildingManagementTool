@@ -17,7 +17,7 @@ namespace BuildingManagementTool.Models
 
         public async Task<PropertyCategory> GetById(int id)
         {
-            return await _dbContext.PropertyCategories.Include(pc => pc.Category).FirstOrDefaultAsync(pc => pc.PropertyCategoryId == id);
+            return await _dbContext.PropertyCategories.Include(pc => pc.Category).Include(pc => pc.Property).FirstOrDefaultAsync(pc => pc.PropertyCategoryId == id);
         }
 
         public async Task<IEnumerable<PropertyCategory>> GetByPropertyId(int? id)
@@ -27,11 +27,12 @@ namespace BuildingManagementTool.Models
 
         public async Task AddPropertyCategory(PropertyCategory propertyCategory)
         {
-            if (propertyCategory != null) 
-            { 
-                await _dbContext.PropertyCategories.AddAsync(propertyCategory);
-                await _dbContext.SaveChangesAsync();
+            if (propertyCategory == null)
+            {
+                throw new ArgumentNullException(nameof(propertyCategory), "PropertyCategory cannot be null.");
             }
+            await _dbContext.PropertyCategories.AddAsync(propertyCategory);
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

@@ -22,6 +22,14 @@ namespace BuildingManagementTool.Controllers
             //test id
             id = 1;
             var property = await _propertyRepository.GetById(id);
+            if (property == null) 
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The selected property could not be found"
+                });
+            }
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
             var viewModel = new CategoryViewModel(categories, img, property);
@@ -34,6 +42,14 @@ namespace BuildingManagementTool.Controllers
             //test id
             id = 1;
             var property = await _propertyRepository.GetById(id);
+            if (property == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The selected property could not be found"
+                });
+            }
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
             var viewModel = new CategoryViewModel(categories, img, property);
@@ -47,13 +63,11 @@ namespace BuildingManagementTool.Controllers
             var currentProperty = await _propertyRepository.GetById(id);
             if (currentProperty == null)
             {
-                var problemDetails = new ProblemDetails
+                return StatusCode(StatusCodes.Status404NotFound, new
                 {
-                    Title = "Property Not Found",
-                    Detail = "The selected property was not found",
-                    Status = StatusCodes.Status404NotFound
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+                    success = false,
+                    message = "The selected property could not be found"
+                }); 
             }
             var categories = await _categoryRepository.Categories();
             var categoryFormViewModel = new CategoryFormViewModel(categories, id);
