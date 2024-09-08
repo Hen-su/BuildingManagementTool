@@ -1,17 +1,87 @@
 ﻿@model PropertyCategory
 
-@if (Model.CategoryId != null)
-{
+<style>
+    .menu-button {
+        background-color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 5;
+    }
+
+    .menu-button:hover {
+        background-color: #f0f0f0;
+        border: 1px solid black;     
+    }
+
+    .dropdown-menu {
+        display: none; /* Hide dropdowns initially */
+        position: fixed;
+    }
+
+    .dropdown-menu::before {
+        display: none; 
+    }
+
+    .dropdown-toggle::after {
+        display: none;
+    }
+</style>
+
+
     <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategoryId">
-        <h4>@Model.Category.CategoryName</h4>
+        <div class="boxHeader row g-0">
+        @if (Model.CategoryId != null)
+        {
+            <h4 class="col-11">@Model.Category.CategoryName</h4>
+        }
+        else
+        {
+            <h4 class="col-11">@Model.CustomCategory</h4>
+        }
+            <div class="dropdown show col-1">
+                <button class="w-100 p-0 menu-button btn dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <svg width="40" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="3" r="1.5" fill="currentColor" />
+                        <circle cx="12" cy="10" r="1.5" fill="currentColor" />
+                        <circle cx="12" cy="17" r="1.5" fill="currentColor" />
+                    </svg>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item" href="#">Edit</a>
+                    <a class="dropdown-item" href="#">Delete</a>
+                    <a class="dropdown-item" href="#">Change Color</a>
+                </div>
+            </div>
+        </div>
         <div class="documentContent container"></div>
     </div>
-}
-else
-{
-    <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategoryId">
-        <h4>@Model.CustomCategory</h4>
-        <div class="documentContent container"></div>
-    </div>
-}
+
+<script>
+    $(document).ready(function () {
+            // Click event for dropdown buttons
+        $('.dropdown-toggle').off('click').on('click', function (event) {
+            event.stopPropagation();
+            var $this = $(this);
+            var $dropdownMenu = $this.next('.dropdown-menu');
+
+            // Close other dropdowns
+            $('.dropdown-menu').not($dropdownMenu).slideUp();
+
+            // Toggle current dropdown
+            $dropdownMenu.slideToggle();
+
+            console.log('Dropdown clicked');
+        });
+
+            // Close dropdowns when clicking outside
+        $(document).off('click').on('click', function (event) {
+            if (!$(event.target).closest('.dropdown').length) {
+                $('.dropdown-menu').slideUp();
+            }
+        });
+    });
+</script>
 
