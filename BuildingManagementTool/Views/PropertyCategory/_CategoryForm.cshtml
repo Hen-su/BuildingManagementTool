@@ -1,0 +1,43 @@
+﻿@model CategoryFormViewModel
+
+<div id="categoryModal" class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content px-4">
+        <div class="modal-header">
+            <h2>Add New Category</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+            <form id="categoryForm" method="post">
+                <div class="d-flex flex-column">
+                    <label asp-for="CategoryName" >Select from the list or add custom label:</label>
+                    <input asp-for="CategoryName" id="categoryName" class="form-control" list="suggestions" type="text" placeholder="Enter Category Name"></input>
+                    <span asp-validation-for="CategoryName" class="text-danger"></span>
+                    <datalist id="suggestions">
+                        @foreach (var suggestion in Model.Categories)
+                        {
+                            <option value="@suggestion.CategoryName">@suggestion.CategoryName</option>
+                        }
+                    </datalist>
+                </div>
+            </form>
+            <div class="errorContainer alert alert-danger mt-2" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+            <div class="row justify-content-end">
+                <div class="col-auto">
+                    <button type="button" class="btn-secondary rounded me-2" data-bs-dismiss="modal">Close</button>
+                    <button id="addBtn" form="categoryForm" class="btn-primary rounded" type="button" data-bs-dismiss="modal">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+
+    </script>
+}

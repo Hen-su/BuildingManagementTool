@@ -14,7 +14,7 @@
         </div>
 
         <div class="d-flex flex-column align-items-center">
-            @if (Model.ContentType.StartsWith("video") || Model.ContentType == "application/pdf" || Model.ContentType.StartsWith("image") || User.IsInRole("Viewer") || User.IsInRole("Manager"))
+            @if (Model.ContentType.StartsWith("video") || Model.ContentType == "application/pdf" || Model.ContentType.StartsWith("image"))
             {
                 <a id="viewBtn" data-id = "@Model.DocumentId" class="btn btn-dark mb-2" style="width: 150px;">View</a>
             }
