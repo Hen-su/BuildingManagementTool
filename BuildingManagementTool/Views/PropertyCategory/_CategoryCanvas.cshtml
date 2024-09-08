@@ -79,7 +79,7 @@
                         $('#modalContainer').remove();
                         console.log('Modal container removed');
                     }
-                    catDiv.children('h4').first().show();
+                    catDiv.children('.boxHeader').first().show();
                 }
             });
 
@@ -89,14 +89,14 @@
                     $(this).remove(); // Remove the content after sliding up
                     console.log('shrink')
                 });
-                catDiv.children('h4').first().show();
+                catDiv.children('.boxHeader').first().show();
             } else {
                 // Collapse any other expanded boxes
                 $('.categoryBox, .sideBox').removeClass('expanded').find('.documentContent').slideUp(function () {
                     $(this).remove(); // Remove the content after sliding up
                     console.log('shrink')
                 });
-                catDiv.children('h4').first().hide();
+                catDiv.children('.boxHeader').first().hide();
                 // Expand the clicked box
                 catDiv.addClass('expanded');
                 console.log('expand')

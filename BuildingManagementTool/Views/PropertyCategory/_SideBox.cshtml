@@ -1,15 +1,19 @@
 ﻿@model PropertyCategory
 
-@if (Model.CategoryId != null)
-{
-    <div class="sideBox px-2" data-id=" @Model.PropertyCategoryId">
-        <h4>@Model.Category.CategoryName</h4>
+<div class="sideBox px-2" data-id=" @Model.PropertyCategoryId">
+    <div class="boxHeader row g-0">
+        @if (Model.CategoryId != null)
+        {
+        <h4 class="col-11">@Model.Category.CategoryName</h4>
+        }
+        else
+        {
+        <h4 class="col-11">@Model.CustomCategory</h4>
+        }
+        <partial name="_CategoryDropdownMenu" model="Model"></partial>
     </div>
-}
-else
-{
-    <div class="sideBox px-2" data-id=" @Model.PropertyCategoryId">
-        <h4>@Model.CustomCategory</h4>
-    </div>
-}
+    <div class="documentContent container"></div>
+</div>
+
+
 
