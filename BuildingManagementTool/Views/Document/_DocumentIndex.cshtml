@@ -1,5 +1,8 @@
 ﻿@model DocumentViewModel
 
+
+
+
 <div class="viewHeader container-fluid viewHeader row row-cols-2 justify-content-between p-0">
     <h1 class="col">@Model.CurrentCategory.Category.CategoryName</h1>
     <button class="collapseBtn col btn btn-close" type="button"></button>
@@ -21,11 +24,29 @@
     </div>
 </div>
 
+<div class="col-auto mt-3 float-left" style="position: fixed; left: 2rem; top: 15rem">
+    <div id="documentNotesContainer" style="display: none;">
+    </div>
+</div>
+
+
+
+
 <div id="modalContainer" class="modal shadow" role="dialog"></div>
 
 
 <script>
+
+
+
     $(document).ready(function () {
+
+        
+        var propertyCategoryId = @Model.CurrentCategory.PropertyCategoryId;
+        $("#documentNotesContainer").hide();
+        loadDocumentNotesForCategory(propertyCategoryId);
+
+
         $("#uploadModalBtn").click(function () {
             var propertyCategoryId = @Model.CurrentCategory.PropertyCategoryId;
             var url = "/Document/UploadFormPartial/" + encodeURIComponent(propertyCategoryId);
@@ -131,6 +152,68 @@
         $('.errorContainer').text(message).show();
     }
 
+    // Note submission
+
+    $(document).ready(function () {
+        $('#noteInput').on('input', function () {
+            var note = $(this).val();
+
+            // Check the note length
+            if (note.length > 50) {
+                $('#noteError').text('Note must be only 50 characters long.').show();
+                $('#submitNoteBtn').prop('disabled', true);
+            } else {
+                $('#noteError').hide();
+                $('#submitNoteBtn').prop('disabled', false);
+            }
+        });
+
+
+        $(document).on("click", "#submitNoteBtn", function () {
+            var note = $("#noteInput").val();
+            var documentId = $(this).data("id");
+
+            // Final validation before submitting
+            if (note.length > 50) {
+                $('#noteError').text('Note must be only 50 characters long!').show();
+                return; // Prevent form submission
+            }
+
+            $('#submitNoteBtn').prop('disabled', true).text('Saving...');
+
+            $.ajax({
+                url: '/Document/AddNoteToDocument',
+                type: 'POST',
+                data: {
+                    documentId: documentId,
+                    note: note
+                },
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        $('#modalContainer').modal('hide');
+
+                        // Reload only the notes section for the current category
+                        loadDocumentNotesForCategory(@Model.CurrentCategory.PropertyCategoryId);
+
+                    } else {
+                        displayErrorMessage(response);
+                    }
+                    $('#submitNoteBtn').prop('disabled', false).text('Create Note');
+                },
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                    $('#submitNoteBtn').prop('disabled', false).text('Create Note');
+                }
+            });
+        });
+    });
+
+
+
+
+
+
     function selectUnselect(documentId) {
         // finding clicked card
         var clickedCard = document.querySelector('.doc-card[onclick="selectUnselect(' + documentId + ')"]');
@@ -155,4 +238,16 @@
             });
         }
     }
+
+
+    function loadDocumentNotesForCategory(propertyCategoryId) {
+        $.get('/Document/GetDocumentNotesByCategory', { propertyCategoryId: propertyCategoryId }, function (response) {
+            $('#documentNotesContainer').html(response).slideDown(1000); 
+        });
+    }
+
+
+
+
+
 </script>

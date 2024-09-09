@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
+using SendGrid.Helpers.Mail;
 
 namespace BuildingManagementTool.Models
 {
@@ -46,6 +47,12 @@ namespace BuildingManagementTool.Models
                 }
             }
             return false;
+        }
+
+        public async Task UpdateDocumentAsync(Document document)
+        {
+            _buildingManagementToolDbContext.Documents.Update(document);
+            await _buildingManagementToolDbContext.SaveChangesAsync();
         }
     }
 }

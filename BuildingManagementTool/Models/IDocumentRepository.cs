@@ -6,5 +6,7 @@
         Task<Document> GetById (int? id);
         Task AddDocumentData(Document document);
         Task<bool> DeleteDocumentData(Document document);
+        Task UpdateDocumentAsync(Document document);
+
     }
 }

@@ -35,7 +35,12 @@
             {
               <a id="deleteConfBtn" data-id="@Model.DocumentId" class="btn btn-danger" style="width: 150px;">
                 Delete
-            </a>   
+            </a>
+
+
+                <a id="addNoteBtn" data-id="@Model.DocumentId" class="btn btn-success" style="width: 150px;">
+                    Add Note
+                </a>
             }
            
         </div>
@@ -46,6 +51,19 @@
 
  <script>
     $(document).ready(function () {
+
+
+        $("#addNoteBtn").click(function () {
+            var documentId = $(this).data("id"); // Use the data-id attribute
+            var url = "/Document/AddNoteFormPartial/" + encodeURIComponent(documentId);
+            $("#modalContainer").load(url, function () {
+                $("#modalContainer").modal("show");
+            });
+        })
+
+
+
+
         //Returns a partial view
         $("#viewBtn").click(function () {
             var documentId = $(this).data("id");
@@ -65,6 +83,7 @@
         $("#modalContainer").on('hidden.bs.modal', function () {
             $(this).html(''); // Clear the content
         });
+
     })
 </script>
 

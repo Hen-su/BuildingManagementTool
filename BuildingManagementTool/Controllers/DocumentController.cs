@@ -88,5 +88,75 @@ namespace BuildingManagementTool.Controllers
             }
             return PartialView("_DocumentOptions", document);
         }
+
+        [HttpGet]
+        public IActionResult AddNoteFormPartial(int id)
+        {
+            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found",
+                    Detail = "The document was not found.",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            return PartialView("_AddNoteForm", document); 
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddNoteToDocument(int documentId, string note)
+        {
+            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
+            if (document == null)
+            {
+                return NotFound(new { success = false, message = "Document not found." });
+            }
+
+            // Adding the note to the document
+            document.Note = note;
+
+            // Updating the document in the repository
+            await _documentRepository.UpdateDocumentAsync(document);
+
+            return Json(new { success = true, message = "Note added successfully!" });
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetDocumentNotesByCategory(int propertyCategoryId)
+        {
+            // Retrieve the current property category
+            var currentCategory = await _propertyCategoryRepository.GetById(propertyCategoryId);
+            if (currentCategory == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Category Not Found",
+                    Detail = "The selected property category was not found.",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            // Get all documents for the given property category
+            IEnumerable<Document> documents = _documentRepository.AllDocuments
+                .Where(d => d.PropertyCategoryId == propertyCategoryId).ToList();
+
+            // Check if documents are available
+            if (!documents.Any())
+            {
+                return NotFound(new { success = false, message = "No documents found for this property category." });
+            }
+
+            // Return the partial view with the list of documents and their notes
+            return PartialView("_DocumentNotes", documents);
+        }
+
+
+
     }
 }
