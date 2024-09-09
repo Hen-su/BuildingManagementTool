@@ -90,14 +90,14 @@ else
 
 <script>
     $(document).ready(function () {
-        $(document).on('click', function (event) {
-            console.log('Element clicked:', event.target);
-            console.log('Element classes:', $(event.target).attr('class'));
-            console.log('Element ID:', $(event.target).attr('id'));
+        $('#categoryModalContainer').on('hidden.bs.modal', function () {
+            console.log("emptied");
+            $('body').removeClass('modal-open');
+            $(this).empty();
         });
 
-        $(document).on('click', '#categoryModalBtn', function (event) {
-            event.stopPropagation();
+        $('#categoryModalBtn').click(function (event) {
+            console.log("add category clicked")
             var currentProperty = @Model.Property.PropertyId;
             var url = "/PropertyCategory/CategoryFormPartial/" + encodeURIComponent(currentProperty);
             $("#categoryModalContainer").load(url, function () {
@@ -105,7 +105,7 @@ else
             });
         });
 
-        $(document).off('click', '.addBtn').on('click', '.addBtn', function (event) {
+        $(document).on('click', '#addBtn', function (event) {
             console.log("Add clicked")
             var categoryName = $(".categoryName").val();
             console.log($(".categoryName").val());
@@ -147,7 +147,7 @@ else
             });
         })
 
-        $(document).on("click", ".deleteCategoryConfirmBtn", function () {
+        $(document).on("click", ".deleteCategoryConfirmBtn", function (event) {
             console.log("Delete clicked")
             var categoryId = $(this).data('id');
             $.ajax({
