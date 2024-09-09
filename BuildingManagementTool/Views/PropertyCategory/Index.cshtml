@@ -82,22 +82,34 @@ else
 }
 
 <div id="categoryContainer">
-    <partial name="_CategoryCanvas" model="Model" />;
-    <div class="errorContainer alert alert-danger mt-2" style="display:none;"></div>
+    <partial name="_CategoryCanvas" model="Model" />
 </div>
+<div class="errorContainer alert alert-danger mt-2" style="display:none;"></div>
+<div id="categoryModalContainer" class="modal shadow" role="dialog"></div>
+
+
 <script>
     $(document).ready(function () {
-        $("#categoryModalBtn").click(function () {
-            var currentProperty = 1; //test
+        $(document).on('click', function (event) {
+            console.log('Element clicked:', event.target);
+            console.log('Element classes:', $(event.target).attr('class'));
+            console.log('Element ID:', $(event.target).attr('id'));
+        });
+
+        $(document).on('click', '#categoryModalBtn', function (event) {
+            event.stopPropagation();
+            var currentProperty = @Model.Property.PropertyId;
             var url = "/PropertyCategory/CategoryFormPartial/" + encodeURIComponent(currentProperty);
             $("#categoryModalContainer").load(url, function () {
                 $("#categoryModalContainer").modal("show");
             });
         });
 
-        $(document).on("click", "#addBtn", function () {
+        $(document).off('click', '.addBtn').on('click', '.addBtn', function (event) {
             console.log("Add clicked")
-            var categoryName = $("#categoryName").val();
+            var categoryName = $(".categoryName").val();
+            console.log($(".categoryName").val());
+            console.log($(".categoryName").length);
             $.ajax({
                 url: '/PropertyCategory/AddCategory',
                 type: 'POST',
@@ -109,14 +121,52 @@ else
                             type: 'GET',
                             data: { id: '@Model.Property.PropertyId' },
                             success: function (result) {
-                                // Replace the document list with the updated content
                                 $('#categoryContainer').html(result);
                                 $('#categoryModalContainer').modal('hide');
-                                $('.modal-backdrop').remove()
-                                $(document.body).removeClass("modal-open");
                             },
                             error: function () {
                                 alert('An error occurred while adding the category');
+                            }
+                        });
+                    } else {
+                        displayErrorMessage(response);
+                    }
+                },
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                }
+            });
+        })
+
+        $(document).off("click", ".deleteCategoryModalBtn").on('click', '.deleteCategoryModalBtn', function (event) {
+            event.stopPropagation();
+            console.log("deleteConf clicked")
+            var categoryId = $(this).data("id");
+            $("#categoryModalContainer").load("/PropertyCategory/DeleteConfirmationPartial?id=" + categoryId, function () {
+                $("#categoryModalContainer").modal("show");
+            });
+        })
+
+        $(document).on("click", ".deleteCategoryConfirmBtn", function () {
+            console.log("Delete clicked")
+            var categoryId = $(this).data('id');
+            $.ajax({
+                url: '/Blob/DeletePropertyCategory',
+                type: 'POST',
+                data: { id: categoryId },
+                success: function (response) {
+                    if (response.success) {
+                        $.ajax({
+                            url: '/PropertyCategory/UpdateCategoryCanvas',
+                            type: 'GET',
+                            data: { id: '@Model.Property.PropertyId' },
+                            success: function (result) {
+                                // Replace the document list with the updated content
+                                $('#categoryContainer').html(result);
+                                $('#categoryModalContainer').modal('hide');
+                            },
+                            error: function () {
+                                alert('An error occurred while deleting the category');
                             }
                         });
                     } else {

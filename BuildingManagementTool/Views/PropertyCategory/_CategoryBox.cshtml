@@ -18,7 +18,9 @@
 
     .dropdown-menu {
         display: none; /* Hide dropdowns initially */
-        position: fixed;
+        position: absolute;
+        top: 100%;
+        z-index: 8;
     }
 
     .dropdown-menu::before {
