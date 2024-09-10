@@ -13,30 +13,31 @@
             <h4 class="text-center fw-bold ">Notes</h4>
             <hr />
 
-            @foreach (var document in Model)
+            @if (Model.Any(document => !string.IsNullOrEmpty(document.Note)))
             {
-                <div class="row mb-2">
-                  
-                    <h5 class="card-title col-5 mt-2">Note</h5>
-                    <p class="col-7">
-                        @if (!string.IsNullOrEmpty(document.Note))
-                        {
-                            @document.Note
-                        }
-                        else
-                        {
-                            <em>No note available</em>
-                        }
-                    </p>
-                </div>
-              
+                @foreach (var document in Model)
+                {
+                    @if (!string.IsNullOrEmpty(document.Note))
+                    {
+                        <div class="row mb-2">
+                            <h5 class="card-title col-5 mt-2">Note</h5>
+                            <p class="col-7">@document.Note</p>
+                        </div>
 
-                <div class="row mb-2">
-                    <h5 class="card-title col-5">Doc:</h5>
-                    <p class="col-7">@document.FileName</p>
-                </div> 
-                <hr />
+                        <div class="row mb-2">
+                            <h5 class="card-title col-5">Doc:</h5>
+                            <p class="col-7">@document.FileName</p>
+                        </div>
+                        <hr />
+                    }
                 }
+            }
+            else
+            {
+                <p>No notes available!</p>
+            }
+
+
             </div>
         </div>
     

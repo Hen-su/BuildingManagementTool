@@ -89,10 +89,31 @@ else
             <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId">
                 <h4>@Model.PropertyCategories.ElementAt(i).Category.CategoryName</h4>
 
-                <div class="documentContent container"> 
+                <div class="documentContent container align-content-lg-start"> 
                 
                     <h5 class="fw-bold text-decoration-underline">Notes</h5>
-                    
+                    @foreach (var document in Model.CategoryDocuments[Model.PropertyCategories.ElementAt(i).PropertyCategoryId].Where(d => !string.IsNullOrEmpty(d.Note)).Take(2))
+                    {
+                        <p class="fw-bold">
+                            @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
+                        </p>
+                        <div style="display:flex">
+                            <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />
+
+                            <p>
+                                @(document.FileName.Length > 25 ? document.FileName.Substring(0, 25) + "..." : document.FileName)
+                            </p>
+                        </div>
+                    }
+
+
+
+                    @if (!Model.CategoryDocuments.ContainsKey(Model.PropertyCategories.ElementAt(i).PropertyCategoryId) ||
+                   !Model.CategoryDocuments[Model.PropertyCategories.ElementAt(i).PropertyCategoryId].Any())
+                    {
+                        <p class="mt-4">No documents available for this category.</p>
+                    }
+
                 
                 </div>
             </div>
@@ -106,6 +127,34 @@ else
             {
                 <div class="sideBox px-2" data-id=" @Model.PropertyCategories.ElementAt(4).PropertyCategoryId">
                     <h4>@Model.PropertyCategories.ElementAt(4).Category.CategoryName</h4>
+                    <div class="documentContent container align-content-lg-start">
+
+                        <h5 class="fw-bold text-decoration-underline">Notes</h5>
+                        @foreach (var document in Model.CategoryDocuments[Model.PropertyCategories.ElementAt(4).PropertyCategoryId].Where(d => !string.IsNullOrEmpty(d.Note)).Take(2))
+                        {
+
+                            <p class="fw-bold">
+                                @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
+                            </p>
+                            <div style="display:flex">
+                                <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />
+
+                                <p>
+                                    @(document.FileName.Length > 25 ? document.FileName.Substring(0, 25) + "..." : document.FileName)
+                                </p>
+                            </div>
+
+                        }
+
+
+                        @if (!Model.CategoryDocuments.ContainsKey(Model.PropertyCategories.ElementAt(4).PropertyCategoryId) ||
+                       !Model.CategoryDocuments[Model.PropertyCategories.ElementAt(4).PropertyCategoryId].Any())
+                        {
+                            <p class="mt-4">No documents available for this category.</p>
+                        }
+
+
+                    </div>
                    
                 </div>
             }
@@ -114,6 +163,35 @@ else
             {
                 <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(5).PropertyCategoryId">
                     <h4>@Model.PropertyCategories.ElementAt(5).Category.CategoryName</h4>
+
+                    <div class="documentContent container align-content-lg-start">
+
+                        <h5 class="fw-bold text-decoration-underline">Notes</h5>
+                        @foreach (var document in Model.CategoryDocuments[Model.PropertyCategories.ElementAt(5).PropertyCategoryId].Where(d => !string.IsNullOrEmpty(d.Note)).Take(2))
+                        {
+
+                            <p class="fw-bold">
+                                @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
+                            </p>
+                            <div style="display:flex">
+                                <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />
+
+                                <p>
+                                    @(document.FileName.Length > 25 ? document.FileName.Substring(0, 25) + "..." : document.FileName)
+                                </p>
+                            </div>
+
+                        }
+
+
+                        @if (!Model.CategoryDocuments.ContainsKey(Model.PropertyCategories.ElementAt(5).PropertyCategoryId) ||
+                       !Model.CategoryDocuments[Model.PropertyCategories.ElementAt(5).PropertyCategoryId].Any())
+                        {
+                            <p class="mt-4">No documents available for this category.</p>
+                        }
+
+
+                    </div>
                     
                 </div>
             }
@@ -129,6 +207,34 @@ else
             {
                 <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(6).PropertyCategoryId">
                     <h4>@Model.PropertyCategories.ElementAt(6).Category.CategoryName</h4>
+                    <div class="documentContent container align-content-lg-start">
+
+                        <h5 class="fw-bold text-decoration-underline">Notes</h5>
+                        @foreach (var document in Model.CategoryDocuments[Model.PropertyCategories.ElementAt(6).PropertyCategoryId].Where(d => !string.IsNullOrEmpty(d.Note)).Take(2))
+                        {
+
+                            <p class="fw-bold">
+                                @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
+                            </p>
+                            <div style="display:flex">
+                                <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />
+
+                                <p>
+                                    @(document.FileName.Length > 25 ? document.FileName.Substring(0, 25) + "..." : document.FileName)
+                                </p>
+                            </div>
+
+                        }
+
+
+                        @if (!Model.CategoryDocuments.ContainsKey(Model.PropertyCategories.ElementAt(6).PropertyCategoryId) ||
+                       !Model.CategoryDocuments[Model.PropertyCategories.ElementAt(6).PropertyCategoryId].Any())
+                        {
+                            <p class="mt-4">No documents available for this category.</p>
+                        }
+
+
+                    </div>
                    
                 </div>
             }
@@ -138,7 +244,34 @@ else
             {
                 <div class="sideBox px-2" data-id="@Model.PropertyCategories.ElementAt(7).PropertyCategoryId">
                     <h4>@Model.PropertyCategories.ElementAt(7).Category.CategoryName</h4>
-                  
+                    <div class="documentContent container align-content-lg-start">
+
+                        <h5 class="fw-bold text-decoration-underline">Notes</h5>
+                        @foreach (var document in Model.CategoryDocuments[Model.PropertyCategories.ElementAt(7).PropertyCategoryId].Where(d => !string.IsNullOrEmpty(d.Note)).Take(2))
+                        {
+
+                            <p class="fw-bold">
+                                @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
+                            </p>
+                            <div style="display:flex">
+                                <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />
+
+                                <p>
+                                    @(document.FileName.Length > 25 ? document.FileName.Substring(0, 25) + "..." : document.FileName)
+                                </p>
+                            </div>
+
+                        }
+
+
+                        @if (!Model.CategoryDocuments.ContainsKey(Model.PropertyCategories.ElementAt(7).PropertyCategoryId) ||
+                       !Model.CategoryDocuments[Model.PropertyCategories.ElementAt(7).PropertyCategoryId].Any())
+                        {
+                            <p class="mt-4">No documents available for this category.</p>
+                        }
+
+
+                    </div>
                 </div>
             }
         </div>
@@ -148,7 +281,34 @@ else
         {
             <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategories.ElementAt(i).PropertyCategoryId">
                 <h4>@Model.PropertyCategories.ElementAt(i).Category.CategoryName</h4>
-                
+                <div class="documentContent container align-content-lg-start">
+
+                    <h5 class="fw-bold text-decoration-underline">Notes</h5>
+                    @foreach (var document in Model.CategoryDocuments[Model.PropertyCategories.ElementAt(i).PropertyCategoryId].Where(d => !string.IsNullOrEmpty(d.Note)).Take(2))
+                    {
+
+                        <p class="fw-bold">
+                            @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
+                        </p>
+                        <div style="display:flex">
+                            <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />
+
+                            <p>
+                                @(document.FileName.Length > 25 ? document.FileName.Substring(0, 25) + "..." : document.FileName)
+                            </p>
+                        </div>
+
+                    }
+
+
+                    @if (!Model.CategoryDocuments.ContainsKey(Model.PropertyCategories.ElementAt(i).PropertyCategoryId) ||
+                   !Model.CategoryDocuments[Model.PropertyCategories.ElementAt(i).PropertyCategoryId].Any())
+                    {
+                        <p class="mt-4">No documents available for this category.</p>
+                    }
+
+
+                </div>
             </div>
         }
     </div>
@@ -163,6 +323,7 @@ else
             if (catDiv.hasClass('expanded')) {
                 catDiv.removeClass('expanded').find('.documentContent').slideUp(function () {
                     $(this).remove(); // Remove the content after sliding up
+                    location.reload();
                     console.log('shrink')
                 });
                 catDiv.children('h4').first().show();

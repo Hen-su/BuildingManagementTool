@@ -54,5 +54,12 @@ namespace BuildingManagementTool.Models
             _buildingManagementToolDbContext.Documents.Update(document);
             await _buildingManagementToolDbContext.SaveChangesAsync();
         }
+
+        public async Task<List<Document>> GetDocumentsByCategoryId(int categoryId)
+        {
+            return await _buildingManagementToolDbContext.Documents
+                .Where(d => d.PropertyCategoryId == categoryId) 
+                .ToListAsync();
+        }
     }
 }

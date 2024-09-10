@@ -77,6 +77,9 @@
                                 $('#documentContainer').html(result);
                                 $('#modalContainer').modal('hide');
                                 $('#documentOptionsContainer').empty();
+                                //to reload the notes list once a document is deleted
+                                loadDocumentNotesForCategory(@Model.CurrentCategory.PropertyCategoryId);
+
                             },
                             error: function () {
                                 alert('An error occurred while updating the document list.');
@@ -190,10 +193,9 @@
                 },
                 success: function (response) {
                     if (response.success) {
-                        alert(response.message);
                         $('#modalContainer').modal('hide');
 
-                        // Reload only the notes section for the current category
+                        // Reload only the notes section to see the updated changes
                         loadDocumentNotesForCategory(@Model.CurrentCategory.PropertyCategoryId);
 
                     } else {
