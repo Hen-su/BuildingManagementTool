@@ -11,11 +11,13 @@ namespace BuildingManagementTool.Controllers
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IPropertyRepository _propertyRepository;
         private readonly ICategoryRepository _categoryRepository;
-        public PropertyCategoryController(IPropertyCategoryRepository propertyCategoryRepository, IPropertyRepository propertyRepository, ICategoryRepository categoryRepository)
+        private readonly IDocumentRepository _documentRepository;
+        public PropertyCategoryController(IPropertyCategoryRepository propertyCategoryRepository, IPropertyRepository propertyRepository, ICategoryRepository categoryRepository, IDocumentRepository documentRepository)
         {
             _propertyCategoryRepository = propertyCategoryRepository;
             _propertyRepository = propertyRepository;
             _categoryRepository = categoryRepository;
+            _documentRepository = documentRepository;
         }
         public async Task<IActionResult> Index(int id)
         {
@@ -116,6 +118,20 @@ namespace BuildingManagementTool.Controllers
                 success = false,
                 message = "An error occurred when adding new category. Please try again"
             });
+        }
+
+        public async Task<IActionResult> DeleteConfirmationPartial(int id)
+        {
+            var category = await _propertyCategoryRepository.GetById(id);
+            if (category == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "Could not find matching category"
+                });
+            }
+            return PartialView("_CategoryDeleteConfirmation", category);
         }
     }
 }

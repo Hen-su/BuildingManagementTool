@@ -18,7 +18,9 @@
 
     .dropdown-menu {
         display: none; /* Hide dropdowns initially */
-        position: fixed;
+        position: absolute;
+        top: 100%;
+        z-index: 8;
     }
 
     .dropdown-menu::before {
@@ -64,8 +66,10 @@
         });
 
             // Close dropdowns when clicking outside
-        $(document).off('click').on('click', function (event) {
+        $(document).on('click', function (event) {
+            // Check if the click is outside of any dropdown
             if (!$(event.target).closest('.dropdown').length) {
+                // Hide all dropdown menus
                 $('.dropdown-menu').slideUp();
             }
         });

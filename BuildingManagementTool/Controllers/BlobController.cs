@@ -298,5 +298,50 @@ namespace BuildingManagementTool.Controllers
                 return StatusCode(StatusCodes.Status415UnsupportedMediaType, problemDetails);
             }
         }
+
+        [HttpPost]
+        public async Task<IActionResult> DeletePropertyCategory(int id)
+        {
+            var propertyCategory = await _propertyCategoryRepository.GetById(id);
+            if (propertyCategory == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "Could not find matching category"
+                });
+            }
+            var documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == propertyCategory.PropertyCategoryId).ToList();
+            if (documents.Any())
+            {
+                foreach (var document in documents)
+                {
+                    await _documentRepository.DeleteDocumentData(document);
+                }
+            }
+            await _propertyCategoryRepository.DeletePropertyCategory(propertyCategory);
+
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
+            string prefix;
+            if (propertyCategory.CategoryId != null)
+            {
+                prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}".Trim().Replace(" ", "-");
+            }
+            else
+            {
+                prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim().Replace(" ", "-");
+            }
+            var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
+            if (!deleteSuccess) 
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = "An error occurred while deleting the category, Please try again"
+                });
+            }
+            return Json(new { success = true });
+        }
     }
 }

@@ -108,5 +108,23 @@ namespace BuildingManagementTool.Services
             }
         }
 
+        public async Task<bool> DeleteByPrefix(string containerName, string prefix)
+        {
+            try
+            {
+                var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+                await foreach (BlobItem blobItem in containerClient.GetBlobsAsync(prefix: prefix))
+                {
+                    BlobClient blobClient = containerClient.GetBlobClient(blobItem.Name);
+                    await blobClient.DeleteIfExistsAsync();
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
     }
 }
