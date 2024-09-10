@@ -332,7 +332,15 @@ namespace BuildingManagementTool.Controllers
             {
                 prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim().Replace(" ", "-");
             }
-            await _blobService.DeleteByPrefix(containerName, prefix);
+            var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
+            if (!deleteSuccess) 
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = "An error occurred while deleting the category, Please try again"
+                });
+            }
             return Json(new { success = true });
         }
     }

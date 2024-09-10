@@ -133,29 +133,5 @@ namespace BuildingManagementTool.Controllers
             }
             return PartialView("_CategoryDeleteConfirmation", category);
         }
-
-        [HttpPost]
-        public async Task<IActionResult> DeletePropertyCategory(int id)
-        {
-            var category = await _propertyCategoryRepository.GetById(id);
-            if (id == null)
-            {
-                return StatusCode(StatusCodes.Status404NotFound, new
-                {
-                    success = false,
-                    message = "Could not find matching category"
-                });
-            }
-            var documents =  _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == category.PropertyCategoryId).ToList();
-            if (documents != null)
-            {
-                foreach (var document in documents)
-                {
-                    _documentRepository.DeleteDocumentData(document);
-                }
-            }
-            _propertyCategoryRepository.DeletePropertyCategory(category);
-            return Json(new { success = true });
-        }
     }
 }

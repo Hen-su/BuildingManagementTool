@@ -19,6 +19,7 @@ namespace BuildingManagementTool.Tests
         private Mock<IPropertyCategoryRepository> _mockPropertyCategoryRepository;
         private Mock<IPropertyRepository> _mockPropertyRepository;
         private Mock<ICategoryRepository> _mockCategoryRepository;
+        private Mock<IDocumentRepository> _mockDocumentRepository;
         private PropertyCategoryController _propertyCategoryController;
 
         [SetUp]
@@ -27,7 +28,8 @@ namespace BuildingManagementTool.Tests
             _mockPropertyCategoryRepository = new Mock<IPropertyCategoryRepository>();
             _mockPropertyRepository = new Mock<IPropertyRepository>();
             _mockCategoryRepository = new Mock<ICategoryRepository>();
-            _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object, _mockPropertyRepository.Object, _mockCategoryRepository.Object);
+            _mockDocumentRepository = new Mock<IDocumentRepository>();
+            _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object, _mockPropertyRepository.Object, _mockCategoryRepository.Object, _mockDocumentRepository.Object);
         }
 
         [Test]
@@ -169,6 +171,55 @@ namespace BuildingManagementTool.Tests
 
         [Test]
         public async Task AddCategory_PropertyExists_ReturnError()
+        {
+            int id = 1;
+            Models.Property property = null;
+            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+
+            var list = new List<Category>
+            {
+                new Category{ CategoryId = 1, CategoryName = "Test1" },
+                new Category{ CategoryId = 2, CategoryName = "Test2" },
+                new Category{ CategoryId = 3, CategoryName = "Test3" }
+            };
+            string categoryName = "NewCategory";
+            _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
+
+            var result = await _propertyCategoryController.AddCategory(1, categoryName);
+            _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
+
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
+        [Test]
+        public async Task DeleteCategory_PropertyExists_ReturnSuccess()
+        {
+            int id = 1;
+            Models.Property property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+
+            var list = new List<Category>
+            {
+                new Category{ CategoryId = 1, CategoryName = "Test1" },
+                new Category{ CategoryId = 2, CategoryName = "Test2" },
+                new Category{ CategoryId = 3, CategoryName = "Test3" }
+            };
+            string categoryName = "NewCategory";
+            _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
+
+            var result = await _propertyCategoryController.AddCategory(1, categoryName);
+            _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Once);
+
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task DeleteCategory_PropertyExists_ReturnError()
         {
             int id = 1;
             Models.Property property = null;

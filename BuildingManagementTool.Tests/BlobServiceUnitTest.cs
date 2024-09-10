@@ -6,6 +6,7 @@ using Azure.Storage.Blobs.Specialized;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using Castle.Components.DictionaryAdapter.Xml;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
@@ -65,19 +66,19 @@ namespace BuildingManagementTool.Tests
                 blobSequenceNumber: 1,
                 versionId: "version1",
                 contentHash: Convert.FromBase64String("dGVzdGhhc2g=")
-               ); 
+               );
 
             var mockResponse = Response.FromValue(mockBlobContentInfo, null);
 
             _mockBlobClient.Setup(x => x.UploadAsync(
-                It.IsAny<Stream>(),                           
-                It.Is<BlobHttpHeaders>(h => h.ContentType == "text/plain"), 
-                It.IsAny<IDictionary<string, string>>(),    
-                It.IsAny<BlobRequestConditions>(),           
-                It.IsAny<IProgress<long>>(),              
-                It.IsAny<AccessTier?>(),                    
-                It.IsAny<StorageTransferOptions>(),       
-                It.IsAny<CancellationToken>()))            
+                It.IsAny<Stream>(),
+                It.Is<BlobHttpHeaders>(h => h.ContentType == "text/plain"),
+                It.IsAny<IDictionary<string, string>>(),
+                It.IsAny<BlobRequestConditions>(),
+                It.IsAny<IProgress<long>>(),
+                It.IsAny<AccessTier?>(),
+                It.IsAny<StorageTransferOptions>(),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mockResponse);
 
             var response = await _blobService.UploadBlobAsync(containerName, blobName, content, headers);
@@ -90,7 +91,7 @@ namespace BuildingManagementTool.Tests
                 It.IsAny<IProgress<long>>(),
                 It.IsAny<AccessTier?>(),
                 It.IsAny<StorageTransferOptions>(),
-                It.IsAny<CancellationToken>()), 
+                It.IsAny<CancellationToken>()),
                 Times.Once());
 
             Assert.True(response);
@@ -146,7 +147,7 @@ namespace BuildingManagementTool.Tests
         public async Task DeleteBlobAsync_FileExists_Success()
         {
             var containerName = "test";
-            var blobName = "category/test.txt";
+            var blobName = "property/category/test.txt";
             var mockResponse = new Mock<Response<bool>>();
             mockResponse.Setup(m => m.Value).Returns(true);
 
@@ -163,7 +164,7 @@ namespace BuildingManagementTool.Tests
         public async Task DeleteBlobAsync_FileNotExists_Fail()
         {
             var containerName = "test";
-            var blobName = "category/test.txt";
+            var blobName = "property/category/test.txt";
             var mockResponse = new Mock<Response<bool>>();
             mockResponse.Setup(m => m.Value).Returns(false);
 
@@ -180,7 +181,7 @@ namespace BuildingManagementTool.Tests
         public async Task GetBlobUrlAsync_BlobExists_Success()
         {
             var containerName = "test";
-            var blobName = "category/test.txt";
+            var blobName = "property/category/test.txt";
             var expectedUrl = "https://example.com/test/test.txt";
             var mockResponse = new Mock<Response<bool>>();
             mockResponse.Setup(m => m.Value).Returns(true);
@@ -198,7 +199,7 @@ namespace BuildingManagementTool.Tests
         public async Task GetBlobUrlAsync_BlobNotExist_Success()
         {
             var containerName = "test";
-            var blobName = "category/test.txt";
+            var blobName = "property/category/test.txt";
             var expectedUrl = "https://example.com/test/test.txt";
             var mockResponse = new Mock<Response<bool>>();
             mockResponse.Setup(m => m.Value).Returns(false);
@@ -238,7 +239,7 @@ namespace BuildingManagementTool.Tests
         public async Task DownloadBlobAsync_BlobDoesNotExist_Fail_ReturnsNull()
         {
             var containerName = "test";
-            var blobName = "category/test.txt";
+            var blobName = "property/category/test.txt";
 
             _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(containerName))
                 .Returns(_mockBlobContainerClient.Object);
@@ -258,7 +259,7 @@ namespace BuildingManagementTool.Tests
         public async Task DownloadBlobAsync_ExceptionThrown_ReturnsNull()
         {
             var containerName = "test";
-            var blobName = "category/test.txt";
+            var blobName = "property/category/test.txt";
 
             _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(containerName))
                 .Throws(new Exception("Test exception"));
@@ -266,6 +267,80 @@ namespace BuildingManagementTool.Tests
             var result = await _blobService.DownloadBlobAsync(containerName, blobName);
 
             Assert.IsNull(result);
+        }
+
+        [Test]
+        public async Task DeleteByPrefix_DeleteSuccess_ReturnTrue()
+        {
+            var containerName = "test";
+            var prefix = "property/category";
+            var blobName1 = "property/category/test.txt";
+            var blobName2 = "property/category/test2.txt";
+            var blobList = new BlobItem[]
+            {
+                BlobsModelFactory.BlobItem(blobName1),
+                BlobsModelFactory.BlobItem(blobName2),
+            };
+
+            Page<BlobItem> page = Page<BlobItem>.FromValues(blobList, null, Mock.Of<Response>());
+            AsyncPageable<BlobItem> pageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { page });
+
+            _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns(_mockBlobContainerClient.Object);
+
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(It.IsAny<string>()))
+                .Returns(_mockBlobClient.Object);
+
+            _mockBlobContainerClient
+                .Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Returns(pageableBlobList);
+
+            _mockBlobContainerClient.Setup(x => x.DeleteIfExistsAsync(It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>())).ReturnsAsync(Response.FromValue(true, null));
+
+            var result = await _blobService.DeleteByPrefix(containerName, prefix);
+
+            _mockBlobContainerClient
+                .Verify(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            _mockBlobClient
+                .Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public async Task DeleteByPrefix_DeleteFailed_ReturnFalse()
+        {
+            var containerName = "test";
+            var prefix = "property/category";
+            var blobName1 = "property/category/test.txt";
+            var blobName2 = "property/category/test2.txt";
+            var blobList = new BlobItem[]
+            {
+                BlobsModelFactory.BlobItem(blobName1),
+                BlobsModelFactory.BlobItem(blobName2),
+            };
+
+            Page<BlobItem> page = Page<BlobItem>.FromValues(blobList, null, Mock.Of<Response>());
+            AsyncPageable<BlobItem> pageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { page });
+
+            _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns(_mockBlobContainerClient.Object);
+
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(It.IsAny<string>()))
+                .Returns(_mockBlobClient.Object);
+
+            _mockBlobContainerClient
+                .Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Throws(new Exception("Simulated Exception"));
+
+            var result = await _blobService.DeleteByPrefix(containerName, prefix);
+
+            _mockBlobContainerClient
+                .Verify(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            _mockBlobClient
+                .Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Never);
+            Assert.IsFalse(result);
         }
     }
 }
