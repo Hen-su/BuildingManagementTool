@@ -186,13 +186,11 @@ namespace BuildingManagementTool.Controllers
             var document = await _documentRepository.GetById(id);
             if (document == null)
             {
-                var problemDetails = new ProblemDetails
+                return StatusCode(StatusCodes.Status404NotFound, new
                 {
-                    Title = "Metadata Not Found",
-                    Detail = "The File MetaData was not found",
-                    Status = StatusCodes.Status404NotFound
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+                    success = false,
+                    message = "The File MetaData was not found"
+                });
             }
             return PartialView("_DeleteConfirmation", document);
         }
@@ -211,25 +209,21 @@ namespace BuildingManagementTool.Controllers
             var document = await _documentRepository.GetById(id);
             if (document == null)
             {
-                var problemDetails = new ProblemDetails
+                return StatusCode(StatusCodes.Status404NotFound, new
                 {
-                    Title = "Document Not Found",
-                    Detail = "The Document was not found",
-                    Status = StatusCodes.Status404NotFound
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+                    success = false,
+                    message = "The File MetaData was not found"
+                });
             }
             //Download blob
             var stream = await _blobService.DownloadBlobAsync(containerName, document.BlobName);
             if (stream == null)
             {
-                var problemDetails = new ProblemDetails
+                return StatusCode(StatusCodes.Status404NotFound, new
                 {
-                    Title = "File Not Found",
-                    Detail = "The file was not found in blob storage",
-                    Status = StatusCodes.Status404NotFound
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+                    success = false,
+                    message = "The File was not found in blob storage"
+                });
             }
 
             return File(stream, document.ContentType, document.FileName);
