@@ -61,11 +61,13 @@
         }
     }   
 </div>
-<div id="categoryModalContainer" class="modal shadow" role="dialog"></div>
 
 <script>
     $(document).ready(function () {
-        $(document).on('click', '.categoryBox, .sideBox', function () {
+        $(document).on('click', '.categoryBox, .sideBox', function (event) {
+            if ($(event.target).is('.dropdown, .dropdown *')) {
+                return;
+            }
             var catDiv = $(this)
             var categoryId = catDiv.data('id');
 

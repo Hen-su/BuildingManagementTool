@@ -50,6 +50,24 @@ namespace BuildingManagementTool.Tests
             await _propertyCategoryRepository.AddPropertyCategory(newCategory));
         }
 
+        [Test]
+        public async Task DeletePropertyCategory_PropertyCategoryExists_AddSuccess()
+        {
+            PropertyCategory newCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1 };
+            await _propertyCategoryRepository.AddPropertyCategory(newCategory);
+            await _propertyCategoryRepository.DeletePropertyCategory(newCategory);
+            var savedCategory = await _dbContext.PropertyCategories.FindAsync(1);
+            Assert.That(savedCategory == null);
+        }
+
+        [Test]
+        public async Task DeletePropertyCategory_PropertyCategoryNull_ThrowEx()
+        {
+            PropertyCategory newCategory = null;
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await _propertyCategoryRepository.AddPropertyCategory(newCategory));
+        }
+
         [TearDown]
         public void Teardown()
         {

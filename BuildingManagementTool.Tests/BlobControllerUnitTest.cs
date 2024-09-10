@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -33,7 +34,17 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository = new Mock<IDocumentRepository>();
             _mockBlobService = new Mock<IBlobService>();
             _mockPropertyCategoryRepository = new Mock<IPropertyCategoryRepository>();
-            _mockUserManager = new Mock<UserManager<ApplicationUser>>();
+            _mockUserManager = new Mock<UserManager<ApplicationUser>>(
+            Mock.Of<IUserStore<ApplicationUser>>(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
             _blobController = new BlobController(_mockBlobService.Object, _mockDocumentRepository.Object, _mockPropertyCategoryRepository.Object, _mockUserManager.Object);
         }
 
@@ -396,6 +407,43 @@ namespace BuildingManagementTool.Tests
             Assert.That(result.FileDownloadName.Equals(document.FileName));
         }
 
+        [Test]
+        public async Task DeletePropertyCategory_DeleteSuccess_ReturnSuccess()
+        {
+            var propertyCategoryId = 1;
+            var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
+            var category = new Category { CategoryId = 1, CategoryName = "Test Category" };
+            var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1, Property = property, Category = category };
+            
+            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
+            .ReturnsAsync(propertyCategory);
+
+            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+
+            var result = await _blobController.DeletePropertyCategory(propertyCategoryId);
+            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task DeletePropertyCategory_DeleteFailed_ReturnError()
+        {
+            var propertyCategoryId = 1;
+            var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
+            var category = new Category { CategoryId = 1, CategoryName = "Test Category" };
+            var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1, Property = property, Category = category };
+
+            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
+            .ReturnsAsync(propertyCategory);
+
+            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
 
             var result = await _blobController.DeletePropertyCategory(propertyCategoryId);
 
