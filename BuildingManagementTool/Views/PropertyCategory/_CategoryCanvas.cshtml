@@ -4,7 +4,7 @@
     <div class="canvasRow row w-100 mx-0 d-flex justify-content-around">
         @for (int i = 0; i < 4 && i < Model.PropertyCategories.Count(); i++)
         {
-            <partial name="_CategoryBox" model="Model.PropertyCategories.ElementAt(i)"></partial>
+            <partial name="_CategoryBox" model="Model.CategoryPreviewViewModels.ElementAt(i)"></partial>
         }
     </div>
 
@@ -13,12 +13,12 @@
 
             @if (Model.PropertyCategories.Count() > 4)
             {
-                <partial name="_SideBox" model="Model.PropertyCategories.ElementAt(4)"></partial>
+                <partial name="_SideBox" model="Model.CategoryPreviewViewModels.ElementAt(4)"></partial>
             }
 
             @if (Model.PropertyCategories.Count() > 5)
             {
-                <partial name="_SideBox" model="Model.PropertyCategories.ElementAt(5)"></partial>
+                <partial name="_SideBox" model="Model.CategoryPreviewViewModels.ElementAt(5)"></partial>
             }
         </div>
         <div class="propertyBoxContainer col-lg-6 d-flex justify-content-between align-items-center">
@@ -30,13 +30,13 @@
 
             @if (Model.PropertyCategories.Count() > 6)
             {
-                <partial name="_SideBox" model="Model.PropertyCategories.ElementAt(6)"></partial>
+                <partial name="_SideBox" model="Model.CategoryPreviewViewModels.ElementAt(6)"></partial>
             }
 
 
             @if (Model.PropertyCategories.Count() > 7)
             {
-                <partial name="_SideBox" model="Model.PropertyCategories.ElementAt(7)"></partial>
+                <partial name="_SideBox" model="Model.CategoryPreviewViewModels.ElementAt(7)"></partial>
             }
         </div>
     </div>
@@ -53,7 +53,7 @@
                 }
                 @:<div class="canvasRow row w-100 mx-0 d-flex justify-content-around">
             }
-            <partial name="_CategoryBox" model="Model.PropertyCategories.ElementAt(i)"></partial> 
+            <partial name="_CategoryBox" model="Model.CategoryPreviewViewModels.ElementAt(i)"></partial> 
         }
         @if ((Model.PropertyCategories.Count() - 8) % columnsPerRow != 0)
         {
@@ -70,10 +70,10 @@
             }
             var catDiv = $(this)
             var categoryId = catDiv.data('id');
-
+            var previewContainer = catDiv.find('.previewContainer');
             $(document).on('click', '.collapseBtn', function (event) {
                 if (catDiv.hasClass('expanded')) {
-                    catDiv.removeClass('expanded').find('.documentContent').slideUp(function () {
+                    catDiv.removeClass('expanded').find('.documentContent').hide(function () {
                         $(this).remove(); // Remove the content after sliding up
                         console.log('shrink')
                     });
@@ -81,24 +81,28 @@
                         $('#modalContainer').remove();
                         console.log('Modal container removed');
                     }
+                    previewContainer.show();
                     catDiv.children('.boxHeader').first().show();
                 }
             });
 
             //Collapse box if already opened
             if (catDiv.hasClass('expanded')) {
-                catDiv.removeClass('expanded').find('.documentContent').slideUp(function () {
+                catDiv.removeClass('expanded').find('.documentContent').hide(function () {
                     $(this).remove(); // Remove the content after sliding up
+                    previewContainer.show();
+                    catDiv.children('.boxHeader').first().show();
                     console.log('shrink')
                 });
-                catDiv.children('.boxHeader').first().show();
+                
             } else {
                 // Collapse any other expanded boxes
-                $('.categoryBox, .sideBox').removeClass('expanded').find('.documentContent').slideUp(function () {
+                $('.categoryBox, .sideBox').removeClass('expanded').find('.documentContent').hide(function () {
                     $(this).remove(); // Remove the content after sliding up
                     console.log('shrink')
                 });
                 catDiv.children('.boxHeader').first().hide();
+                catDiv.children('.previewContainer').first().hide();
                 // Expand the clicked box
                 catDiv.addClass('expanded');
                 console.log('expand')
@@ -124,7 +128,5 @@
         $(document).on('click', '.documentContent', function (event) {
             event.stopPropagation(); // Prevents the click from bubbling up to parent elements
         });
-
-        
     });
 </script>

@@ -38,19 +38,17 @@ namespace BuildingManagementTool.Controllers
             var img = "/imgs/sample-house.jpeg";
 
             var documentsByCategory = new Dictionary<int, List<Document>>();
-
+            List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
             foreach (var category in categories)
             {
                 // Fetch documents by category id
                 var documents = await _documentRepository.GetDocumentsByCategoryId(category.PropertyCategoryId);
+                documents = documents.Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
+                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
             }
 
-            var viewModel = new CategoryViewModel(categories, img)
-            {
-                CategoryDocuments = documentsByCategory // Add the document data to the ViewModel
-            };
-
+            var viewModel = new CategoryViewModel(categories, img, property, previewViewModels);
             return View(viewModel);
         }
 
@@ -70,7 +68,19 @@ namespace BuildingManagementTool.Controllers
             }
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
-            var viewModel = new CategoryViewModel(categories, img, property);
+
+            var documentsByCategory = new Dictionary<int, List<Document>>();
+            List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
+            foreach (var category in categories)
+            {
+                // Fetch documents by category id
+                var documents = await _documentRepository.GetDocumentsByCategoryId(category.PropertyCategoryId);
+                documents = documents.Take(2).ToList();
+                documentsByCategory[category.PropertyCategoryId] = documents;
+                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
+            }
+
+            var viewModel = new CategoryViewModel(categories, img, property, previewViewModels);
             return PartialView("_CategoryCanvas", viewModel);
         }
 

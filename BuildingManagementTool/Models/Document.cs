@@ -19,9 +19,6 @@ namespace BuildingManagementTool.Models
         public string FileImageUrl { get; set; }
         public int PropertyCategoryId { get; set; }
         public PropertyCategory PropertyCategory { get; set; }
-
         public string? Note { get; set; }
-
-
     }
 }

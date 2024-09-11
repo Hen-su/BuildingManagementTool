@@ -35,19 +35,10 @@
     </div>
 </div>
 
-
-
-
 <div id="modalContainer" class="modal shadow" role="dialog"></div>
 
-
 <script>
-
-
-
     $(document).ready(function () {
-
-        
         var propertyCategoryId = @Model.CurrentCategory.PropertyCategoryId;
         $("#documentNotesContainer").hide();
         loadDocumentNotesForCategory(propertyCategoryId);
@@ -149,26 +140,8 @@
                 }
             });
         })
-    });
+        // Note submission
 
-    //Display error message in upload form
-    function displayErrorMessage(response) {
-        let message = 'An unexpected error occurred.';
-
-        if (response.responseJSON && response.responseJSON.message) {
-            message = response.responseJSON.message;
-        } else if (response.message) {
-            message = response.message;
-        } else if (response.statusText) {
-            message = response.statusText;
-        }
-
-        $('.errorContainer').text(message).show();
-    }
-
-    // Note submission
-
-    $(document).ready(function () {
         $('#noteInput').on('input', function () {
             var note = $(this).val();
 
@@ -181,7 +154,6 @@
                 $('#submitNoteBtn').prop('disabled', false);
             }
         });
-
 
         $(document).on("click", "#submitNoteBtn", function () {
             var note = $("#noteInput").val();
@@ -222,10 +194,20 @@
         });
     });
 
+    //Display error message in upload form
+    function displayErrorMessage(response) {
+        let message = 'An unexpected error occurred.';
 
+        if (response.responseJSON && response.responseJSON.message) {
+            message = response.responseJSON.message;
+        } else if (response.message) {
+            message = response.message;
+        } else if (response.statusText) {
+            message = response.statusText;
+        }
 
-
-
+        $('.errorContainer').text(message).show();
+    }
 
     function selectUnselect(documentId) {
         // finding clicked card
@@ -252,15 +234,10 @@
         }
     }
 
-
     function loadDocumentNotesForCategory(propertyCategoryId) {
         $.get('/Document/GetDocumentNotesByCategory', { propertyCategoryId: propertyCategoryId }, function (response) {
-            $('#documentNotesContainer').html(response).slideDown(1000); 
+            $('#documentNotesContainer').html(response).slideDown(); 
         });
     }
-
-
-
-
 
 </script>

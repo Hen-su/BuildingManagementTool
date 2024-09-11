@@ -1,4 +1,4 @@
-﻿@model PropertyCategory
+﻿@model CategoryPreviewViewModel
 
 <style>
     .menu-button {
@@ -33,19 +33,23 @@
 </style>
 
 
-    <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategoryId">
+    <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategory.PropertyCategoryId">
         <div class="boxHeader row g-0">
-        @if (Model.CategoryId != null)
+        @if (Model.PropertyCategory.CategoryId != null)
         {
-            <h4 class="col-11">@Model.Category.CategoryName</h4>
+            <h4 class="col-11">@Model.PropertyCategory.Category.CategoryName</h4>
         }
         else
         {
-            <h4 class="col-11">@Model.CustomCategory</h4>
+            <h4 class="col-11">@Model.PropertyCategory.CustomCategory</h4>
         }
-            <partial name="_CategoryDropdownMenu" model="Model"></partial>
+            <partial name="_CategoryDropdownMenu" model="Model.PropertyCategory"></partial>
         </div>
-        <div class="documentContent container"></div>
+    <div class="previewContainer container align-content-lg-start">
+        <partial name="_CategoryPreview" model="Model"></partial>
+    </div>
+        <div class="documentContent container align-content-lg-start">           
+        </div>
     </div>
 
 <script>

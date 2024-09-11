@@ -7,14 +7,14 @@ namespace BuildingManagementTool.ViewModels
         public Property Property { get; set; }
         public IEnumerable<PropertyCategory> PropertyCategories { get; } = new List<PropertyCategory>();
         public string? PropertyImageUrl { get; }
-          // Add a collection of documents for each category
-        public Dictionary<int, List<Document>> CategoryDocuments { get; set; }
-        public CategoryViewModel(IEnumerable<PropertyCategory> propertyCategories, string? propertyImageUrl, Property property) 
+        public List<CategoryPreviewViewModel> CategoryPreviewViewModels { get; set; }
+        
+        public CategoryViewModel(IEnumerable<PropertyCategory> propertyCategories, string? propertyImageUrl, Property property, List<CategoryPreviewViewModel> previewViewModels) 
         {
             PropertyCategories = propertyCategories;
             PropertyImageUrl = propertyImageUrl;
             Property = property;
-            CategoryDocuments = new Dictionary<int, List<Document>>();
+            CategoryPreviewViewModels = previewViewModels;
         }
     }
 }
