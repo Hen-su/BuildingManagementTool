@@ -10,5 +10,6 @@ namespace BuildingManagementTool.Models
         Task<string> GetBlobUrlAsync(string containerName, string blobName);
         Task<IEnumerable<string>> ListBlobsAsync(string containerName);
         Task<Stream> DownloadBlobAsync(string containerName, string blobName);
+        Task<bool> DeleteByPrefix(string containerName, string prefix);
     }
 }

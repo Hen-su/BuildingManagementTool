@@ -2,29 +2,42 @@
 using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Azure;
 
 namespace BuildingManagementTool.Controllers
 {
+    [Authorize]
     public class BlobController : Controller
     {
         private readonly IDocumentRepository _documentRepository;
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IBlobService _blobService;
-        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository)
+        private readonly UserManager<ApplicationUser> _userManager;
+        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository, UserManager<ApplicationUser> userManager)
         {
             _blobService = blobService;
             _documentRepository = documentRepository;
             _propertyCategoryRepository = propertyCategoryRepository;
+            _userManager = userManager;
         }
 
         [HttpPost]
         public async Task<IActionResult> UploadBlob(IList<IFormFile> files, int id)
         {
             var propertyCategory = await _propertyCategoryRepository.GetById(id);
-            var containerName = "test1";
+            if (propertyCategory == null) 
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "The selected category was not found in the database"
+                });
+            }
+
             //Check submitted file list isn't empty
             if (files == null || files.Count == 0)
             {
@@ -34,10 +47,22 @@ namespace BuildingManagementTool.Controllers
                     message = "No file was uploaded. Please select a file before submitting."
                 });
             }
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-"+user.Id;
+
             //Check if a blob with the same name exists
             foreach (var file in files)
             {
-                string blobName = $"{propertyCategory.Category.CategoryName}/{file.FileName}";
+                string blobName;
+                if (propertyCategory.CategoryId != null)
+                {
+                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}/{file.FileName}".Trim().Replace(" ", "-"); 
+                }
+                else
+                {
+                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}/{file.FileName}".Trim().Replace(" ", "-");
+                }
+                 
                 bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
                 if (blobExists)
                 {
@@ -128,8 +153,8 @@ namespace BuildingManagementTool.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteBlob(int? id)
         {
-            //test container
-            var containerName = "test1";
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
             //Check metadata exists
             var document = await _documentRepository.GetById(id);
             if (document == null)
@@ -161,13 +186,11 @@ namespace BuildingManagementTool.Controllers
             var document = await _documentRepository.GetById(id);
             if (document == null)
             {
-                var problemDetails = new ProblemDetails
+                return StatusCode(StatusCodes.Status404NotFound, new
                 {
-                    Title = "Metadata Not Found",
-                    Detail = "The File MetaData was not found",
-                    Status = StatusCodes.Status404NotFound
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+                    success = false,
+                    message = "The File MetaData was not found"
+                });
             }
             return PartialView("_DeleteConfirmation", document);
         }
@@ -180,31 +203,27 @@ namespace BuildingManagementTool.Controllers
         [HttpGet] 
         public async Task<IActionResult> Download(int id)
         {
-            //test container
-            var containerName = "test1";
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
             //Check metadata exists
             var document = await _documentRepository.GetById(id);
             if (document == null)
             {
-                var problemDetails = new ProblemDetails
+                return StatusCode(StatusCodes.Status404NotFound, new
                 {
-                    Title = "Document Not Found",
-                    Detail = "The Document was not found",
-                    Status = StatusCodes.Status404NotFound
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+                    success = false,
+                    message = "The File MetaData was not found"
+                });
             }
             //Download blob
             var stream = await _blobService.DownloadBlobAsync(containerName, document.BlobName);
             if (stream == null)
             {
-                var problemDetails = new ProblemDetails
+                return StatusCode(StatusCodes.Status404NotFound, new
                 {
-                    Title = "File Not Found",
-                    Detail = "The file was not found in blob storage",
-                    Status = StatusCodes.Status404NotFound
-                };
-                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+                    success = false,
+                    message = "The File was not found in blob storage"
+                });
             }
 
             return File(stream, document.ContentType, document.FileName);
@@ -222,7 +241,8 @@ namespace BuildingManagementTool.Controllers
         //Gets Url of blobs and handles rendering based on content type
         public async Task<IActionResult> RenderFile(int id)
         {
-            var containerName = "test1";
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
             //Check if metadata exists
             var document = await _documentRepository.GetById(id);
             if (document == null)
@@ -271,6 +291,51 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status415UnsupportedMediaType, problemDetails);
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeletePropertyCategory(int id)
+        {
+            var propertyCategory = await _propertyCategoryRepository.GetById(id);
+            if (propertyCategory == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "Could not find matching category"
+                });
+            }
+            var documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == propertyCategory.PropertyCategoryId).ToList();
+            if (documents.Any())
+            {
+                foreach (var document in documents)
+                {
+                    await _documentRepository.DeleteDocumentData(document);
+                }
+            }
+            await _propertyCategoryRepository.DeletePropertyCategory(propertyCategory);
+
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
+            string prefix;
+            if (propertyCategory.CategoryId != null)
+            {
+                prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}".Trim().Replace(" ", "-");
+            }
+            else
+            {
+                prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim().Replace(" ", "-");
+            }
+            var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
+            if (!deleteSuccess) 
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = "An error occurred while deleting the category, Please try again"
+                });
+            }
+            return Json(new { success = true });
         }
     }
 }

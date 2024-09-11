@@ -4,14 +4,20 @@
 
 
 <div class="viewHeader container-fluid viewHeader row row-cols-2 justify-content-between p-0">
-    <h1 class="col">@Model.CurrentCategory.Category.CategoryName</h1>
+    @if (Model.CurrentCategory.CategoryId != null)
+    {
+        <h1 class="col">@Model.CurrentCategory.Category.CategoryName</h1>
+    }
+    else
+    {
+        <h1 class="col">@Model.CurrentCategory.CustomCategory</h1>
+    }
     <button class="collapseBtn col btn btn-close" type="button"></button>
 </div>
 
 
 @if (User.IsInRole("Manager"))
 {
-
     <button id="uploadModalBtn" class="btn-success btn-md">Upload</button>
 }
 
@@ -55,6 +61,10 @@
             });
         });
 
+        $('#modalContainer').on('hide.bs.modal', function () {
+            $(this).empty();
+        });
+
         $(document).on('shown.bs.modal', '.modal', function () {
             $('.modal-backdrop').before($(this));
         });
@@ -95,7 +105,7 @@
             });
         })
 
-        $(document).on("click", "#submitBtn", function (ev) {
+        $(document).off("click", "#submitBtn").on("click", "#submitBtn", function (ev) {
             ev.preventDefault();
 
             $('#submitBtn').prop('disabled', true).text('Uploading...');
@@ -121,6 +131,7 @@
                                 // Replace the document list with the updated content
                                 $('#documentContainer').html(result);
                                 $('#modalContainer').modal('hide');
+                                console.log($('#modalContainer'))
                                 $('#submitBtn').prop('disabled', false).text('Upload Now');
                             },
                             error: function () {

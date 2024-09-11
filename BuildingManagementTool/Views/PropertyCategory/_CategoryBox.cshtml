@@ -1,0 +1,78 @@
+﻿@model PropertyCategory
+
+<style>
+    .menu-button {
+        background-color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 5;
+    }
+
+    .menu-button:hover {
+        background-color: #f0f0f0;
+        border: 1px solid black;     
+    }
+
+    .dropdown-menu {
+        display: none; /* Hide dropdowns initially */
+        position: absolute;
+        top: 100%;
+        z-index: 8;
+    }
+
+    .dropdown-menu::before {
+        display: none; 
+    }
+
+    .dropdown-toggle::after {
+        display: none;
+    }
+</style>
+
+
+    <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategoryId">
+        <div class="boxHeader row g-0">
+        @if (Model.CategoryId != null)
+        {
+            <h4 class="col-11">@Model.Category.CategoryName</h4>
+        }
+        else
+        {
+            <h4 class="col-11">@Model.CustomCategory</h4>
+        }
+            <partial name="_CategoryDropdownMenu" model="Model"></partial>
+        </div>
+        <div class="documentContent container"></div>
+    </div>
+
+<script>
+    $(document).ready(function () {
+            // Click event for dropdown buttons
+        $('.dropdown-toggle').off('click').on('click', function (event) {
+            event.stopPropagation();
+            var $this = $(this);
+            var $dropdownMenu = $this.next('.dropdown-menu');
+
+            // Close other dropdowns
+            $('.dropdown-menu').not($dropdownMenu).slideUp();
+
+            // Toggle current dropdown
+            $dropdownMenu.slideToggle();
+
+            console.log('Dropdown clicked');
+        });
+
+            // Close dropdowns when clicking outside
+        $(document).on('click', function (event) {
+            // Check if the click is outside of any dropdown
+            if (!$(event.target).closest('.dropdown').length) {
+                // Hide all dropdown menus
+                $('.dropdown-menu').slideUp();
+            }
+        });
+    });
+</script>
+

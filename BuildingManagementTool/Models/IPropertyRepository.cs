@@ -4,5 +4,6 @@
     {
         Task<IEnumerable<Property>> Properties();
         Task<IEnumerable<Property>> GetByUserId(string id);
+        Task<Property> GetById(int id);
     }
 }

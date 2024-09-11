@@ -17,6 +17,14 @@ namespace BuildingManagementTool.Models
         }
 
         public async Task<IEnumerable<Property>> GetByUserId(string id) => throw new NotImplementedException();
-        //return await _dbContext.Properties.Where(u => u.UserId).ToListAsync();
+
+        public async Task<Property> GetById(int id)
+        {
+            if (id != null)
+            {
+                return await _dbContext.Properties.FirstOrDefaultAsync(p => p.PropertyId == id);
+            }
+            return null;
+        }
     }
 }
