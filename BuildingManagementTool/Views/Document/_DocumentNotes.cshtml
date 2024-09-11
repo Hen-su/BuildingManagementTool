@@ -1,0 +1,44 @@
+﻿@model IEnumerable<BuildingManagementTool.Models.Document>
+
+<style>
+    .notes-card-body{
+        background:skyblue;
+    }
+</style>
+
+<div class="document-notes-list d-flex flex-wrap justify-content-start">
+
+        <div class="card bg-light mb-3 mx-2" style="max-width: 15rem;">
+            <div class="notes-card-body card-body">
+            <h4 class="text-center fw-bold ">Notes</h4>
+            <hr />
+
+            @if (Model.Any(document => !string.IsNullOrEmpty(document.Note)))
+            {
+                @foreach (var document in Model)
+                {
+                    @if (!string.IsNullOrEmpty(document.Note))
+                    {
+                        <div class="row mb-2">
+                            <h5 class="card-title col-5 mt-2">Note</h5>
+                            <p class="col-7">@document.Note</p>
+                        </div>
+
+                        <div class="row mb-2">
+                            <h5 class="card-title col-5">Doc:</h5>
+                            <p class="col-7">@document.FileName</p>
+                        </div>
+                        <hr />
+                    }
+                }
+            }
+            else
+            {
+                <p>No notes available!</p>
+            }
+
+
+            </div>
+        </div>
+    
+</div>

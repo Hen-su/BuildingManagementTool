@@ -2,6 +2,8 @@
 using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BuildingManagementTool.Controllers
 {
@@ -19,9 +21,9 @@ namespace BuildingManagementTool.Controllers
             _categoryRepository = categoryRepository;
             _documentRepository = documentRepository;
         }
+
         public async Task<IActionResult> Index(int id)
         {
-            //test id
             id = 1;
             var property = await _propertyRepository.GetById(id);
             if (property == null) 
@@ -34,7 +36,21 @@ namespace BuildingManagementTool.Controllers
             }
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
-            var viewModel = new CategoryViewModel(categories, img, property);
+
+            var documentsByCategory = new Dictionary<int, List<Document>>();
+
+            foreach (var category in categories)
+            {
+                // Fetch documents by category id
+                var documents = await _documentRepository.GetDocumentsByCategoryId(category.PropertyCategoryId);
+                documentsByCategory[category.PropertyCategoryId] = documents;
+            }
+
+            var viewModel = new CategoryViewModel(categories, img)
+            {
+                CategoryDocuments = documentsByCategory // Add the document data to the ViewModel
+            };
+
             return View(viewModel);
         }
 
