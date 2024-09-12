@@ -1,4 +1,12 @@
-﻿@model PropertyCategory
+﻿
+<style>
+
+    .colorPicker {
+        z-index: 1050; /* Higher than the dropdown menu's default */
+        position: relative;
+    }
+
+</style>
 
 <div class="dropdown show col-1" style="position:relative;">
     <button class="w-100 p-0 menu-button btn dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -11,6 +19,9 @@
     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
         <a class="dropdown-item" href="#">Edit</a>
         <a class="deleteCategoryModalBtn dropdown-item" data-id="@Model.PropertyCategoryId">Delete</a>
-        <a class="dropdown-item" href="#">Change Color</a>
+        <div class="dropdown-item">
+            
+            <input type="color" class="colorPicker" data-id="@Model.PropertyCategoryId" title="Pick a background color" value="@Model.Color" />
+        </div>
     </div>
 </div>

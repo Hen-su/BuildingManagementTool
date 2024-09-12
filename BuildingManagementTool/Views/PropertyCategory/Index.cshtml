@@ -195,5 +195,25 @@ else
         }
     })
 
+
+    $(document).on('input', '.colorPicker', function (event) {
+        var color = $(this).val();
+        $(this).closest('.categoryBox, .sideBox').css('background-color', color);
+
+        // Send the color change to the server
+        var categoryId = $(this).closest('.categoryBox, .sideBox').data('id');
+        $.ajax({
+            url: '/PropertyCategory/UpdateColor',
+            type: 'POST',
+            data: { id: categoryId, color: color },
+            success: function () {
+                console.log('Color updated successfully');
+            },
+            error: function (xhr, status, error) {
+                console.error("Error updating color: " + error);
+            }
+        });
+    });
+
     
 </script>
