@@ -13,5 +13,7 @@ namespace BuildingManagementTool.Models
         public string? CustomCategory {  get; set; }
         public Property Property { get; set; }
         public Category Category { get; set; }
+
+        public string? Color { get; set; }
     }
 }

@@ -30,10 +30,14 @@
     .dropdown-toggle::after {
         display: none;
     }
+
+  
+
+
 </style>
 
 
-    <div class="col-lg-3 categoryBox" data-id="@Model.PropertyCategory.PropertyCategoryId">
+    <div class="col-lg-3 categoryBox" style="background:@Model.PropertyCategory.Color;" data-id="@Model.PropertyCategory.PropertyCategoryId">
         <div class="boxHeader row g-0">
         @if (Model.PropertyCategory.CategoryId != null)
         {
@@ -77,6 +81,7 @@
                 $('.dropdown-menu').slideUp();
             }
         });
+
     });
 </script>
 

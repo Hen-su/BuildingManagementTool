@@ -44,5 +44,11 @@ namespace BuildingManagementTool.Models
               _dbContext.PropertyCategories.Remove(propertyCategory);
              await _dbContext.SaveChangesAsync();
         }
+
+        public async Task Update(PropertyCategory propertyCategory)
+        {
+            _dbContext.PropertyCategories.Update(propertyCategory);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }

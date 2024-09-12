@@ -1,6 +1,6 @@
 ﻿@model CategoryPreviewViewModel
 
-<div class="sideBox px-2" data-id=" @Model.PropertyCategory.PropertyCategoryId">
+<div class="sideBox px-2" style="background:@Model.PropertyCategory.Color;" data-id=" @Model.PropertyCategory.PropertyCategoryId">
     <div class="boxHeader row g-0">
         @if (Model.PropertyCategory.CategoryId != null)
         {

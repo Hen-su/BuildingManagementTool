@@ -159,5 +159,21 @@ namespace BuildingManagementTool.Controllers
             }
             return PartialView("_CategoryDeleteConfirmation", category);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateColor(int id, string color)
+        {
+            var propertyCategory = await _propertyCategoryRepository.GetById(id);
+            if (propertyCategory == null)
+            {
+                return NotFound();
+            }
+
+            propertyCategory.Color = color;
+            await _propertyCategoryRepository.Update(propertyCategory);
+
+            return Ok();
+        }
+
     }
 }
