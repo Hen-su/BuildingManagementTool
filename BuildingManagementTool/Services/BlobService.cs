@@ -126,5 +126,24 @@ namespace BuildingManagementTool.Services
             }
         }
 
+        public async Task RenameBlobDirectory(string containerName, string oldDirectory, string newDirectory)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            await foreach (BlobItem blobItem in containerClient.GetBlobsAsync(prefix: oldDirectory))
+            {
+                string oldBlobName = blobItem.Name;
+                string newBlobName = oldBlobName.Replace(oldDirectory, newDirectory);
+                BlobClient oldBlobClient = containerClient.GetBlobClient(oldBlobName);
+                BlobClient newBlobClient = containerClient.GetBlobClient(newBlobName);
+                await newBlobClient.StartCopyFromUriAsync(oldBlobClient.Uri);
+
+                BlobProperties properties = await newBlobClient.GetPropertiesAsync();
+                if (properties.CopyStatus == CopyStatus.Success)
+                {
+                    await oldBlobClient.DeleteIfExistsAsync();
+                }
+            }
+        }
+
     }
 }

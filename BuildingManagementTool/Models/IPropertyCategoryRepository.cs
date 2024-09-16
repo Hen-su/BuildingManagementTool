@@ -7,7 +7,6 @@
         Task<IEnumerable<PropertyCategory>> GetByPropertyId(int? id);
         Task AddPropertyCategory(PropertyCategory propertyCategory);
         Task DeletePropertyCategory(PropertyCategory propertyCategory);
-        Task Update(PropertyCategory propertyCategory);
-
+        Task UpdatePropertyCategory(PropertyCategory propertyCategory);
     }
 }

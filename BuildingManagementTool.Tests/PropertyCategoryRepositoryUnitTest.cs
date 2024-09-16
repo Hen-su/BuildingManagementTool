@@ -65,8 +65,28 @@ namespace BuildingManagementTool.Tests
         {
             PropertyCategory newCategory = null;
             Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await _propertyCategoryRepository.AddPropertyCategory(newCategory));
+            await _propertyCategoryRepository.DeletePropertyCategory(newCategory));
         }
+
+        [Test]
+        public async Task UpdatePropertyCategory_PropertyCategoryExists_AddSuccess()
+        {
+            PropertyCategory newCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1 };
+            await _propertyCategoryRepository.AddPropertyCategory(newCategory);
+            var savedCategory = await _dbContext.PropertyCategories.FindAsync(1);
+            savedCategory.CategoryId = 2;
+            await _propertyCategoryRepository.UpdatePropertyCategory(savedCategory);
+            Assert.That(savedCategory.CategoryId, Is.EqualTo(2));
+        }
+
+        [Test]
+        public async Task UpdatePropertyCategory_PropertyCategoryNull_ThrowEx()
+        {
+            PropertyCategory newCategory = null;
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await _propertyCategoryRepository.UpdatePropertyCategory(newCategory));
+        }
+
 
         [TearDown]
         public void Teardown()

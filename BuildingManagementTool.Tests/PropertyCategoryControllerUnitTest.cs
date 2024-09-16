@@ -121,13 +121,13 @@ namespace BuildingManagementTool.Tests
             };
             _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
             _mockCategoryRepository.Setup(pc => pc.Categories()).ReturnsAsync(list);
-            var viewModel = new CategoryFormViewModel(list, id);
+            var viewModel = new CategoryFormViewModel(list, id, null);
 
             var result = await _propertyCategoryController.CategoryFormPartial(id);
             var viewResult = result as PartialViewResult;
             var resultViewModel = viewResult.Model as CategoryFormViewModel;
             Assert.IsNotNull(result);
-            Assert.That(viewResult.ViewName.Equals("_CategoryForm"));
+            Assert.That(viewResult.ViewName.Equals("_AddCategoryForm"));
             Assert.That(resultViewModel.Categories.Count().Equals(3));
         }
 
@@ -195,6 +195,35 @@ namespace BuildingManagementTool.Tests
         }
         */
         [Test]
+        public async Task DeleteConfirmationPartial_PropertyExists_ReturnPartial()
+        {
+            int id = 1;
+            Models.Property property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            Models.Category category = new Models.Category { CategoryId = 1, CategoryName = "Test Category" };
+            PropertyCategory propertyCategory = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1, Category = category, Property = property };
+            _mockPropertyCategoryRepository.Setup(p => p.GetById(id)).ReturnsAsync(propertyCategory);
+
+            var result = await _propertyCategoryController.DeleteConfirmationPartial(id);
+            var viewResult = result as PartialViewResult;
+            Assert.IsNotNull(result);
+            Assert.That(viewResult.ViewName.Equals("_CategoryDeleteConfirmation"));
+        }
+
+        [Test]
+        public async Task DeleteConfirmationPartial_PropertyNotExists_ReturnError()
+        {
+            int id = 1;
+            Models.Property property = null;
+            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+
+            var result = await _propertyCategoryController.DeleteConfirmationPartial(id);
+
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
+        [Test]
         public async Task DeleteCategory_PropertyExists_ReturnSuccess()
         {
             int id = 1;
@@ -237,6 +266,47 @@ namespace BuildingManagementTool.Tests
 
             var result = await _propertyCategoryController.AddCategory(1, categoryName);
             _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
+
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
+        [Test]
+        public async Task EditCategoryFormPartial_PropertyExists_ReturnPartial()
+        {
+            int id = 1;
+            int currentCategoryId = 1;
+            PropertyCategory propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1 };
+            var list = new List<Category>
+            {
+                new Category{ CategoryId = 1, CategoryName = "Test1" },
+                new Category{ CategoryId = 2, CategoryName = "Test2" },
+                new Category{ CategoryId = 3, CategoryName = "Test3" }
+            };
+            Models.Property property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+
+            _mockPropertyCategoryRepository.Setup(pc => pc.GetById(currentCategoryId)).ReturnsAsync(propertyCategory);
+
+            _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
+
+            var result = await _propertyCategoryController.EditCategoryFormPartial(id, currentCategoryId);
+            var viewResult = result as PartialViewResult;
+            Assert.That(viewResult.ViewName.Equals("_EditCategoryForm"));
+            var resultViewModel = viewResult.Model as CategoryFormViewModel;
+            Assert.That(resultViewModel.Categories.Count().Equals(3));
+        }
+
+        [Test]
+        public async Task EditCategoryFormPartial_PropertyNotExists_ReturnError()
+        {
+            int id = 1;
+            int currentCategoryId = 1;
+            Models.Property property = null;
+            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+
+            var result = await _propertyCategoryController.EditCategoryFormPartial(id, currentCategoryId);
 
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
