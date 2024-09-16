@@ -42,7 +42,7 @@ namespace BuildingManagementTool.Controllers
             foreach (var category in categories)
             {
                 // Fetch documents by category id
-                var documents = await _documentRepository.GetDocumentsByCategoryId(category.PropertyCategoryId);
+                var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
                 documents = documents.Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
@@ -74,7 +74,7 @@ namespace BuildingManagementTool.Controllers
             foreach (var category in categories)
             {
                 // Fetch documents by category id
-                var documents = await _documentRepository.GetDocumentsByCategoryId(category.PropertyCategoryId);
+                var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
                 documents = documents.Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
@@ -170,7 +170,7 @@ namespace BuildingManagementTool.Controllers
             }
 
             propertyCategory.Color = color;
-            await _propertyCategoryRepository.Update(propertyCategory);
+            await _propertyCategoryRepository.UpdatePropertyCategory(propertyCategory);
 
             return Ok();
         }

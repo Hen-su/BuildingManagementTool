@@ -1,6 +1,5 @@
 ﻿@model CategoryPreviewViewModel
 
-    <h5 class="fw-bold text-decoration-underline">Notes</h5>
 
         @foreach (var document in Model.CategoryDocuments[Model.PropertyCategory.PropertyCategoryId].Where(d => !string.IsNullOrEmpty(d.Note)).Take(2))
         {

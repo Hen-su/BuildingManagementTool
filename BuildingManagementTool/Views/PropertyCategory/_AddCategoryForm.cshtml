@@ -12,7 +12,7 @@
                 <div class="d-flex flex-column">
                     <label asp-for="CategoryName" >Select from the list or add custom label:</label>
                     <input asp-for="CategoryName" class="categoryName form-control" list="suggestions" type="text" placeholder="Enter Category Name"></input>
-                    <span asp-validation-for="CategoryName" class="text-danger"></span>
+                    <span asp-validation-for="CategoryName" class="categoryName-error text-danger"></span>
                     <datalist id="suggestions">
                         @foreach (var suggestion in Model.Categories)
                         {
@@ -38,3 +38,4 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
+

@@ -12,7 +12,7 @@
         background-color: white;
         cursor: pointer;
         position: relative;
-        overflow: hidden;
+        overflow: visible;
         flex: 1 1 23%;
     }
 
@@ -43,7 +43,7 @@
     }
 
     .boxHeader {
-        margin-top: 1rem;
+        padding-top: 1rem;
     }
 
     .categoryBox.expanded, .sideBox.expanded {
@@ -237,10 +237,8 @@ else
 
             $('.errorContainer').text(message).show();
         }
-    })
 
-
-    $(document).on('input', '.colorPicker', function (event) {
+        $(document).on('input', '.colorPicker', function (event) {
         var color = $(this).val();
         $(this).closest('.categoryBox, .sideBox').css('background-color', color);
 
@@ -258,6 +256,10 @@ else
             }
         });
     });
+    })
+
+
+    
 
     
 </script>
