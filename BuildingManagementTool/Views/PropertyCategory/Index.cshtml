@@ -74,7 +74,7 @@
 @if (User.IsInRole("Manager"))
 {
     <h2 class="mt-5 mb-5">You're in Manage Mode!</h2>
-    <a id="categoryModalBtn" class="btn btn-primary mb-3">Add Category</a>
+    <a id="addCategoryModalBtn" class="btn btn-primary mb-3">Add Category</a>
 }
 else
 {
@@ -92,14 +92,24 @@ else
     $(document).ready(function () {
         $('#categoryModalContainer').on('hidden.bs.modal', function () {
             console.log("emptied");
-            $('body').removeClass('modal-open');
             $(this).empty();
         });
 
-        $('#categoryModalBtn').click(function (event) {
+        $(document).on('click', '#addCategoryModalBtn', function (event) {
             console.log("add category clicked")
             var currentProperty = @Model.Property.PropertyId;
             var url = "/PropertyCategory/CategoryFormPartial/" + encodeURIComponent(currentProperty);
+            $("#categoryModalContainer").load(url, function () {
+                $("#categoryModalContainer").modal("show");
+            });
+        });
+
+        $(document).off('click', '.editCategoryModalBtn').on('click', '.editCategoryModalBtn', function (event) {
+            console.log("edit category clicked", )
+            var currentProperty = @Model.Property.PropertyId;
+            var currentCategory = $(this).data('id');
+            console.log(currentCategory)
+            var url = "/PropertyCategory/EditCategoryFormPartial/" + encodeURIComponent(currentProperty) + "?currentCategoryId=" + encodeURIComponent(currentCategory);
             $("#categoryModalContainer").load(url, function () {
                 $("#categoryModalContainer").modal("show");
             });
@@ -121,8 +131,41 @@ else
                             type: 'GET',
                             data: { id: '@Model.Property.PropertyId' },
                             success: function (result) {
-                                $('#categoryContainer').html(result);
                                 $('#categoryModalContainer').modal('hide');
+                                $('#categoryContainer').html(result);
+                            },
+                            error: function () {
+                                alert('An error occurred while adding the category');
+                            }
+                        });
+                    } else {
+                        displayErrorMessage(response);
+                    }
+                },
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                }
+            });
+        })
+
+        $(document).off('click', '#renameBtn').on('click', '#renameBtn', function (event) {
+            console.log("Rename clicked")
+            var categoryName = $(".categoryName").val();
+            console.log($(".categoryName").val());
+            console.log($(".categoryName").length);
+            $.ajax({
+                url: '/Blob/RenamePropertyCategory',
+                type: 'POST',
+                data: { id: $(this).data('id'), newName: categoryName },
+                success: function (response) {
+                    if (response.success) {
+                        $.ajax({
+                            url: '/PropertyCategory/UpdateCategoryCanvas',
+                            type: 'GET',
+                            data: { id: '@Model.Property.PropertyId' },
+                            success: function (result) {                                
+                                $('#categoryModalContainer').modal('hide');
+                                $('#categoryContainer').html(result);
                             },
                             error: function () {
                                 alert('An error occurred while adding the category');
@@ -162,8 +205,9 @@ else
                             data: { id: '@Model.Property.PropertyId' },
                             success: function (result) {
                                 // Replace the document list with the updated content
-                                $('#categoryContainer').html(result);
                                 $('#categoryModalContainer').modal('hide');
+                                $('#categoryContainer').html(result);
+                                
                             },
                             error: function () {
                                 alert('An error occurred while deleting the category');

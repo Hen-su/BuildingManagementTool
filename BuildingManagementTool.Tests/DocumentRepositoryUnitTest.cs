@@ -95,6 +95,90 @@ namespace BuildingManagementTool.Tests
             Assert.False(result);
         }
 
+        [Test]
+        public async Task GetById_ValidId_ReturnDocument()
+        {
+            var document = new Document
+            {
+                DocumentId = 1,
+                FileName = "text.txt",
+                BlobName = "category/text.txt",
+                ContentType = "text/plain",
+                FileSize = 1,
+                UploadDate = DateTime.UtcNow,
+                FileImageUrl = "/imgs/text.svg"
+            };
+
+            var document2 = new Document
+            {
+                DocumentId = 2,
+                FileName = "text2.txt",
+                BlobName = "category/text2.txt",
+                ContentType = "text/plain",
+                FileSize = 1,
+                UploadDate = DateTime.UtcNow,
+                FileImageUrl = "/imgs/text.svg"
+            };
+
+            await _documentRepository.AddDocumentData(document);
+            await _documentRepository.AddDocumentData(document2);
+
+            var savedDocument = await _documentRepository.GetById(1);
+            Assert.That(savedDocument != null);
+            Assert.That(savedDocument.DocumentId.Equals(1), "DocumentId should be 1");
+            Assert.That(savedDocument.FileName.Equals("text.txt"), "Filename should be text.txt");
+        }
+
+        [Test]
+        public async Task GetByPropertyCategoryId_ValidId_ReturnDocuments()
+        {
+            var document = new Document
+            {
+                DocumentId = 1,
+                FileName = "text.txt",
+                BlobName = "category/text.txt",
+                ContentType = "text/plain",
+                FileSize = 1,
+                UploadDate = DateTime.UtcNow,
+                FileImageUrl = "/imgs/text.svg",
+                PropertyCategoryId = 1
+            };
+
+            var document2 = new Document
+            {
+                DocumentId = 2,
+                FileName = "text2.txt",
+                BlobName = "category/text2.txt",
+                ContentType = "text/plain",
+                FileSize = 1,
+                UploadDate = DateTime.UtcNow,
+                FileImageUrl = "/imgs/text.svg",
+                PropertyCategoryId = 1
+            };
+
+            var document3 = new Document
+            {
+                DocumentId = 3,
+                FileName = "text3.txt",
+                BlobName = "category/text2.txt",
+                ContentType = "text/plain",
+                FileSize = 1,
+                UploadDate = DateTime.UtcNow,
+                FileImageUrl = "/imgs/text.svg",
+                PropertyCategoryId = 2
+            };
+
+            await _documentRepository.AddDocumentData(document);
+            await _documentRepository.AddDocumentData(document2);
+            await _documentRepository.AddDocumentData(document3);
+
+            var savedDocument = await _documentRepository.GetByPropertyCategoryId(1);
+            Assert.That(savedDocument != null);
+            Assert.That(savedDocument.Count().Equals(2), "Document count should be 2");
+            Assert.That(savedDocument[0].FileName.Equals("text.txt"), "Filename should be text.txt");
+            Assert.That(savedDocument[1].FileName.Equals("text2.txt"), "Filename should be text2.txt");
+        }
+
         [TearDown]
         public void TearDown()
         {

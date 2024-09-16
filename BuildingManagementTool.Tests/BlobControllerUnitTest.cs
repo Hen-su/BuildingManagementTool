@@ -25,6 +25,7 @@ namespace BuildingManagementTool.Tests
         private Mock<IBlobService> _mockBlobService;
         private Mock<IDocumentRepository> _mockDocumentRepository;
         private Mock<IPropertyCategoryRepository> _mockPropertyCategoryRepository;
+        private Mock<ICategoryRepository> _mockCategoryRepository;
         private Mock<UserManager<ApplicationUser>> _mockUserManager;
         private BlobController _blobController;
 
@@ -34,6 +35,7 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository = new Mock<IDocumentRepository>();
             _mockBlobService = new Mock<IBlobService>();
             _mockPropertyCategoryRepository = new Mock<IPropertyCategoryRepository>();
+            _mockCategoryRepository = new Mock<ICategoryRepository>();
             _mockUserManager = new Mock<UserManager<ApplicationUser>>(
             Mock.Of<IUserStore<ApplicationUser>>(),
             null,
@@ -45,7 +47,7 @@ namespace BuildingManagementTool.Tests
             null,
             null
         );
-            _blobController = new BlobController(_mockBlobService.Object, _mockDocumentRepository.Object, _mockPropertyCategoryRepository.Object, _mockUserManager.Object);
+            _blobController = new BlobController(_mockBlobService.Object, _mockDocumentRepository.Object, _mockPropertyCategoryRepository.Object, _mockUserManager.Object, _mockCategoryRepository.Object);
         }
 
         [Test]
@@ -452,6 +454,81 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status500InternalServerError), "Expected 500 Internal Server Error status code.");
         }
+
+        [Test]
+        public async Task RenameCategoryPropertyCategory_ValidId_ReturnSuccess()
+        {
+            var propertyCategoryId = 1;
+            var newCategory = "newCategory";
+            var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
+            var category = new Category { CategoryId = 1, CategoryName = "Test Category" };
+            var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1, Property = property, Category = category };
+
+            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
+            .ReturnsAsync(propertyCategory);
+
+            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+            _mockPropertyCategoryRepository.Setup(repo => repo.UpdatePropertyCategory(It.IsAny<PropertyCategory>())).Returns(Task.CompletedTask);
+
+            var documentList = new List<Document>
+            { 
+                new Document { DocumentId = 1, FileName = "text.txt", BlobName = "property/category/text.txt", PropertyCategoryId = 1 },
+                new Document { DocumentId = 2, FileName = "text2.txt", BlobName = "property/category/text2.txt", PropertyCategoryId = 1}
+            };
+
+            _mockDocumentRepository.Setup(d => d.GetByPropertyCategoryId(It.IsAny<int>())).ReturnsAsync(documentList);
+
+            _mockDocumentRepository.Setup(d => d.UpdateDocumentAsync(It.IsAny<Document>())).Returns(Task.CompletedTask);
+
+            _mockBlobService.Setup(b => b.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
+
+            var result = await _blobController.RenamePropertyCategory(propertyCategoryId, newCategory);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task RenameCategoryPropertyCategory_NullId_ReturnError()
+        {
+            var propertyCategoryId = 1;
+            PropertyCategory propertyCategory = null;
+            var newCategory = "newCategory";
+            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
+            .ReturnsAsync(propertyCategory);
+
+            var result = await _blobController.RenamePropertyCategory(propertyCategoryId, newCategory);
+            _mockPropertyCategoryRepository.Verify(d => d.UpdatePropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
+            _mockDocumentRepository.Verify(d => d.UpdateDocumentAsync(It.IsAny<Document>()), Times.Never);
+            _mockBlobService.Verify(b => b.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
+        [Test]
+        public async Task RenameCategoryPropertyCategory_NullName_ReturnError()
+        {
+            var propertyCategoryId = 1;
+            string newCategory = null;
+            var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
+            var category = new Category { CategoryId = 1, CategoryName = "Test Category" };
+            var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1, Property = property, Category = category };
+            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
+            .ReturnsAsync(propertyCategory);
+
+            var result = await _blobController.RenamePropertyCategory(propertyCategoryId, newCategory);
+            _mockPropertyCategoryRepository.Verify(d => d.UpdatePropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
+            _mockDocumentRepository.Verify(d => d.UpdateDocumentAsync(It.IsAny<Document>()), Times.Never);
+            _mockBlobService.Verify(b => b.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status400BadRequest), "Expected 400 Bad Request status code.");
+        }
+
 
         [TearDown]
         public void Teardown()

@@ -72,8 +72,8 @@ namespace BuildingManagementTool.Controllers
                 }); 
             }
             var categories = await _categoryRepository.Categories();
-            var categoryFormViewModel = new CategoryFormViewModel(categories, id);
-            return PartialView("_CategoryForm", categoryFormViewModel);
+            var categoryFormViewModel = new CategoryFormViewModel(categories, id, null);
+            return PartialView("_AddCategoryForm", categoryFormViewModel);
         }
 
         [HttpPost]
@@ -132,6 +132,33 @@ namespace BuildingManagementTool.Controllers
                 });
             }
             return PartialView("_CategoryDeleteConfirmation", category);
+        }
+
+        public async Task<IActionResult> EditCategoryFormPartial(int id, int currentCategoryId)
+        {
+            
+            var currentProperty = await _propertyRepository.GetById(id);
+            if (currentProperty == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The selected property could not be found"
+                });
+            }
+
+            var currentCategory = await _propertyCategoryRepository.GetById(currentCategoryId);
+            if (currentCategory == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "Could not find matching category"
+                });
+            }
+            var categories = await _categoryRepository.Categories();
+            var categoryFormViewModel = new CategoryFormViewModel(categories, id, currentCategory);
+            return PartialView("_EditCategoryForm", categoryFormViewModel);
         }
     }
 }

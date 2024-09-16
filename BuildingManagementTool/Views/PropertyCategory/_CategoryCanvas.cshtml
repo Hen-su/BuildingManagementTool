@@ -64,23 +64,19 @@
 
 <script>
     $(document).ready(function () {
-        $(document).on('click', '.categoryBox, .sideBox', function (event) {
+        $(document).off('click', '.categoryBox, .sideBox').on('click', '.categoryBox, .sideBox', function (event) {
             if ($(event.target).is('.dropdown, .dropdown *')) {
                 return;
             }
             var catDiv = $(this)
             var categoryId = catDiv.data('id');
 
-            $(document).on('click', '.collapseBtn', function (event) {
+            $(document).off('click', '.collapseBtn').on('click', '.collapseBtn', function (event) {
                 if (catDiv.hasClass('expanded')) {
                     catDiv.removeClass('expanded').find('.documentContent').slideUp(function () {
                         $(this).remove(); // Remove the content after sliding up
                         console.log('shrink')
                     });
-                    if ($('#modalContainer').length) {
-                        $('#modalContainer').remove();
-                        console.log('Modal container removed');
-                    }
                     catDiv.children('.boxHeader').first().show();
                 }
             });
@@ -89,7 +85,7 @@
             if (catDiv.hasClass('expanded')) {
                 catDiv.removeClass('expanded').find('.documentContent').slideUp(function () {
                     $(this).remove(); // Remove the content after sliding up
-                    console.log('shrink')
+                    //console.log('shrink')
                 });
                 catDiv.children('.boxHeader').first().show();
             } else {
@@ -101,7 +97,7 @@
                 catDiv.children('.boxHeader').first().hide();
                 // Expand the clicked box
                 catDiv.addClass('expanded');
-                console.log('expand')
+                console.log(catDiv, 'expand')
                 $.ajax({
                     url: '/Document/Index',
                     type: 'GET',
