@@ -1,5 +1,6 @@
 ﻿@model CategoryFormViewModel
 
+
 <div id="categoryModal" class="modal-dialog modal-md modal-dialog-centered" role="document">
     <div class="modal-content px-4">
         <div class="modal-header">
@@ -11,7 +12,7 @@
             <form id="categoryForm" method="post">
                 <div class="d-flex flex-column">
                     <label asp-for="CategoryName" >Select from the list or add custom label:</label>
-                    <input asp-for="CategoryName" class="categoryName form-control" list="suggestions" type="text" placeholder="Enter Category Name"></input>
+                    <input asp-for="CategoryName" class="categoryName form-control" name="categoryName" list="suggestions" type="text" placeholder="Enter Category Name"></input>
                     <span asp-validation-for="CategoryName" class="categoryName-error text-danger"></span>
                     <datalist id="suggestions">
                         @foreach (var suggestion in Model.Categories)
@@ -33,9 +34,41 @@
         </div>
     </div>
 </div>
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
+
+
+<script>
+    $(document).ready(function () {
+
+        if ($.validator) {
+            console.log("jQuery Validation plugin loaded.");
+        } else {
+            console.error("jQuery Validation plugin not loaded.");
+        }
+        $.validator.addMethod("regex", function (value, element, regexpr) {
+            return regexpr.test(value);
+        }, "Invalid format.");
+
+
+        $("#categoryForm").validate({
+            rules: {
+                categoryName: {
+                    required: true,
+                    regex: /^[a-zA-Z0-9 _-]+$/,
+                    maxlength: 50
+                }
+            },
+            messages: {
+                categoryName: {
+                    required: "Please enter a category name.",
+                    regex: "Category name can only include letters, numbers, spaces, hyphens, and underscores.",
+                    maxlength: "Property name cannot be longer than 50 characters."
+                }
+            },
+            errorClass: "error"
+        });
+    })
+
+</script>
+
+
 

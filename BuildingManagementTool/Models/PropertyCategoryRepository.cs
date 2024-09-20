@@ -54,5 +54,14 @@ namespace BuildingManagementTool.Models
             _dbContext.PropertyCategories.Update(propertyCategory);
             await _dbContext.SaveChangesAsync();
         }
+
+        public async Task AddDefaultCategories(PropertyCategory propertyCategory)
+        {
+            if (propertyCategory == null)
+            {
+                throw new ArgumentNullException(nameof(propertyCategory), "PropertyCategory cannot be null.");
+            }
+
+        }
     }
 }

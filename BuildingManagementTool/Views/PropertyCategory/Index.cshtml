@@ -2,6 +2,10 @@
 
 
 <style>
+    .error{
+        color: red;
+    }
+
     .categoryBox{
         height: auto;
     }
@@ -69,18 +73,41 @@
         border-bottom: 5px solid skyblue;
     }
 
+    #addCategoryModalBtn {
+        position: fixed;
+        bottom: 10rem;
+        right: 15rem;
+        width: 60px;
+        height: 60px;
+        background-color: #007bff;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        font-size: 24px;
+        text-decoration: none;
+    }
 
+        #addCategoryModalBtn:hover {
+            background-color: #0056b3;
+        }
 </style>
 
 @if (User.IsInRole("Manager"))
 {
     <h2 class="mt-5 mb-5">You're in Manage Mode!</h2>
-    <a id="addCategoryModalBtn" class="btn btn-primary mb-3">Add Category</a>
+    <a id="addCategoryModalBtn">
+        <i class="fas fa-plus"></i>
+    </a>
 }
 else
 {
     <h2 class="mt-5 mb-5">You're in View Mode!</h2>
 }
+
+<h2 class="text-center mb-4">@Model.Property.PropertyName</h2>
 
 <div id="categoryContainer">
     <partial name="_CategoryCanvas" model="Model" />
@@ -121,32 +148,36 @@ else
             var categoryName = $(".categoryName").val();
             console.log($(".categoryName").val());
             console.log($(".categoryName").length);
-            $.ajax({
-                url: '/PropertyCategory/AddCategory',
-                type: 'POST',
-                data: { id: '@Model.Property.PropertyId', name: categoryName },
-                success: function (response) {
-                    if (response.success) {
-                        $.ajax({
-                            url: '/PropertyCategory/UpdateCategoryCanvas',
-                            type: 'GET',
-                            data: { id: '@Model.Property.PropertyId' },
-                            success: function (result) {
-                                $('#categoryModalContainer').modal('hide');
-                                $('#categoryContainer').html(result);
-                            },
-                            error: function () {
-                                alert('An error occurred while adding the category');
-                            }
-                        });
-                    } else {
-                        displayErrorMessage(response);
+            var categoryForm = $("#categoryForm");
+            if (categoryForm.valid()) {
+                $.ajax({
+                    url: '/PropertyCategory/AddCategory',
+                    type: 'POST',
+                    data: { id: '@Model.Property.PropertyId', name: categoryName },
+                    success: function (response) {
+                        if (response.success) {
+                            $.ajax({
+                                url: '/PropertyCategory/UpdateCategoryCanvas',
+                                type: 'GET',
+                                data: { id: '@Model.Property.PropertyId' },
+                                success: function (result) {
+                                    $('#categoryModalContainer').modal('hide');
+                                    $('#categoryContainer').html(result);
+                                },
+                                error: function () {
+                                    alert('An error occurred while adding the category');
+                                }
+                            });
+                        } else {
+                            displayErrorMessage(response);
+                        }
+                    },
+                    error: function (xhr) {
+                        displayErrorMessage(xhr);
                     }
-                },
-                error: function (xhr) {
-                    displayErrorMessage(xhr);
-                }
-            });
+                });
+            }
+            return
         })
 
         $(document).off('click', '#renameBtn').on('click', '#renameBtn', function (event) {
@@ -154,32 +185,36 @@ else
             var categoryName = $(".categoryName").val();
             console.log($(".categoryName").val());
             console.log($(".categoryName").length);
-            $.ajax({
-                url: '/Blob/RenamePropertyCategory',
-                type: 'POST',
-                data: { id: $(this).data('id'), newName: categoryName },
-                success: function (response) {
-                    if (response.success) {
-                        $.ajax({
-                            url: '/PropertyCategory/UpdateCategoryCanvas',
-                            type: 'GET',
-                            data: { id: '@Model.Property.PropertyId' },
-                            success: function (result) {                                
-                                $('#categoryModalContainer').modal('hide');
-                                $('#categoryContainer').html(result);
-                            },
-                            error: function () {
-                                alert('An error occurred while adding the category');
-                            }
-                        });
-                    } else {
-                        displayErrorMessage(response);
+            var categoryForm = $("#categoryForm");
+            if (categoryForm.valid()) { 
+                $.ajax({
+                    url: '/Blob/RenamePropertyCategory',
+                    type: 'POST',
+                    data: { id: $(this).data('id'), newName: categoryName },
+                    success: function (response) {
+                        if (response.success) {
+                            $.ajax({
+                                url: '/PropertyCategory/UpdateCategoryCanvas',
+                                type: 'GET',
+                                data: { id: '@Model.Property.PropertyId' },
+                                success: function (result) {
+                                    $('#categoryModalContainer').modal('hide');
+                                    $('#categoryContainer').html(result);
+                                },
+                                error: function () {
+                                    alert('An error occurred while adding the category');
+                                }
+                            });
+                        } else {
+                            displayErrorMessage(response);
+                        }
+                    },
+                    error: function (xhr) {
+                        displayErrorMessage(xhr);
                     }
-                },
-                error: function (xhr) {
-                    displayErrorMessage(xhr);
-                }
-            });
+                });
+            }
+            return
         })
 
         $(document).off("click", ".deleteCategoryModalBtn").on('click', '.deleteCategoryModalBtn', function (event) {

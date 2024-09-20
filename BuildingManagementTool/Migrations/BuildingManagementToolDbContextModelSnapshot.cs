@@ -204,6 +204,28 @@ namespace BuildingManagementTool.Migrations
                     b.ToTable("PropertyCategories");
                 });
 
+            modelBuilder.Entity("BuildingManagementTool.Models.UserProperty", b =>
+                {
+                    b.Property<int>("UserPropertyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserPropertyId"));
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserPropertyId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("UserProperties");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -365,6 +387,17 @@ namespace BuildingManagementTool.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+
+                    b.Navigation("Property");
+                });
+
+            modelBuilder.Entity("BuildingManagementTool.Models.UserProperty", b =>
+                {
+                    b.HasOne("BuildingManagementTool.Models.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Property");
                 });

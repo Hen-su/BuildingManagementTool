@@ -3,7 +3,8 @@
     public interface IPropertyRepository
     {
         Task<IEnumerable<Property>> Properties();
-        Task<IEnumerable<Property>> GetByUserId(string id);
         Task<Property> GetById(int id);
+        Task AddProperty(Property property);
+        Task AddDefaultCategories(Property property);
     }
 }
