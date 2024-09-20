@@ -12,5 +12,7 @@ namespace BuildingManagementTool.Models
         [Required]
         [MaxLength(100)]
         public string LastName { get; set; }
+
+        public ApplicationUser() { }
     }
 }

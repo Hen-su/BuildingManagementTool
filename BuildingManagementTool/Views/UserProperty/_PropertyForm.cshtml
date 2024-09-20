@@ -1,0 +1,69 @@
+﻿@model PropertyFormViewModel
+
+<style>
+    .error {
+        color: red;
+    }
+</style>
+
+<div id="propertyModal" class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content px-4">
+        <div class="modal-header">
+            <h2>Add New Property</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+            <form id="propertyForm" method="post">
+                <div class="d-flex flex-column">
+                    <label asp-for="PropertyName">Property Name/Address</label>
+                    <input asp-for="PropertyName" id="propertyName" name="propertyName" class="form-control" list="suggestions" type="text" placeholder="Enter Property Name or Address"></input>
+                    <span asp-validation-for="PropertyName" class="propertyName-error text-danger"></span>
+                </div>
+            </form>
+            <div class="errorContainer alert alert-danger mt-2" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+            <div class="row justify-content-end">
+                <div class="col-auto">
+                    <button type="button" class="btn-secondary rounded me-2" data-bs-dismiss="modal">Close</button>
+                    <button id="addBtn" form="propertyForm" class="btn-primary rounded" type="button">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        if ($.validator) {
+            console.log("jQuery Validation plugin loaded.");
+        } else {
+            console.error("jQuery Validation plugin not loaded.");
+        }
+        $.validator.addMethod("regex", function (value, element, regexpr) {
+            return regexpr.test(value);
+        }, "Invalid format.");
+
+
+        $("#propertyForm").validate({
+            rules: {
+                propertyName: {
+                    required: true,
+                    regex: /^[a-zA-Z0-9 _-]+$/,
+                    maxlength: 100
+                }
+            },
+            messages: {
+                propertyName: {
+                    required: "Please enter a property name.",
+                    regex: "Property name can only include letters, numbers, spaces, hyphens, and underscores.",
+                    maxlength: "Property name cannot be longer than 100 characters."
+                }
+            },
+            errorClass: "error"
+        });
+    })
+    
+</script>

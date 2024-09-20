@@ -1,0 +1,16 @@
+﻿@model UserProperty
+
+<style>
+    .propertyCard:hover {
+        filter: brightness(80%);
+    }
+</style>
+
+<div class="propertyCard col shadow-md p-0" data-id="@Model.PropertyId">
+    <div class="card" style="width: 25rem;">
+        <img class="card-img-top" src="/imgs/sample-house.jpeg" alt="Card image cap">
+        <div class="card-body">
+            <h5 class="card-title">@Model.Property.PropertyName</h5>
+        </div>
+    </div>
+</div>

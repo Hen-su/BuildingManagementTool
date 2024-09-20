@@ -47,7 +47,7 @@ namespace BuildingManagementTool.Tests
             _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(id)).ReturnsAsync(list.Where(p => p.PropertyId == id));
             var img = "/imgs/sample-house.jpeg";
 
-            var viewModel = new CategoryViewModel(list, img, property);
+            var viewModel = new CategoryViewModel(list, img, property, null);
 
             var result = await _propertyCategoryController.Index(id);
             var viewResult = (ViewResult) result;
@@ -55,7 +55,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(result);
             Assert.That(resultViewModel.PropertyCategories.Count().Equals(2));
         }
-
+        */
         [Test]
         public async Task Index_PropertyNotExists_ReturnError()
         {
@@ -69,7 +69,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
         }
-
+        /*
         [Test]
         public async Task UpdateCategoryCanvas_PropertyExists_ReturnPartial()
         {
@@ -84,7 +84,7 @@ namespace BuildingManagementTool.Tests
             _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
             _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(id)).ReturnsAsync(list.Where(p => p.PropertyId == id));
             var img = "/imgs/sample-house.jpeg";
-            var viewModel = new CategoryViewModel(list, img, property);
+            var viewModel = new CategoryViewModel(list, img, property, null);
 
             var result = await _propertyCategoryController.UpdateCategoryCanvas(id);
             var viewResult = result as PartialViewResult;
@@ -93,7 +93,7 @@ namespace BuildingManagementTool.Tests
             Assert.That(viewResult.ViewName.Equals("_CategoryCanvas"));
             Assert.That(resultViewModel.PropertyCategories.Count().Equals(2));
         }
-
+        */
         [Test]
         public async Task UpdateCategoryCanvas_PropertyNotExists_ReturnError()
         {
@@ -193,7 +193,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
         }
-        */
+    
         [Test]
         public async Task DeleteConfirmationPartial_PropertyExists_ReturnPartial()
         {

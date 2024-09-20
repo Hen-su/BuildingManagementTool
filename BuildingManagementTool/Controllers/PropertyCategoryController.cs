@@ -24,7 +24,6 @@ namespace BuildingManagementTool.Controllers
 
         public async Task<IActionResult> Index(int id)
         {
-            id = 1;
             var property = await _propertyRepository.GetById(id);
             if (property == null) 
             {
@@ -55,8 +54,6 @@ namespace BuildingManagementTool.Controllers
         [HttpGet]
         public async Task<IActionResult> UpdateCategoryCanvas(int id)
         {
-            //test id
-            id = 1;
             var property = await _propertyRepository.GetById(id);
             if (property == null)
             {

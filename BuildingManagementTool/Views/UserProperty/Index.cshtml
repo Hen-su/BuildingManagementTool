@@ -1,0 +1,122 @@
+﻿@using Microsoft.AspNetCore.Identity
+
+
+@model IEnumerable<UserProperty>
+
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var currentUser = UserManager.GetUserAsync(User).Result;
+}
+
+<style>
+    #addPropertyModalBtn {
+        position: fixed;
+        bottom: 10rem;
+        right: 15rem;
+        width: 60px;
+        height: 60px;
+        background-color: #007bff;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        font-size: 24px;
+        text-decoration: none;
+    }
+
+    #addPropertyModalBtn:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+
+<h1 class="text-center mb-4">Welcome @currentUser.FirstName!</h1>
+<form class="d-flex align-items-center mb-4">
+    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+    <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
+</form>
+
+<div id="propertyContainer" class="container row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <partial name="_PropertyContainer" model="Model"></partial>
+</div>
+
+
+<div id="propertyModalContainer" class="modal shadow" role="dialog"></div>
+
+<a id="addPropertyModalBtn">
+    <i class="fas fa-plus"></i>
+</a>
+
+<script>
+    $(document).ready(function() {
+        $('#propertyModalContainer').on('hidden.bs.modal', function () {
+            console.log("emptied");
+            $(this).empty();
+        });
+
+        $(document).on('click', '#addPropertyModalBtn', function (event) {
+            console.log("add property clicked")
+            var url = "/UserProperty/PropertyFormPartial"
+            $("#propertyModalContainer").load(url, function () {
+                $("#propertyModalContainer").modal("show");
+            });
+        });
+
+        $(document).on('click', '#addBtn', function (event) {
+            console.log("Add clicked")
+            var propertyName = $("#propertyName").val();
+            console.log()
+            var propertyForm = $("#propertyForm")
+            if (propertyForm.valid()) {
+                $.ajax({
+                    url: '/UserProperty/AddProperty',
+                    type: 'POST',
+                    data: { name: propertyName },
+                    success: function (response) {
+                        if (response.success) {
+                            $.ajax({
+                                url: '/UserProperty/UpdatePropertyContainer',
+                                type: 'GET',
+                                success: function (result) {
+                                    $('#propertyModalContainer').modal('hide');
+                                    $('#propertyContainer').html(result);
+                                },
+                                error: function () {
+                                    displayErrorMessage(response);
+                                }
+                            });
+                        } else {
+                            displayErrorMessage(response);
+                        }
+                    },
+                    error: function (xhr) {
+                        displayErrorMessage(xhr);
+                    }
+                });
+            }
+            return
+        })
+
+        $(document).off("click", ".propertyCard").on("click", ".propertyCard", function (event) {
+            var id = $(this).data('id')
+            console.log("property clicked", id)
+            var url = '/PropertyCategory/Index/';
+            window.location.href = url + id;
+        });
+
+        function displayErrorMessage(response) {
+            let message = 'An unexpected error occurred.';
+
+            if (response.responseJSON && response.responseJSON.message) {
+                message = response.responseJSON.message;
+            } else if (response.message) {
+                message = response.message;
+            } else if (response.statusText) {
+                message = response.statusText;
+            }
+            $('.errorContainer').text(message).show();
+        }
+    })
+</script>
