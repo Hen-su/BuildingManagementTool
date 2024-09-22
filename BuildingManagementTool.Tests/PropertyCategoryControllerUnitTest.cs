@@ -31,7 +31,7 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository = new Mock<IDocumentRepository>();
             _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object, _mockPropertyRepository.Object, _mockCategoryRepository.Object, _mockDocumentRepository.Object);
         }
-        /*
+        
         [Test]
         public async Task Index_PropertyExists_ReturnView()
         {
@@ -44,7 +44,7 @@ namespace BuildingManagementTool.Tests
                 new PropertyCategory{ PropertyCategoryId = 3 ,PropertyId = 2, CategoryId = 1 },
             };
             _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
-            _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(id)).ReturnsAsync(list.Where(p => p.PropertyId == id));
+            _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(list.Where(p => p.PropertyId == id));
             var img = "/imgs/sample-house.jpeg";
 
             var viewModel = new CategoryViewModel(list, img, property, null);
@@ -55,7 +55,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(result);
             Assert.That(resultViewModel.PropertyCategories.Count().Equals(2));
         }
-        */
+        
         [Test]
         public async Task Index_PropertyNotExists_ReturnError()
         {
@@ -69,7 +69,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
         }
-        /*
+        
         [Test]
         public async Task UpdateCategoryCanvas_PropertyExists_ReturnPartial()
         {
@@ -93,7 +93,7 @@ namespace BuildingManagementTool.Tests
             Assert.That(viewResult.ViewName.Equals("_CategoryCanvas"));
             Assert.That(resultViewModel.PropertyCategories.Count().Equals(2));
         }
-        */
+        
         [Test]
         public async Task UpdateCategoryCanvas_PropertyNotExists_ReturnError()
         {

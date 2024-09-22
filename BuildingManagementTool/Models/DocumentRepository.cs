@@ -56,7 +56,7 @@ namespace BuildingManagementTool.Models
             {
                 try
                 {
-                    _buildingManagementToolDbContext.Remove(document);
+                    _buildingManagementToolDbContext.Documents.Remove(document);
                     await _buildingManagementToolDbContext.SaveChangesAsync();
                     return true;
                 }
@@ -66,6 +66,17 @@ namespace BuildingManagementTool.Models
                 }
             }
             return false;
+        }
+
+        public async Task DeleteByPropertyId(int id)
+        {
+            if (id == null || id == 0)
+            {
+                throw new ArgumentNullException("PropertyCategory Id cannot be null.");
+            }
+            var documentList = _buildingManagementToolDbContext.Documents.Include(d => d.PropertyCategory).Where(d => d.PropertyCategory.PropertyId == id);
+            _buildingManagementToolDbContext.Documents.RemoveRange(documentList);
+            await _buildingManagementToolDbContext.SaveChangesAsync();
         }
     }
 }

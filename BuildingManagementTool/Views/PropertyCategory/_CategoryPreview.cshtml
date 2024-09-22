@@ -1,22 +1,24 @@
 ﻿@model CategoryPreviewViewModel
 
+@if (Model.CategoryDocuments != null &&
+              Model.CategoryDocuments.TryGetValue(Model.PropertyCategory.PropertyCategoryId, out var documents) &&
+              documents.Any())
+{
+    @foreach (var document in documents)
+    {
+        <p class="fw-bold">
+            @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
+        </p>
+        <div style="display:flex">
+            <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />
 
-        @foreach (var document in Model.CategoryDocuments[Model.PropertyCategory.PropertyCategoryId].Where(d => !string.IsNullOrEmpty(d.Note)).Take(2))
-        {
-            <p class="fw-bold">
-                @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
+            <p>
+                @(document.FileName.Length > 25 ? document.FileName.Substring(0, 25) + "..." : document.FileName)
             </p>
-            <div style="display:flex">
-                <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />
-
-                <p>
-                    @(document.FileName.Length > 25 ? document.FileName.Substring(0, 25) + "..." : document.FileName)
-                </p>
-            </div>
-        }
-
-        @if (!Model.CategoryDocuments.ContainsKey(Model.PropertyCategory.PropertyCategoryId) ||
-        !Model.CategoryDocuments[Model.PropertyCategory.PropertyCategoryId].Any())
-        {
-            <p class="mt-4">No documents available for this category.</p>
-        }
+        </div>
+    }
+}
+else
+{
+    <p class="mt-4">No documents available for this category.</p>
+}

@@ -55,13 +55,15 @@ namespace BuildingManagementTool.Models
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task AddDefaultCategories(PropertyCategory propertyCategory)
+        public async Task DeleteByPropertyId(int id)
         {
-            if (propertyCategory == null)
+            if (id == null || id == 0)
             {
-                throw new ArgumentNullException(nameof(propertyCategory), "PropertyCategory cannot be null.");
+                throw new ArgumentNullException("Property Id cannot be null.");
             }
-
+            var propertyCategoryList = await _dbContext.PropertyCategories.Where(pc => pc.PropertyId == id).ToListAsync();
+            _dbContext.PropertyCategories.RemoveRange(propertyCategoryList);
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

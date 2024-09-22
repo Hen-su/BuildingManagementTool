@@ -16,15 +16,17 @@ namespace BuildingManagementTool.Controllers
         private readonly IDocumentRepository _documentRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
+        private readonly IPropertyRepository _propertyRepository;
         private readonly IBlobService _blobService;
         private readonly UserManager<ApplicationUser> _userManager;
-        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository, UserManager<ApplicationUser> userManager, ICategoryRepository categoryRepository)
+        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository, UserManager<ApplicationUser> userManager, ICategoryRepository categoryRepository, IPropertyRepository propertyRepository)
         {
             _blobService = blobService;
             _documentRepository = documentRepository;
             _propertyCategoryRepository = propertyCategoryRepository;
             _userManager = userManager;
             _categoryRepository = categoryRepository;
+            _propertyRepository = propertyRepository;
         }
 
         [HttpPost]
@@ -412,6 +414,34 @@ namespace BuildingManagementTool.Controllers
                 message = "Category name cannot be empty"
             });
         }
-        
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProperty(int id)
+        {
+            var property = await _propertyRepository.GetById(id);
+            if (property == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The selected property was not found"
+                });
+            }
+            await _propertyRepository.DeleteProperty(property);
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
+            string prefix = $"{property.PropertyName}".Trim().Replace(" ", "-");
+            var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
+            if (!deleteSuccess)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = "An error occurred while deleting the property, Please try again"
+                });
+            }
+            return Json(new { success = true });
+        }
+
     }
 }

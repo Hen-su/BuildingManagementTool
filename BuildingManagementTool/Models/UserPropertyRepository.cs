@@ -24,5 +24,16 @@ namespace BuildingManagementTool.Models
             await _dbContext.UserProperties.AddAsync(property);
             await _dbContext.SaveChangesAsync();
         }
+
+        public async Task DeleteByPropertyId(int id)
+        {
+            if (id == null || id == 0)
+            {
+                throw new ArgumentNullException("Property id cannot be null.");
+            }
+            var userPropertyList = await _dbContext.UserProperties.Where(u => u.PropertyId == id).ToListAsync();
+            _dbContext.UserProperties.RemoveRange(userPropertyList);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }

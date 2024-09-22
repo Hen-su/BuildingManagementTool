@@ -108,6 +108,37 @@ namespace BuildingManagementTool.Tests
             await _userPropertyRepository.GetByUserId(null));
         }
 
+        [Test]
+        public async Task DeleteByPropertyId_ValidId_Success()
+        {
+            int id = 1;
+            var userId = Guid.NewGuid().ToString();
+            var userId2 = Guid.NewGuid().ToString();
+            var userPropertyList = new List<UserProperty>
+            {
+                new UserProperty { UserPropertyId = 1, PropertyId = 1, UserId = userId },
+                new UserProperty {UserPropertyId = 2, PropertyId = 2, UserId = userId2}
+            };
+            await _dbContext.UserProperties.AddRangeAsync(userPropertyList);
+            await _dbContext.SaveChangesAsync();
+
+            var initialList = await _dbContext.UserProperties.ToListAsync();
+
+            await _userPropertyRepository.DeleteByPropertyId(id);
+
+            var newList = await _dbContext.UserProperties.ToListAsync();
+            Assert.That(newList.Count, Is.EqualTo(1));
+            Assert.That(newList[0].UserId, Is.EqualTo(userId2));
+        }
+
+        [Test]
+        public async Task DeleteByPropertyId_NullId_ThrowEx()
+        {
+            int id = 0;
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await _userPropertyRepository.DeleteByPropertyId(id));
+        }
+
         [TearDown]
         public void TearDown()
         {

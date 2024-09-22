@@ -87,6 +87,36 @@ namespace BuildingManagementTool.Tests
             await _propertyCategoryRepository.UpdatePropertyCategory(newCategory));
         }
 
+        [Test]
+        public async Task DeleteByPropertyId_ValidId_Success()
+        {
+            int id = 1;
+            var propertyCategoriesList = new List<PropertyCategory>
+            {
+                new PropertyCategory { PropertyId = 1, CategoryId = 1, PropertyCategoryId = 1 },
+                new PropertyCategory { PropertyId = 2, CategoryId = 2, PropertyCategoryId = 2 }
+            };
+            await _dbContext.PropertyCategories.AddRangeAsync(propertyCategoriesList);
+            await _dbContext.SaveChangesAsync();
+
+            var initialList = await _dbContext.Properties.ToListAsync();
+
+            await _propertyCategoryRepository.DeleteByPropertyId(id);
+
+            var newList = await _dbContext.PropertyCategories.ToListAsync();
+            Assert.That(newList.Count, Is.EqualTo(1));
+            Assert.That(newList[0].PropertyId, Is.EqualTo(propertyCategoriesList[1].PropertyId));
+            Assert.That(newList[0].PropertyCategoryId, Is.EqualTo(propertyCategoriesList[1].PropertyCategoryId));
+        }
+
+        [Test]
+        public async Task DeleteByPropertyId_NullId_ThrowEx()
+        {
+            int id = 0;
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await _propertyCategoryRepository.DeleteByPropertyId(id));
+        }
+
 
         [TearDown]
         public void Teardown()
