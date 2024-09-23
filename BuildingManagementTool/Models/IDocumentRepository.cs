@@ -8,5 +8,6 @@
         Task<bool> DeleteDocumentData(Document document);
         Task<List<Document>> GetByPropertyCategoryId(int id);
         Task UpdateDocumentAsync(Document document);
+        Task DeleteByPropertyId(int id);
     }
 }

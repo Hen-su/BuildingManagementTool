@@ -124,7 +124,7 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
-        public async Task UpdatePropertContainer_ValidUser_ReturnPartial()
+        public async Task UpdatePropertyContainer_ValidUser_ReturnPartial()
         {
             var userId = Guid.NewGuid().ToString();
             var email = "example@example.com";
@@ -146,7 +146,7 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
-        public async Task UpdatePropertContainer_InvalidUser_ReturnError()
+        public async Task UpdatePropertyContainer_InvalidUser_ReturnError()
         {
             var userId = Guid.NewGuid().ToString();
             var email = "example@example.com";
@@ -159,6 +159,44 @@ namespace BuildingManagementTool.Tests
             Assert.IsInstanceOf<BadRequestObjectResult>(objectResult);
             Assert.AreEqual("A problem occurred while retrieving your data", objectResult.Value);
         }
+
+        [Test]
+        public async Task DeleteConfirmationPartial_ValidId_ReturnPartial()
+        {
+            int id = 1;
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            _mockPropertyRepository.Setup(p => p.GetById(It.IsAny<int>())).ReturnsAsync(property);
+
+            var result = await _userPropertyController.DeleteConfirmationPartial(id);
+            var viewResult = result as PartialViewResult;
+            Assert.IsNotNull(viewResult);
+            Assert.That(viewResult.ViewName, Is.EqualTo("_PropertyDeleteConfirmation"));
+        }
+
+        [Test]
+        public async Task DeleteConfirmationPartial_NullId_ReturnError()
+        {
+            int id = 0;
+            var property = new Models.Property();
+            _mockPropertyRepository.Setup(p => p.GetById(It.IsAny<int>())).ReturnsAsync(property);
+
+            var result = await _userPropertyController.DeleteConfirmationPartial(id);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status400BadRequest), "Expected 400 Bad Request status code.");
+        }
+        [Test]
+        public async Task DeleteConfirmationPartial_PropertyNotExist_ReturnError()
+        {
+            int id = 1;
+            _mockPropertyRepository.Setup(p => p.GetById(It.IsAny<int>())).ReturnsAsync((Models.Property) null);
+
+            var result = await _userPropertyController.DeleteConfirmationPartial(id);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
 
         [TearDown]
         public void Teardown()

@@ -85,5 +85,28 @@ namespace BuildingManagementTool.Controllers
             var propertyList = await _userPropertyRepository.GetByUserId(userId);
             return PartialView("_PropertyContainer", propertyList);
         }
+
+        public async Task<IActionResult> DeleteConfirmationPartial(int id)
+        {
+            if (id == null || id == 0)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    success = false,
+                    message = "The property id cannot be null"
+                });
+            }
+
+            var property = await _propertyRepository.GetById(id);
+            if (property == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The selected property could not be found"
+                });
+            }
+            return PartialView("_PropertyDeleteConfirmation", property);
+        }
     }
 }

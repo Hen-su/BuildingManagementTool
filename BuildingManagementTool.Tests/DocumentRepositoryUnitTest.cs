@@ -179,6 +179,43 @@ namespace BuildingManagementTool.Tests
             Assert.That(savedDocument[1].FileName.Equals("text2.txt"), "Filename should be text2.txt");
         }
 
+        [Test]
+        public async Task DeleteByPropertyId_ValidId_Success()
+        {
+            int id = 1;
+            var propertyCategoriesList = new List<PropertyCategory>
+            {
+                new PropertyCategory { PropertyId = 1, CategoryId = 1, PropertyCategoryId = 1 },
+                new PropertyCategory { PropertyId = 2, CategoryId = 2, PropertyCategoryId = 2 }
+            };
+
+            var documentList = new List<Document>
+            {
+                new Document { PropertyCategory = propertyCategoriesList[0], PropertyCategoryId = 1, DocumentId = 1, FileName = "Test Document 1", ContentType = "text/plain", BlobName = "property/category/Test-Document-1", FileSize = 2, FileImageUrl = "/imgs/text.svg" },
+                new Document { PropertyCategory = propertyCategoriesList[1] ,PropertyCategoryId = 2, DocumentId = 2, FileName = "Test Document 2", ContentType = "text/plain", BlobName = "property/category/Test-Document-2", FileSize = 2, FileImageUrl = "/imgs/text.svg" }
+            };
+
+            await _dbContext.Documents.AddRangeAsync(documentList);
+            await _dbContext.SaveChangesAsync();
+
+            var initialList = await _dbContext.Documents.ToListAsync();
+
+            await _documentRepository.DeleteByPropertyId(id);
+
+            var newList = await _dbContext.Documents.ToListAsync();
+            Assert.That(newList.Count, Is.EqualTo(1));
+            Assert.That(newList[0].PropertyCategoryId, Is.EqualTo(documentList[1].PropertyCategoryId));
+            Assert.That(newList[0].PropertyCategoryId, Is.EqualTo(documentList[1].PropertyCategoryId));
+        }
+
+        [Test]
+        public async Task DeleteByPropertyId_NullId_ThrowEx()
+        {
+            int id = 0;
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await _documentRepository.DeleteByPropertyId(id));
+        }
+
         [TearDown]
         public void TearDown()
         {

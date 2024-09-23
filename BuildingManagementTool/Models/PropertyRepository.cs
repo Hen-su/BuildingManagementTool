@@ -6,11 +6,18 @@ namespace BuildingManagementTool.Models
     public class PropertyRepository : IPropertyRepository
     {
         private readonly BuildingManagementToolDbContext _dbContext;
+        
         private readonly ICategoryRepository _categoryRepository;
-        public PropertyRepository(BuildingManagementToolDbContext dbContext, ICategoryRepository categoryRepository)
+        private readonly IUserPropertyRepository _userPropertyRepository;
+        private readonly IDocumentRepository _documentRepository;
+        private readonly IPropertyCategoryRepository _propertyCategoryRepository;
+        public PropertyRepository(BuildingManagementToolDbContext dbContext, ICategoryRepository categoryRepository, IUserPropertyRepository userPropertyRepository, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository)
         {
             _dbContext = dbContext;
             _categoryRepository = categoryRepository;
+            _userPropertyRepository = userPropertyRepository;
+            _documentRepository = documentRepository;
+            _propertyCategoryRepository = propertyCategoryRepository;
         }
 
         public async Task<IEnumerable<Property>> Properties()
@@ -54,6 +61,32 @@ namespace BuildingManagementTool.Models
             }
             await _dbContext.PropertyCategories.AddRangeAsync(defaultList);
             await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteProperty(Property property)
+        {
+            if (property == null)
+            {
+                throw new ArgumentNullException("Property id cannot be null.");
+            }
+
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                await _documentRepository.DeleteByPropertyId(property.PropertyId);
+                await _propertyCategoryRepository.DeleteByPropertyId(property.PropertyId);
+                await _userPropertyRepository.DeleteByPropertyId(property.PropertyId);
+
+                _dbContext.Properties.Remove(property);
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex) 
+            {
+                await transaction.RollbackAsync();
+                throw ex;
+            }
+            
         }
     }
 }

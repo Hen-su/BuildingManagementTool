@@ -36,12 +36,18 @@ namespace BuildingManagementTool.Controllers
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
 
-            var documentsByCategory = new Dictionary<int, List<Document>>();
+            
             List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
             foreach (var category in categories)
             {
+                var documentsByCategory = new Dictionary<int, List<Document>>();
                 // Fetch documents by category id
                 var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
+                if (documents == null || !documents.Any()) 
+                {
+                    previewViewModels.Add(new CategoryPreviewViewModel(category, null));
+                    continue;
+                }
                 documents = documents.Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
@@ -66,12 +72,17 @@ namespace BuildingManagementTool.Controllers
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
 
-            var documentsByCategory = new Dictionary<int, List<Document>>();
             List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
             foreach (var category in categories)
             {
+                var documentsByCategory = new Dictionary<int, List<Document>>();
                 // Fetch documents by category id
                 var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
+                if (documents == null || !documents.Any())
+                {
+                    previewViewModels.Add(new CategoryPreviewViewModel(category, null));
+                    continue;
+                }
                 documents = documents.Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));

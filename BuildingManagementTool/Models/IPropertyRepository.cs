@@ -6,5 +6,6 @@
         Task<Property> GetById(int id);
         Task AddProperty(Property property);
         Task AddDefaultCategories(Property property);
+        Task DeleteProperty(Property property);
     }
 }

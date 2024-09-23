@@ -8,5 +8,6 @@
         Task AddPropertyCategory(PropertyCategory propertyCategory);
         Task DeletePropertyCategory(PropertyCategory propertyCategory);
         Task UpdatePropertyCategory(PropertyCategory propertyCategory);
+        Task DeleteByPropertyId(int id);
     }
 }

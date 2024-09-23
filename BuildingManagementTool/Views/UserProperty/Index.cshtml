@@ -38,7 +38,7 @@
     <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
 </form>
 
-<div id="propertyContainer" class="container row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+<div id="propertyContainer" class="container row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 justify-content-between">
     <partial name="_PropertyContainer" model="Model"></partial>
 </div>
 
@@ -64,7 +64,16 @@
             });
         });
 
-        $(document).on('click', '#addBtn', function (event) {
+        $(document).on('click', '.deletePropertyModalBtn', function (event) {
+            event.stopPropagation();
+            console.log("deleteConf clicked")
+            var propertyId = $(this).data("id");
+            $("#propertyModalContainer").load("/UserProperty/DeleteConfirmationPartial?id=" + propertyId, function () {
+                $("#propertyModalContainer").modal("show");
+            });
+        })
+
+        $(document).on('click', '#addPropertyBtn', function (event) {
             console.log("Add clicked")
             var propertyName = $("#propertyName").val();
             console.log()
@@ -97,6 +106,36 @@
                 });
             }
             return
+        })
+
+        $(document).on('click', '#deletePropertyConfirmBtn', function (event) {
+            console.log("Delete clicked")
+            var propertyId = $("#deletePropertyConfirmBtn").data('id');
+            $.ajax({
+                url: '/Blob/DeleteProperty',
+                type: 'POST',
+                data: { id: propertyId },
+                success: function (response) {
+                    if (response.success) {
+                        $.ajax({
+                            url: '/UserProperty/UpdatePropertyContainer',
+                            type: 'GET',
+                            success: function (result) {
+                                $('#propertyModalContainer').modal('hide');
+                                $('#propertyContainer').html(result);
+                            },
+                            error: function () {
+                                displayErrorMessage(response);
+                            }
+                        });
+                    } else {
+                        displayErrorMessage(response);
+                    }
+                },
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                }
+            });
         })
 
         $(document).off("click", ".propertyCard").on("click", ".propertyCard", function (event) {
