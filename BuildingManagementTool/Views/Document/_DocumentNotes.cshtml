@@ -1,42 +1,106 @@
 ﻿@model IEnumerable<BuildingManagementTool.Models.Document>
 
-<style>
-    .notes-card-body{
-        background:skyblue;
-    }
-</style>
-
 <div class="document-notes-list d-flex flex-wrap justify-content-start">
-
-        <div class="card bg-light mb-3 mx-2" style="max-width: 15rem;">
-            <div class="notes-card-body card-body">
-            <h4 class="text-center fw-bold ">Notes</h4>
-            <hr />
-
-            @if (Model.Any(document => !string.IsNullOrEmpty(document.Note)))
+    @if (Model.Any(document => !string.IsNullOrEmpty(document.Note)))
+    {
+        @foreach (var document in Model)
+        {
+            @if (!string.IsNullOrEmpty(document.Note))
             {
-                @foreach (var document in Model)
-                {
-                    @if (!string.IsNullOrEmpty(document.Note))
-                    {
-                        <div class="row mb-2">
-                            <h5 class="card-title col-5 mt-2">Note</h5>
-                            <p class="col-7">@document.Note</p>
+                <div class="document-item card p-3 mb-3 mx-2 shadow-sm" style="width: 18rem; min-height: 300px border-radius: 10px;">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <!-- Document Name -->
+                        <div class="mb-2">
+                            <h5 class="card-title text-truncate" style="max-width: 100%;" title="@document.FileName">
+                                @document.FileName
+                            </h5>
                         </div>
 
-                        <div class="row mb-2">
-                            <h5 class="card-title col-5">Doc:</h5>
-                            <p class="col-7">@document.FileName</p>
+                        <!-- Document Note -->
+                        <div class="mb-3" style="height: 50px;">
+                            <p class="card-text" style="max-width: 100%;" title="@document.Note">
+                                @document.Note
+                            </p>
                         </div>
-                        <hr />
-                    }
-                }
+
+                        <!-- Active Note Checkbox and Label -->
+                        <div class="d-flex align-items-center justify-content-around mb-3">
+                            <span>Active Note</span>
+                            <input type="checkbox" class="active-note-checkbox" data-id="@document.DocumentId"
+                            @if (document.IsActiveNote)
+                            {
+                                <text>checked</text>
+                            } />
+                        </div>
+
+                        <!-- Delete Button -->
+                        <div class="text-center">
+                            <button data-id="@document.DocumentId" class="deleteNoteBtn btn btn-danger btn-sm">
+                                Delete Note
+                            </button>
+                        </div>
+                    </div>
+                </div>
             }
-            else
-            {
-                <p>No notes available!</p>
-            }
-            </div>
-        </div>
-    
+        }
+    }
+    else
+    {
+        <p>No notes available!</p>
+    }
 </div>
+
+
+
+
+<script>
+    $(document).ready(function () {
+
+
+        $(".deleteNoteBtn").click(function () {
+            var documentId = $(this).data("id"); // Use the data-id attribute
+            var url = "/Document/NoteDeleteConfFormPartial/" + encodeURIComponent(documentId);
+            $("#modalContainer").load(url, function () {
+                $("#modalContainer").modal("show");
+            });
+        })
+
+
+
+        var maxActiveNotes = 2;
+
+        $(".active-note-checkbox").on("change", function () {
+            var selected = $(".active-note-checkbox:checked").length;
+
+            if (selected > maxActiveNotes) {
+                $(this).prop("checked", false);
+
+                $.get("/Document/ActiveNotesWarning", function (response) {
+                    $("#modalContainer").html(response);
+                    $("#modalContainer").modal("show");
+                });
+
+            } else {
+                var documentId = $(this).data("id");
+                var isActive = $(this).is(":checked");
+
+                $.post("/Document/SetActiveNote", { documentId: documentId, isActive: isActive }, function (response) {
+                    if (!response.success) {
+                        alert(response.message);
+                    }
+                });
+            }
+        });
+
+
+
+
+
+
+
+
+
+
+    })
+</script>
+

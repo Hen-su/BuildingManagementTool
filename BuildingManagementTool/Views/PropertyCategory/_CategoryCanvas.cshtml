@@ -76,6 +76,8 @@
                     catDiv.removeClass('expanded').find('.documentContent').hide(function () {
                         $(this).remove(); // Remove the content after sliding up
                         console.log('shrink')
+                        location.reload();
+
                     });
                     if ($('#modalContainer').length) {
                         $('#modalContainer').remove();

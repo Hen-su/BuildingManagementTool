@@ -43,7 +43,7 @@ namespace BuildingManagementTool.Controllers
             {
                 // Fetch documents by category id
                 var documents = await _documentRepository.GetDocumentsByCategoryId(category.PropertyCategoryId);
-                documents = documents.Take(2).ToList();
+                documents = documents.ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
             }

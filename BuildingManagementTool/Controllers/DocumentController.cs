@@ -90,7 +90,7 @@ namespace BuildingManagementTool.Controllers
         }
 
         [HttpGet]
-        public IActionResult AddNoteFormPartial(int id)
+        public async Task<IActionResult> AddNoteFormPartial(int id)
         {
             var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == id);
             if (document == null)
@@ -156,6 +156,79 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_DocumentNotes", documents);
         }
 
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> NoteDeleteConfFormPartial(int id)
+        {
+            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found",
+                    Detail = "The document was not found.",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            return PartialView("_NoteDeleteConfForm", document);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteNoteFromDocument(int documentId)
+        {
+            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
+            if (document == null)
+            {
+                return NotFound(new { success = false, message = "Document not found." });
+            }
+        
+            // Deleting only the inactive note to the document
+            if (!document.IsActiveNote)
+            {
+                document.Note = null;
+            }
+            // Updating the document in the repository
+            await _documentRepository.UpdateDocumentAsync(document);
+
+            return Json(new { success = true, message = "Note deleted successfully!" });
+        }
+
+
+
+        [HttpGet]
+        public IActionResult ActiveNotesWarning()
+        {
+            // Return the partial view
+            return PartialView("_ActiveNotesWarning");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SetActiveNote(int documentId, bool isActive)
+        {
+            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
+            if (document == null)
+            {
+                return Json(new { success = false, message = "Document not found." });
+            }
+
+            // Update the IsActiveNote status
+            document.IsActiveNote = isActive;
+
+            // Ensure no more than 2 active notes
+            var activeNotesCount = _documentRepository.AllDocuments.Count(d => d.IsActiveNote);
+            if (activeNotesCount > 2)
+            {
+                return Json(new { success = false, message = "Exceeded active notes limit." });
+            }
+
+            await _documentRepository.UpdateDocumentAsync(document);
+
+            return Json(new { success = true, message = "Active note status updated!" });
+        }
 
 
     }

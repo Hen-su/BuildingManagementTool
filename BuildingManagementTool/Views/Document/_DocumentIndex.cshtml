@@ -21,7 +21,9 @@
     <button id="uploadModalBtn" class="btn-success btn-md">Upload</button>
 }
 
-
+<div class="col-auto mt-3 float-left" style="top: 15rem">
+    <div id="documentNotesContainer" style="display: none;">
+    </div>
 <div class="container-fluid p-0 row justify-content-between" id="documentContainer">
     <partial name="_DocumentList" model="@Model.Documents"></partial>
 </div>
@@ -30,9 +32,7 @@
     </div>
 </div>
 
-<div class="col-auto mt-3 float-left" style="position: fixed; left: 2rem; top: 15rem">
-    <div id="documentNotesContainer" style="display: none;">
-    </div>
+
 </div>
 
 <div id="modalContainer" class="modal shadow" role="dialog"></div>
@@ -238,6 +238,43 @@
         $.get('/Document/GetDocumentNotesByCategory', { propertyCategoryId: propertyCategoryId }, function (response) {
             $('#documentNotesContainer').html(response).slideDown(); 
         });
+
     }
+
+
+
+
+
+    $(document).on("click", "#deleteNoteBtm", function () {
+        var documentId = $(this).data("id");
+
+       
+            $.ajax({
+                url: '/Document/DeleteNoteFromDocument',
+                type: 'POST',
+                data: {
+                    documentId: documentId
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#modalContainer').modal('hide');
+
+                        // Reload only the notes section to see the updated changes
+                        loadDocumentNotesForCategory(@Model.CurrentCategory.PropertyCategoryId);
+
+                    } else {
+                        displayErrorMessage(response);
+                    }
+                    $('#deleteNoteBtm').prop('disabled', false).text('Delete Note');
+                },
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                    $('#deleteNoteBtm').prop('disabled', false).text('Delete Note');
+                }
+            });
+
+        
+   
+    });
 
 </script>

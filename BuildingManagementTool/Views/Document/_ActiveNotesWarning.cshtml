@@ -1,0 +1,35 @@
+﻿@model Document
+
+<div id="activeNotesWarning" class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content px-4">
+        <div class="modal-header">
+            <h2>Warning</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+            <form id="activeNotesWarningForm" method="post" enctype="multipart/form-data">
+                <div class="row justify-content-between">
+
+
+                
+                    <div id="activeNotesWarning" class="text-danger">You can only add 2 active notes as max! Change the 'Active' status of the current notes to make this note 'Active'</div>
+                </div>
+            </form>
+
+        </div>
+        <div class="modal-footer">
+            <div class="row justify-content-end">
+                <div class="col-auto">
+                    <button type="button" class="btn-secondary rounded me-2" data-bs-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
