@@ -41,6 +41,10 @@
                 <a id="addNoteBtn" data-id="@Model.DocumentId" class="btn btn-success" style="width: 150px;">
                     Add Note
                 </a>
+
+                <a id="renameFileBtn" data-id="@Model.DocumentId" class="btn btn-primary" style="width: 150px;">
+                    Rename
+                </a>
             }
            
         </div>
@@ -61,6 +65,13 @@
             });
         })
 
+        $("#renameFileBtn").click(function () {
+            var documentId = $(this).data("id"); // Use the data-id attribute
+            var url = "/Document/DocumentRenameFormPartial/" + encodeURIComponent(documentId);
+            $("#modalContainer").load(url, function () {
+                $("#modalContainer").modal("show");
+            });
+        })
 
 
 

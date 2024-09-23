@@ -230,6 +230,45 @@ namespace BuildingManagementTool.Controllers
             return Json(new { success = true, message = "Active note status updated!" });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> DocumentRenameFormPartial(int id)
+        {
+            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found",
+                    Detail = "The document was not found.",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            return PartialView("_DocumentRenameForm", document);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DocumentFileNameRename(int documentId, string filename)
+        {
+            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found",
+                    Detail = "The document was not found.",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            document.FileName = filename;
+            await _documentRepository.UpdateDocumentAsync(document);
+
+            return Json(new { success = true, message = "Document renamed successfully!" });
+        }
+
 
     }
 }

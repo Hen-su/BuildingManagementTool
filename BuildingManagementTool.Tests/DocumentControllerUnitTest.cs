@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Moq;
 using System.Reflection.Metadata;
+using System.Xml.Linq;
 using Document = BuildingManagementTool.Models.Document;
 
 
@@ -492,6 +493,82 @@ namespace BuildingManagementTool.Tests
             Assert.AreEqual(true, result.Value.GetType().GetProperty("success").GetValue(result.Value, null));
             Assert.AreEqual("Active note status updated!", result.Value.GetType().GetProperty("message").GetValue(result.Value, null));
 
+        }
+
+
+        [Test]
+        public async Task DocumentRenameFormPartial_DocumentNotExists_Fail()
+        {
+            int id = 1;
+
+            var result = await _documentController.DocumentRenameFormPartial(1) as Object;
+
+            var objectResult = (ObjectResult)result;
+            var problemDetails = (ProblemDetails)objectResult.Value;
+            Assert.That(problemDetails.Title.Equals("Document Not Found"));
+            Assert.That(problemDetails.Detail.Equals("The document was not found."));
+            Assert.That(problemDetails.Status.Equals(StatusCodes.Status404NotFound));
+        }
+
+
+
+        [Test]
+        public async Task DocumentRenameFormPartial_DocumentExists_Success()
+        {
+            int id = 1;
+            Document document = new Document { DocumentId = 1 };
+
+            _mockDocumentRepository.Setup(d => d.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
+
+            var result = await _documentController.DocumentRenameFormPartial(id) as PartialViewResult;
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual("_DocumentRenameForm", result.ViewName);
+            Assert.AreEqual(document, result.Model);
+        }
+
+
+
+        [Test]
+        public async Task DocumentFileNameRename_DocumentNotFound_Fail()
+        {
+            var documentId = 1;
+            var filename = "newname.txt";
+
+            // Mock the repository to return an empty collection
+            _mockDocumentRepository.Setup(d => d.AllDocuments)
+                .Returns(new List<Document>().AsQueryable());
+
+            var result = await _documentController.DocumentFileNameRename(documentId, filename);
+
+            Assert.NotNull(result);  
+            var objectResult = result as ObjectResult; 
+            Assert.NotNull(objectResult);
+            Assert.AreEqual(StatusCodes.Status404NotFound, objectResult.StatusCode); 
+        }
+
+
+        [Test]
+        public async Task DocumentFileNameRename_DocumentExists_Success()
+        {
+           
+            var documentId = 1;
+            var oldFilename = "oldname.txt";  
+            var newFilename = "newname.txt";  
+            var document = new Document { DocumentId = documentId, FileName = oldFilename };
+
+            _mockDocumentRepository.Setup(d => d.AllDocuments)
+                .Returns(new List<Document> { document }.AsQueryable());
+
+           
+            var result = await _documentController.DocumentFileNameRename(documentId, newFilename) as JsonResult;
+
+            Assert.IsNotNull(result); 
+            Assert.AreEqual(true, result.Value.GetType().GetProperty("success").GetValue(result.Value, null));  
+            Assert.AreEqual("Document renamed successfully!", result.Value.GetType().GetProperty("message").GetValue(result.Value, null));  
+
+          
+            Assert.AreEqual(newFilename, document.FileName);
         }
 
 
