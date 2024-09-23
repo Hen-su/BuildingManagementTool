@@ -1,8 +1,12 @@
 ﻿@model UserProperty
 
 <style>
-    .propertyCard:hover {
-        filter: brightness(80%);
+    .card:hover {
+        background-color: lightgrey;
+    }
+
+    .card:hover img {
+        filter: brightness(0.8);
     }
 
     .menu-button {
@@ -24,7 +28,6 @@
         position: absolute;
         top: 100%;
         background-color: #ffffff;
-        filter: none;
     }
 
     .dropdown-menu::before {
@@ -44,7 +47,6 @@
                 <div class="col-lg-11">
                     <h5 class="card-title">@Model.Property.PropertyName</h5>
                 </div>
-
                 @if (User.IsInRole("Manager"))
                 {
                     <partial name="_PropertyDropdownMenu" model="@Model"></partial>
