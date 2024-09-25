@@ -52,6 +52,7 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IPropertyCategoryRepository, PropertyCategoryRepository>();
 builder.Services.AddScoped<IUserPropertyRepository, UserPropertyRepository>();
+builder.Services.AddScoped<IPropertyImageRepository, PropertyImageRepository>();
 // Add Email Sender
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("AuthMessageSenderOptions"));

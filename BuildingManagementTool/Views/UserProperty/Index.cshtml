@@ -64,6 +64,16 @@
             });
         });
 
+        $(document).on('click', '.managePropertyModalBtn', function (event) {
+            event.stopPropagation();
+            console.log("manage property clicked")
+            var propertyId = $(this).data("id");
+            var url = "/UserProperty/ManagePropertyFormPartial?id=" + propertyId;
+            $("#propertyModalContainer").load(url, function () {
+                $("#propertyModalContainer").modal("show");
+            });
+        });
+
         $(document).on('click', '.deletePropertyModalBtn', function (event) {
             event.stopPropagation();
             console.log("deleteConf clicked")
@@ -137,6 +147,7 @@
                 }
             });
         })
+
 
         $(document).off("click", ".propertyCard").on("click", ".propertyCard", function (event) {
             var id = $(this).data('id')

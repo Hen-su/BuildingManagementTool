@@ -23,6 +23,10 @@ namespace BuildingManagementTool.Tests
         private Mock<IUserPropertyRepository> _mockUserPropertyRepository;
         private Mock<IUserStore<ApplicationUser>> _mockUserStore;
         private Mock<UserManager<ApplicationUser>> _mockUserManager;
+        private Mock<IDocumentRepository> _mockDocumentRepository;
+        private Mock<IBlobService> _mockBlobService;
+        private Mock<IPropertyImageRepository> _mockPropertyImageRepository;
+
         private UserPropertyController _userPropertyController;
 
         [SetUp]
@@ -32,7 +36,12 @@ namespace BuildingManagementTool.Tests
             _mockPropertyRepository = new Mock<IPropertyRepository>();
             _mockUserStore = new Mock<IUserStore<ApplicationUser>>();
             _mockUserManager = new Mock<UserManager<ApplicationUser>>(_mockUserStore.Object, null, null, null, null, null, null, null, null);
-            _userPropertyController = new UserPropertyController(_mockUserPropertyRepository.Object, _mockPropertyRepository.Object, _mockUserManager.Object);
+            _mockDocumentRepository = new Mock<IDocumentRepository>();
+            _mockBlobService = new Mock<IBlobService>();
+            _mockPropertyImageRepository = new Mock<IPropertyImageRepository>();
+
+            _userPropertyController = new UserPropertyController(_mockUserPropertyRepository.Object, _mockPropertyRepository.Object, 
+                _mockUserManager.Object, _mockDocumentRepository.Object, _mockPropertyCategoryRepository.Object, _mockBlobService.Object, _mockPropertyImageRepository.Object);
         }
 
         [Test]
