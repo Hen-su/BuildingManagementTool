@@ -29,7 +29,7 @@ namespace BuildingManagementTool.Controllers
         public async Task<IActionResult> UploadBlob(IList<IFormFile> files, int id)
         {
             var propertyCategory = await _propertyCategoryRepository.GetById(id);
-            if (propertyCategory == null) 
+            if (propertyCategory == null)
             {
                 return NotFound(new
                 {
@@ -48,7 +48,7 @@ namespace BuildingManagementTool.Controllers
                 });
             }
             var user = await _userManager.GetUserAsync(User);
-            var containerName = "userid-"+user.Id;
+            var containerName = "userid-" + user.Id;
 
             //Check if a blob with the same name exists
             foreach (var file in files)
@@ -56,17 +56,17 @@ namespace BuildingManagementTool.Controllers
                 string blobName;
                 if (propertyCategory.CategoryId != null)
                 {
-                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}/{file.FileName}".Trim().Replace(" ", "-"); 
+                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}/{file.FileName}".Trim().Replace(" ", "-");
                 }
                 else
                 {
                     blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}/{file.FileName}".Trim().Replace(" ", "-");
                 }
-                 
+
                 bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
                 if (blobExists)
                 {
-                    return Conflict( new
+                    return Conflict(new
                     {
                         success = false,
                         message = $"A blob with the same name already exists. {blobName}"
@@ -140,7 +140,7 @@ namespace BuildingManagementTool.Controllers
                 {
                     await _blobService.DeleteBlobAsync(containerName, blobName);
 
-                    return StatusCode(StatusCodes.Status500InternalServerError, new 
+                    return StatusCode(StatusCodes.Status500InternalServerError, new
                     {
                         success = false,
                         message = "Failed to save metadata in database. The uploaded blob will be removed."
@@ -170,7 +170,7 @@ namespace BuildingManagementTool.Controllers
             //Check if succcessful
             if (!isDeleted)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new 
+                return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
                     success = false,
                     message = "An error occurred when deleting the file"
@@ -200,7 +200,7 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_PDFViewer", blobUrl);
         }
 
-        [HttpGet] 
+        [HttpGet]
         public async Task<IActionResult> Download(int id)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -327,7 +327,7 @@ namespace BuildingManagementTool.Controllers
                 prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim().Replace(" ", "-");
             }
             var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
-            if (!deleteSuccess) 
+            if (!deleteSuccess)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
@@ -337,5 +337,42 @@ namespace BuildingManagementTool.Controllers
             }
             return Json(new { success = true });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDocumentShareUrl(int id)
+        {
+          
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
+
+           
+            var document = await _documentRepository.GetById(id);
+            if (document == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The File MetaData was not found"
+                });
+            }
+
+           
+            var blobUrl = await _blobService.GetBlobUrlAsync(containerName, document.BlobName);
+            if (string.IsNullOrEmpty(blobUrl))
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The File was not found in blob storage"
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                url = blobUrl
+            });
+        }
+
     }
 }

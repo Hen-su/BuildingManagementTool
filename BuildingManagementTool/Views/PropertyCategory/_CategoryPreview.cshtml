@@ -7,7 +7,7 @@
 
     
         <p class="fw-bold mt-1">
-            @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
+            @(document.Note.Length > 30 ? document.Note.Substring(0, 25) + "..." : document.Note)
         </p>
         <div style="display:flex">
             <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />

@@ -6,7 +6,7 @@
 <div class="viewHeader container-fluid viewHeader row row-cols-2 justify-content-between p-0">
     @if (Model.CurrentCategory.CategoryId != null)
     {
-        <h1 class="col">@Model.CurrentCategory.Category.CategoryName</h1>
+        <h1 class="col my-3 fw-bolder">@Model.CurrentCategory.Category.CategoryName</h1>
     }
     else
     {
@@ -15,6 +15,14 @@
     <button class="collapseBtn col btn btn-close" type="button"></button>
 </div>
 
+<h1 class="my-3 fw-bold">Notes</h1>
+<div class="alert alert-dark d-inline-block" role="alert">
+    Select up to 2 notes to display in the canvas
+</div>
+<div id="documentNotesContainer" style="display: none;">
+</div>
+
+<h1 class="my-3 fw-bold">Documents</h1>
 
 @if (User.IsInRole("Manager"))
 {
@@ -22,8 +30,7 @@
 }
 
 <div class="col-auto mt-3 float-left" style="top: 15rem">
-    <div id="documentNotesContainer" style="display: none;">
-    </div>
+    
 <div class="container-fluid p-0 row justify-content-between" id="documentContainer">
     <partial name="_DocumentList" model="@Model.Documents"></partial>
 </div>

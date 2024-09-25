@@ -109,7 +109,7 @@
 {
     <h2 class="mt-5 mb-5">You're in Manage Mode!</h2>
     <a id="categoryModalBtn" class="btn btn-primary mb-3">Add Category</a>
-    <a id="btnPrintCanvas" class="btn btn-info">Print Canvas</a>
+    <a id="btnPrintCanvas" class="btn btn-info mb-3">Print Canvas</a>
 }
 else
 {
@@ -130,16 +130,6 @@ else
         const printBtn = document.getElementById("btnPrintCanvas");
 
         printBtn.addEventListener('click', function () {
-         /*   const categoryContainer = document.querySelector('#categoryContainer');  THIS WAY MAKES THE CANVAS STAY IN ONE PAGE BUT NOT BORDER IS VISIBLE
-            const originalContents = document.body.innerHTML;
-
-            document.body.innerHTML = categoryContainer.outerHTML;
-
-            window.print(); 
-
-            document.body.innerHTML = originalContents;
-            window.location.reload(); 
-            */
             print();
         });
 

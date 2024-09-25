@@ -215,20 +215,29 @@ namespace BuildingManagementTool.Controllers
                 return Json(new { success = false, message = "Document not found." });
             }
 
-            // Update the IsActiveNote status
-            document.IsActiveNote = isActive;
+            var currentCategory = await _propertyCategoryRepository.GetById(document.PropertyCategoryId);
+            if (currentCategory == null)
+            {
+                return Json(new { success = false, message = "Property category not found." });
+            }
 
-            // Ensure no more than 2 active notes
-            var activeNotesCount = _documentRepository.AllDocuments.Count(d => d.IsActiveNote);
-            if (activeNotesCount > 2)
+            var activeNotesCount = _documentRepository.AllDocuments
+                .Count(d => d.PropertyCategoryId == currentCategory.PropertyCategoryId && d.IsActiveNote);
+
+            if (activeNotesCount < 2 || !isActive) 
+            {
+              
+                document.IsActiveNote = isActive;
+                await _documentRepository.UpdateDocumentAsync(document);
+
+                return Json(new { success = true, message = "Active note status updated!" });
+            }
+            else
             {
                 return Json(new { success = false, message = "Exceeded active notes limit." });
             }
-
-            await _documentRepository.UpdateDocumentAsync(document);
-
-            return Json(new { success = true, message = "Active note status updated!" });
         }
+
 
         [HttpGet]
         public async Task<IActionResult> DocumentRenameFormPartial(int id)
@@ -267,6 +276,24 @@ namespace BuildingManagementTool.Controllers
             await _documentRepository.UpdateDocumentAsync(document);
 
             return Json(new { success = true, message = "Document renamed successfully!" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDocumentShareUrlPartial(int id)
+        {
+            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == id);
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found",
+                    Detail = "The document was not found.",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            return PartialView("_GetDocumentShareUrl", document);
         }
 
 

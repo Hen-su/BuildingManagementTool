@@ -572,7 +572,39 @@ namespace BuildingManagementTool.Tests
         }
 
 
-        [TearDown]
+        [Test]
+        public async Task GetDocumentShareUrlPartial_DocumentNotFound_Fail()
+        {
+            var documentId = 1;
+      
+
+            _mockDocumentRepository.Setup(d => d.AllDocuments)
+                .Returns(new List<Document>().AsQueryable());
+
+            var result = await _documentController.GetDocumentShareUrlPartial(documentId);
+
+            Assert.NotNull(result);
+            var objectResult = result as ObjectResult;
+            Assert.NotNull(objectResult);
+            Assert.AreEqual(StatusCodes.Status404NotFound, objectResult.StatusCode);
+        }
+
+        [Test]
+        public async Task GetDocumentShareUrlPartial_DocumentExists_Success()
+        {
+            int id = 1;
+            Document document = new Document { DocumentId = 1 };
+
+            _mockDocumentRepository.Setup(d => d.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
+
+            var result = await _documentController.GetDocumentShareUrlPartial(id) as PartialViewResult;
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual("_GetDocumentShareUrl", result.ViewName);
+            Assert.AreEqual(document, result.Model);
+        }
+
+            [TearDown]
         public void Teardown()
         {
             _documentController.Dispose();
