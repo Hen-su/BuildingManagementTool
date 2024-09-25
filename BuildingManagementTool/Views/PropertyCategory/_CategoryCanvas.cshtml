@@ -64,20 +64,19 @@
 
 <script>
     $(document).ready(function () {
-        $(document).on('click', '.categoryBox, .sideBox', function (event) {
+        $(document).off('click', '.categoryBox, .sideBox').on('click', '.categoryBox, .sideBox', function (event) {
             if ($(event.target).is('.dropdown, .dropdown *')) {
                 return;
             }
             var catDiv = $(this)
             var categoryId = catDiv.data('id');
             var previewContainer = catDiv.find('.previewContainer');
-            $(document).on('click', '.collapseBtn', function (event) {
+            $(document).off('click', '.collapseBtn').on('click', '.collapseBtn', function (event) {
                 if (catDiv.hasClass('expanded')) {
                     catDiv.removeClass('expanded').find('.documentContent').hide(function () {
                         $(this).remove(); // Remove the content after sliding up
                         console.log('shrink')
                         location.reload();
-
                     });
                     if ($('#modalContainer').length) {
                         $('#modalContainer').remove();
@@ -107,7 +106,7 @@
                 catDiv.children('.previewContainer').first().hide();
                 // Expand the clicked box
                 catDiv.addClass('expanded');
-                console.log('expand')
+                console.log(catDiv, 'expand')
                 $.ajax({
                     url: '/Document/Index',
                     type: 'GET',
@@ -126,9 +125,6 @@
                 });
             }
         });
-
-
-
 
         $(document).on('click', '.documentContent', function (event) {
             event.stopPropagation(); // Prevents the click from bubbling up to parent elements

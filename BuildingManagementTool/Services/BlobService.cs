@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Metadata;
 
 namespace BuildingManagementTool.Services
 {
@@ -62,7 +63,6 @@ namespace BuildingManagementTool.Services
                 {
                     blobNames.Add(blobItem.Name);
                 }
-
                 return blobNames;
             }
             catch
@@ -124,6 +124,38 @@ namespace BuildingManagementTool.Services
             {
                 return false;
             }
+        }
+
+        public async Task RenameBlobDirectory(string containerName, string oldDirectory, string newDirectory)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            await foreach (BlobItem blobItem in containerClient.GetBlobsAsync(prefix: oldDirectory))
+            {
+                string oldBlobName = blobItem.Name;
+                string newBlobName = oldBlobName.Replace(oldDirectory, newDirectory);
+                BlobClient oldBlobClient = containerClient.GetBlobClient(oldBlobName);
+                BlobClient newBlobClient = containerClient.GetBlobClient(newBlobName);
+                await newBlobClient.StartCopyFromUriAsync(oldBlobClient.Uri);
+
+                BlobProperties properties = await newBlobClient.GetPropertiesAsync();
+                if (properties.CopyStatus == CopyStatus.Success)
+                {
+                    await oldBlobClient.DeleteIfExistsAsync();
+                }
+            }
+        }
+
+        public async Task<List<string>> GetBlobUrisByPrefix(string containerName, string prefix)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blobs = containerClient.GetBlobsAsync(prefix: prefix);
+            var blobList = new List<string>();
+            await foreach (var blob in blobs) 
+            {
+                var blobClient = containerClient.GetBlobClient(blob.Name);
+                blobList.Add(blobClient.Uri.ToString());
+            }
+            return blobList;
         }
 
     }

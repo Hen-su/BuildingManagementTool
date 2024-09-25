@@ -24,7 +24,6 @@ namespace BuildingManagementTool.Controllers
 
         public async Task<IActionResult> Index(int id)
         {
-            id = 1;
             var property = await _propertyRepository.GetById(id);
             if (property == null) 
             {
@@ -37,13 +36,20 @@ namespace BuildingManagementTool.Controllers
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
 
-            var documentsByCategory = new Dictionary<int, List<Document>>();
+            
             List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
             foreach (var category in categories)
             {
+                var documentsByCategory = new Dictionary<int, List<Document>>();
                 // Fetch documents by category id
-                var documents = await _documentRepository.GetDocumentsByCategoryId(category.PropertyCategoryId);
-                documents = documents.ToList();
+
+                var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
+                if (documents == null || !documents.Any()) 
+                {
+                    previewViewModels.Add(new CategoryPreviewViewModel(category, null));
+                    continue;
+                }
+                documents = documents.Where(d => d.IsActiveNote == true).Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
             }
@@ -55,8 +61,6 @@ namespace BuildingManagementTool.Controllers
         [HttpGet]
         public async Task<IActionResult> UpdateCategoryCanvas(int id)
         {
-            //test id
-            id = 1;
             var property = await _propertyRepository.GetById(id);
             if (property == null)
             {
@@ -69,12 +73,17 @@ namespace BuildingManagementTool.Controllers
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
 
-            var documentsByCategory = new Dictionary<int, List<Document>>();
             List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
             foreach (var category in categories)
             {
+                var documentsByCategory = new Dictionary<int, List<Document>>();
                 // Fetch documents by category id
-                var documents = await _documentRepository.GetDocumentsByCategoryId(category.PropertyCategoryId);
+                var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
+                if (documents == null || !documents.Any())
+                {
+                    previewViewModels.Add(new CategoryPreviewViewModel(category, null));
+                    continue;
+                }
                 documents = documents.Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
@@ -98,8 +107,8 @@ namespace BuildingManagementTool.Controllers
                 }); 
             }
             var categories = await _categoryRepository.Categories();
-            var categoryFormViewModel = new CategoryFormViewModel(categories, id);
-            return PartialView("_CategoryForm", categoryFormViewModel);
+            var categoryFormViewModel = new CategoryFormViewModel(categories, id, null);
+            return PartialView("_AddCategoryForm", categoryFormViewModel);
         }
 
         [HttpPost]
@@ -170,10 +179,37 @@ namespace BuildingManagementTool.Controllers
             }
 
             propertyCategory.Color = color;
-            await _propertyCategoryRepository.Update(propertyCategory);
+            await _propertyCategoryRepository.UpdatePropertyCategory(propertyCategory);
 
             return Ok();
         }
 
+
+        public async Task<IActionResult> EditCategoryFormPartial(int id, int currentCategoryId)
+        {
+            
+            var currentProperty = await _propertyRepository.GetById(id);
+            if (currentProperty == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The selected property could not be found"
+                });
+            }
+
+            var currentCategory = await _propertyCategoryRepository.GetById(currentCategoryId);
+            if (currentCategory == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "Could not find matching category"
+                });
+            }
+            var categories = await _categoryRepository.Categories();
+            var categoryFormViewModel = new CategoryFormViewModel(categories, id, currentCategory);
+            return PartialView("_EditCategoryForm", categoryFormViewModel);
+        }
     }
 }

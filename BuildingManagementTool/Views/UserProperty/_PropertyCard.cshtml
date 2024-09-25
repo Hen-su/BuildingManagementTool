@@ -1,0 +1,89 @@
+﻿@model UserProperty
+
+<style>
+    .card:hover {
+        background-color: lightgrey;
+    }
+
+    .card:hover img {
+        filter: brightness(0.8);
+    }
+
+    .menu-button {
+        background-color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .menu-button:hover {
+        filter: brightness(80%);
+        border: 1px solid black;
+    }
+
+    .dropdown-menu {
+        display: none; /* Hide dropdowns initially */
+        position: absolute;
+        top: 100%;
+        background-color: #ffffff;
+    }
+
+    .dropdown-menu::before {
+        display: none;
+    }
+
+    .dropdown-toggle::after {
+        display: none;
+    }
+</style>
+
+<div class="propertyCard col shadow-md p-0" style="width: 25rem;" data-id="@Model.PropertyId">
+    <div class="card" style="width: 25rem; position: static">
+        <img class="card-img-top" src="/imgs/sample-house.jpeg" alt="Card image cap">
+        <div class="card-body">
+            <div class="row g-0">
+                <div class="col-lg-11">
+                    <h5 class="card-title">@Model.Property.PropertyName</h5>
+                </div>
+                @if (User.IsInRole("Manager"))
+                {
+                    <partial name="_PropertyDropdownMenu" model="@Model"></partial>
+                }
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        
+        // Click event for dropdown buttons
+        $('.dropdown-toggle').off('click').on('click', function (event) {
+            event.stopPropagation();
+
+            var $this = $(this);
+            var $dropdownMenu = $this.next('.dropdown-menu');
+
+            // Close other dropdowns
+            $('.dropdown-menu').not($dropdownMenu).slideUp();
+
+            // Toggle current dropdown
+            $dropdownMenu.slideToggle();
+
+            console.log('Dropdown clicked');
+        });
+
+        // Close dropdowns when clicking outside
+        $(document).on('click', function (event) {
+            // Check if the click is outside of any dropdown
+            if (!$(event.target).closest('.dropdown').length) {
+                // Hide all dropdown menus
+                $('.dropdown-menu').slideUp();
+            }
+        });
+
+    });
+</script>

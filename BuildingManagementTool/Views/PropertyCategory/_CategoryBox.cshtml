@@ -8,7 +8,6 @@
         display: inline-flex;
         justify-content: center;
         align-items: center;
-        z-index: 5;
     }
 
     .menu-button:hover {
@@ -20,7 +19,6 @@
         display: none; /* Hide dropdowns initially */
         position: absolute;
         top: 100%;
-        z-index: 8;
     }
 
     .dropdown-menu::before {
@@ -30,9 +28,6 @@
     .dropdown-toggle::after {
         display: none;
     }
-
-  
-
 
 </style>
 
@@ -52,8 +47,7 @@
     <div class="previewContainer container mt-3 align-content-lg-start">
         <partial name="_CategoryPreview" model="Model"></partial>
     </div>
-        <div class="documentContent container align-content-lg-start">           
-        </div>
+        <div class="documentContent container align-content-lg-start"></div>
     </div>
 
 <script>

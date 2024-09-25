@@ -31,7 +31,7 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository = new Mock<IDocumentRepository>();
             _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object, _mockPropertyRepository.Object, _mockCategoryRepository.Object, _mockDocumentRepository.Object);
         }
-        /*
+        
         [Test]
         public async Task Index_PropertyExists_ReturnView()
         {
@@ -44,10 +44,10 @@ namespace BuildingManagementTool.Tests
                 new PropertyCategory{ PropertyCategoryId = 3 ,PropertyId = 2, CategoryId = 1 },
             };
             _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
-            _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(id)).ReturnsAsync(list.Where(p => p.PropertyId == id));
+            _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(list.Where(p => p.PropertyId == id));
             var img = "/imgs/sample-house.jpeg";
 
-            var viewModel = new CategoryViewModel(list, img, property);
+            var viewModel = new CategoryViewModel(list, img, property, null);
 
             var result = await _propertyCategoryController.Index(id);
             var viewResult = (ViewResult) result;
@@ -55,7 +55,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(result);
             Assert.That(resultViewModel.PropertyCategories.Count().Equals(2));
         }
-
+        
         [Test]
         public async Task Index_PropertyNotExists_ReturnError()
         {
@@ -69,7 +69,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
         }
-
+        
         [Test]
         public async Task UpdateCategoryCanvas_PropertyExists_ReturnPartial()
         {
@@ -84,7 +84,7 @@ namespace BuildingManagementTool.Tests
             _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
             _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(id)).ReturnsAsync(list.Where(p => p.PropertyId == id));
             var img = "/imgs/sample-house.jpeg";
-            var viewModel = new CategoryViewModel(list, img, property);
+            var viewModel = new CategoryViewModel(list, img, property, null);
 
             var result = await _propertyCategoryController.UpdateCategoryCanvas(id);
             var viewResult = result as PartialViewResult;
@@ -93,7 +93,7 @@ namespace BuildingManagementTool.Tests
             Assert.That(viewResult.ViewName.Equals("_CategoryCanvas"));
             Assert.That(resultViewModel.PropertyCategories.Count().Equals(2));
         }
-
+        
         [Test]
         public async Task UpdateCategoryCanvas_PropertyNotExists_ReturnError()
         {
@@ -121,13 +121,13 @@ namespace BuildingManagementTool.Tests
             };
             _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
             _mockCategoryRepository.Setup(pc => pc.Categories()).ReturnsAsync(list);
-            var viewModel = new CategoryFormViewModel(list, id);
+            var viewModel = new CategoryFormViewModel(list, id, null);
 
             var result = await _propertyCategoryController.CategoryFormPartial(id);
             var viewResult = result as PartialViewResult;
             var resultViewModel = viewResult.Model as CategoryFormViewModel;
             Assert.IsNotNull(result);
-            Assert.That(viewResult.ViewName.Equals("_CategoryForm"));
+            Assert.That(viewResult.ViewName.Equals("_AddCategoryForm"));
             Assert.That(resultViewModel.Categories.Count().Equals(3));
         }
 
@@ -193,7 +193,36 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
         }
-        */
+    
+        [Test]
+        public async Task DeleteConfirmationPartial_PropertyExists_ReturnPartial()
+        {
+            int id = 1;
+            Models.Property property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            Models.Category category = new Models.Category { CategoryId = 1, CategoryName = "Test Category" };
+            PropertyCategory propertyCategory = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1, Category = category, Property = property };
+            _mockPropertyCategoryRepository.Setup(p => p.GetById(id)).ReturnsAsync(propertyCategory);
+
+            var result = await _propertyCategoryController.DeleteConfirmationPartial(id);
+            var viewResult = result as PartialViewResult;
+            Assert.IsNotNull(result);
+            Assert.That(viewResult.ViewName.Equals("_CategoryDeleteConfirmation"));
+        }
+
+        [Test]
+        public async Task DeleteConfirmationPartial_PropertyNotExists_ReturnError()
+        {
+            int id = 1;
+            Models.Property property = null;
+            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+
+            var result = await _propertyCategoryController.DeleteConfirmationPartial(id);
+
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
         [Test]
         public async Task DeleteCategory_PropertyExists_ReturnSuccess()
         {
@@ -237,6 +266,47 @@ namespace BuildingManagementTool.Tests
 
             var result = await _propertyCategoryController.AddCategory(1, categoryName);
             _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
+
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
+        [Test]
+        public async Task EditCategoryFormPartial_PropertyExists_ReturnPartial()
+        {
+            int id = 1;
+            int currentCategoryId = 1;
+            PropertyCategory propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1 };
+            var list = new List<Category>
+            {
+                new Category{ CategoryId = 1, CategoryName = "Test1" },
+                new Category{ CategoryId = 2, CategoryName = "Test2" },
+                new Category{ CategoryId = 3, CategoryName = "Test3" }
+            };
+            Models.Property property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+
+            _mockPropertyCategoryRepository.Setup(pc => pc.GetById(currentCategoryId)).ReturnsAsync(propertyCategory);
+
+            _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
+
+            var result = await _propertyCategoryController.EditCategoryFormPartial(id, currentCategoryId);
+            var viewResult = result as PartialViewResult;
+            Assert.That(viewResult.ViewName.Equals("_EditCategoryForm"));
+            var resultViewModel = viewResult.Model as CategoryFormViewModel;
+            Assert.That(resultViewModel.Categories.Count().Equals(3));
+        }
+
+        [Test]
+        public async Task EditCategoryFormPartial_PropertyNotExists_ReturnError()
+        {
+            int id = 1;
+            int currentCategoryId = 1;
+            Models.Property property = null;
+            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+
+            var result = await _propertyCategoryController.EditCategoryFormPartial(id, currentCategoryId);
 
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");

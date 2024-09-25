@@ -1,0 +1,76 @@
+﻿@model CategoryFormViewModel
+
+
+<div id="categoryModal" class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content px-4">
+        <div class="modal-header">
+            <h2>Rename Category</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+            <form id="categoryForm" method="post">
+                <div class="d-flex flex-column">
+                    <label asp-for="CategoryName" >Select from the list or add custom label:</label>
+                    @if(Model.CurrentCategory.CategoryId != null)
+                    {
+                        <input asp-for="CategoryName" class="categoryName form-control" list="suggestions" type="text" placeholder="Enter Category Name" value="@Model.CurrentCategory.Category.CategoryName"></input>
+                    }
+                    else
+                    {
+                        <input asp-for="CategoryName" class="categoryName form-control" list="suggestions" type="text" placeholder="Enter Category Name" value="@Model.CurrentCategory.CustomCategory"></input>
+                    }
+                    <span asp-validation-for="CategoryName" class="text-danger"></span>
+                    <datalist id="suggestions">
+                        @foreach (var suggestion in Model.Categories)
+                        {
+                            <option value="@suggestion.CategoryName">@suggestion.CategoryName</option>
+                        }
+                    </datalist>
+                </div>
+            </form>
+            <div class="errorContainer alert alert-danger mt-2" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+            <div class="row justify-content-end">
+                <div class="col-auto">
+                    <button type="button" class="btn-secondary rounded me-2" data-bs-dismiss="modal">Close</button>
+                    <button id="renameBtn" form="categoryForm" class="btn-primary rounded" type="button" data-id="@Model.CurrentCategory.PropertyCategoryId" >Rename</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        if ($.validator) {
+            console.log("jQuery Validation plugin loaded.");
+        } else {
+            console.error("jQuery Validation plugin not loaded.");
+        }
+        $.validator.addMethod("regex", function (value, element, regexpr) {
+            return regexpr.test(value);
+        }, "Invalid format.");
+
+
+        $("#categoryForm").validate({
+            rules: {
+                categoryName: {
+                    required: true,
+                    regex: /^[a-zA-Z0-9 _-]+$/,
+                    maxlength: 50
+                }
+            },
+            messages: {
+                categoryName: {
+                    required: "Please enter a category name.",
+                    regex: "Category name can only include letters, numbers, spaces, hyphens, and underscores.",
+                    maxlength: "Property name cannot be longer than 50 characters."
+                }
+            },
+            errorClass: "error"
+        });
+    })
+</script>

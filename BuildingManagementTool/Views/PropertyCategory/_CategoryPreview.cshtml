@@ -1,13 +1,13 @@
 ﻿@model CategoryPreviewViewModel
 
-@if (Model.CategoryDocuments[Model.PropertyCategory.PropertyCategoryId].Any(document => document.IsActiveNote))
+@if (Model.CategoryDocuments != null &&
+              Model.CategoryDocuments.TryGetValue(Model.PropertyCategory.PropertyCategoryId, out var documents) &&
+              documents.Any())
 {
-    @foreach (var document in Model.CategoryDocuments[Model.PropertyCategory.PropertyCategoryId].Where(d => d.IsActiveNote))
+    @foreach (var document in documents)
     {
-
-    
         <p class="fw-bold mt-1">
-            @(document.Note.Length > 30 ? document.Note.Substring(0, 25) + "..." : document.Note)
+            @(document.Note.Length > 30 ? document.Note.Substring(0, 30) + "..." : document.Note)
         </p>
         <div style="display:flex">
             <img src="@document.FileImageUrl" alt="Document Thumbnail" class="img-fluid" style="height:30px; width:auto;" />
@@ -17,22 +17,10 @@
             </p>
         </div>
     }
-
 }
-
-        @if (!Model.CategoryDocuments.ContainsKey(Model.PropertyCategory.PropertyCategoryId) ||
-        !Model.CategoryDocuments[Model.PropertyCategory.PropertyCategoryId].Any())
-        {
+else
+{
     <p class="mt-4">No documents available for this category.</p>
 }
-
-        else
-{
-  
-        <p >@Model.CategoryDocuments[Model.PropertyCategory.PropertyCategoryId].Count() More document(s)</p>
-        <p >Click to see more.</p>
-    
-
-
-
-        }
+<p >@Model.CategoryDocuments[Model.PropertyCategory.PropertyCategoryId].Count() document(s)</p>
+<p >Click to see more.</p>

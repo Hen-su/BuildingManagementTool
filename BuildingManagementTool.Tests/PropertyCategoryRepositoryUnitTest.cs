@@ -65,8 +65,58 @@ namespace BuildingManagementTool.Tests
         {
             PropertyCategory newCategory = null;
             Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await _propertyCategoryRepository.AddPropertyCategory(newCategory));
+            await _propertyCategoryRepository.DeletePropertyCategory(newCategory));
         }
+
+        [Test]
+        public async Task UpdatePropertyCategory_PropertyCategoryExists_AddSuccess()
+        {
+            PropertyCategory newCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1 };
+            await _propertyCategoryRepository.AddPropertyCategory(newCategory);
+            var savedCategory = await _dbContext.PropertyCategories.FindAsync(1);
+            savedCategory.CategoryId = 2;
+            await _propertyCategoryRepository.UpdatePropertyCategory(savedCategory);
+            Assert.That(savedCategory.CategoryId, Is.EqualTo(2));
+        }
+
+        [Test]
+        public async Task UpdatePropertyCategory_PropertyCategoryNull_ThrowEx()
+        {
+            PropertyCategory newCategory = null;
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await _propertyCategoryRepository.UpdatePropertyCategory(newCategory));
+        }
+
+        [Test]
+        public async Task DeleteByPropertyId_ValidId_Success()
+        {
+            int id = 1;
+            var propertyCategoriesList = new List<PropertyCategory>
+            {
+                new PropertyCategory { PropertyId = 1, CategoryId = 1, PropertyCategoryId = 1 },
+                new PropertyCategory { PropertyId = 2, CategoryId = 2, PropertyCategoryId = 2 }
+            };
+            await _dbContext.PropertyCategories.AddRangeAsync(propertyCategoriesList);
+            await _dbContext.SaveChangesAsync();
+
+            var initialList = await _dbContext.Properties.ToListAsync();
+
+            await _propertyCategoryRepository.DeleteByPropertyId(id);
+
+            var newList = await _dbContext.PropertyCategories.ToListAsync();
+            Assert.That(newList.Count, Is.EqualTo(1));
+            Assert.That(newList[0].PropertyId, Is.EqualTo(propertyCategoriesList[1].PropertyId));
+            Assert.That(newList[0].PropertyCategoryId, Is.EqualTo(propertyCategoriesList[1].PropertyCategoryId));
+        }
+
+        [Test]
+        public async Task DeleteByPropertyId_NullId_ThrowEx()
+        {
+            int id = 0;
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await _propertyCategoryRepository.DeleteByPropertyId(id));
+        }
+
 
         [TearDown]
         public void Teardown()

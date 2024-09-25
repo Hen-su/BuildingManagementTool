@@ -1,4 +1,5 @@
 ﻿using Azure;
+using Azure.Core;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -6,16 +7,22 @@ using Azure.Storage.Blobs.Specialized;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using Castle.Components.DictionaryAdapter.Xml;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 using Moq;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Mime;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -341,6 +348,188 @@ namespace BuildingManagementTool.Tests
             _mockBlobClient
                 .Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Never);
             Assert.IsFalse(result);
+        }
+
+        [Test]
+        public async Task RenameBlobDirectory_ReturnSuccess()
+        {
+            var containerName = "test";
+            var oldDirectory = "test/old-directory";
+            var newDirectory = "test/new-directory";
+            var oldBlobName1 = "test/old-directory/blob.txt";
+            var newBlobName1 = "test/new-directory/blob.txt";
+
+            var _mockOldBlobClient = new Mock<BlobClient>();
+            var _mockNewBlobClient = new Mock<BlobClient>();
+
+            var oldBlobUri = new Uri($"https://example.com/{oldBlobName1}");
+            var newBlobUri = new Uri($"https://example.com/{newBlobName1}");
+
+            _mockOldBlobClient.SetupGet(client => client.Uri).Returns(oldBlobUri);
+            _mockNewBlobClient.SetupGet(client => client.Uri).Returns(newBlobUri);
+
+            var blobList = new BlobItem[]
+            {
+                BlobsModelFactory.BlobItem(oldBlobName1)
+            };
+
+            Page<BlobItem> page = Page<BlobItem>.FromValues(blobList, null, Mock.Of<Response>());
+            AsyncPageable<BlobItem> pageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { page });
+
+            _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns(_mockBlobContainerClient.Object);
+
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(oldBlobName1)).Returns(_mockOldBlobClient.Object);
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(newBlobName1)).Returns(_mockNewBlobClient.Object);
+
+            _mockBlobContainerClient.Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(),
+        It.IsAny<BlobStates>(),
+        It.Is<string>(prefix => prefix == oldDirectory), 
+        It.IsAny<CancellationToken>())).Returns(pageableBlobList);
+
+
+            var properties = BlobsModelFactory.BlobProperties(
+                    lastModified: default,
+                    createdOn: default,
+                    metadata: null,
+                    objectReplicationDestinationPolicyId: null,
+                    objectReplicationSourceProperties: null,
+                    blobType: BlobType.Block,
+                    copyCompletedOn: default,
+                    copyStatusDescription: null,
+                    copyId: null,
+                    copyProgress: null,
+                    copySource: default,
+                    blobCopyStatus: CopyStatus.Success,
+                    isIncrementalCopy: false,
+                    destinationSnapshot: null,
+                    leaseDuration: LeaseDurationType.Infinite,
+                    leaseState: LeaseState.Available,
+                    leaseStatus: LeaseStatus.Locked,
+                    contentLength: 1024,
+                    contentType: null,
+                    eTag: new ETag("test-etag"),
+                    contentHash: null,
+                    contentEncoding: null,
+                    contentDisposition: null,
+                    contentLanguage: null,
+                    cacheControl: null,
+                    blobSequenceNumber: 0,
+                    acceptRanges: null,
+                    blobCommittedBlockCount: 0,
+                    isServerEncrypted: false,
+                    encryptionKeySha256: null,
+                    encryptionScope: null,
+                    accessTier: "Hot",
+                    accessTierInferred: false,
+                    archiveStatus: null,
+                    accessTierChangedOn: default,
+                    versionId: null,
+                    isLatestVersion: false,
+                    tagCount: 0,
+                    expiresOn: default,
+                    isSealed: false,
+                    rehydratePriority: null,
+                    lastAccessed: default,
+                    immutabilityPolicy: null,
+                    hasLegalHold: false
+                );
+
+            _mockNewBlobClient.Setup(client => client.GetPropertiesAsync(null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Response.FromValue(properties, Mock.Of<Response>()));
+
+            var mockCopyOperation = new Mock<CopyFromUriOperation>();
+
+            _mockNewBlobClient.Setup(client => client.StartCopyFromUriAsync(
+                It.IsAny<Uri>(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                It.IsAny<CancellationToken>()
+            )).ReturnsAsync(mockCopyOperation.Object);
+
+            _mockOldBlobClient.Setup(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
+
+            await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory);
+            _mockNewBlobClient.Verify(client => client.StartCopyFromUriAsync(It.IsAny<Uri>(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                It.IsAny<CancellationToken>()), Times.Once);
+
+            _mockOldBlobClient.Verify(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task RenameBlobDirectory_NullValue_NoInvocation()
+        {
+            var containerName = "test";
+            string oldDirectory = null;
+            var newDirectory = "test/new-directory";
+            var oldBlobName1 = "test/old-directory/blob.txt";
+            var newBlobName1 = "test/new-directory/blob.txt";
+
+            var _mockOldBlobClient = new Mock<BlobClient>();
+            var _mockNewBlobClient = new Mock<BlobClient>();
+
+            var oldBlobUri = new Uri($"https://example.com/{oldBlobName1}");
+            var newBlobUri = new Uri($"https://example.com/{newBlobName1}");
+
+            _mockOldBlobClient.SetupGet(client => client.Uri).Returns(oldBlobUri);
+            _mockNewBlobClient.SetupGet(client => client.Uri).Returns(newBlobUri);
+
+            var blobList = new BlobItem[]
+            {
+                BlobsModelFactory.BlobItem(oldBlobName1)
+            };
+
+            Page<BlobItem> page = Page<BlobItem>.FromValues(blobList, null, Mock.Of<Response>());
+            AsyncPageable<BlobItem> pageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { page });
+
+            _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns(_mockBlobContainerClient.Object);
+
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(oldBlobName1)).Returns(_mockOldBlobClient.Object);
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(newBlobName1)).Returns(_mockNewBlobClient.Object);
+
+            _mockBlobContainerClient.Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(),
+        It.IsAny<BlobStates>(),
+        It.Is<string>(prefix => prefix == oldDirectory),
+        It.IsAny<CancellationToken>())).Returns(pageableBlobList);
+
+            var mockCopyOperation = new Mock<CopyFromUriOperation>();
+
+            _mockNewBlobClient.Setup(client => client.StartCopyFromUriAsync(
+                It.IsAny<Uri>(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                It.IsAny<CancellationToken>()
+            )).ReturnsAsync(mockCopyOperation.Object);
+
+            _mockOldBlobClient.Setup(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
+
+            var exception = Assert.ThrowsAsync<ArgumentNullException>(
+                () => _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory));
+
+            Assert.That(exception.Message, Does.Contain("Value cannot be null. (Parameter 'oldValue')"));
+            _mockNewBlobClient.Verify(client => client.StartCopyFromUriAsync(It.IsAny<Uri>(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                It.IsAny<CancellationToken>()), Times.Never);
+
+            _mockOldBlobClient.Verify(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

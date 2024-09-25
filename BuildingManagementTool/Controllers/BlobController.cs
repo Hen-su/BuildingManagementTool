@@ -14,15 +14,19 @@ namespace BuildingManagementTool.Controllers
     public class BlobController : Controller
     {
         private readonly IDocumentRepository _documentRepository;
+        private readonly ICategoryRepository _categoryRepository;
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
+        private readonly IPropertyRepository _propertyRepository;
         private readonly IBlobService _blobService;
         private readonly UserManager<ApplicationUser> _userManager;
-        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository, UserManager<ApplicationUser> userManager)
+        public BlobController(IBlobService blobService, IDocumentRepository documentRepository, IPropertyCategoryRepository propertyCategoryRepository, UserManager<ApplicationUser> userManager, ICategoryRepository categoryRepository, IPropertyRepository propertyRepository)
         {
             _blobService = blobService;
             _documentRepository = documentRepository;
             _propertyCategoryRepository = propertyCategoryRepository;
             _userManager = userManager;
+            _categoryRepository = categoryRepository;
+            _propertyRepository = propertyRepository;
         }
 
         [HttpPost]
@@ -151,7 +155,7 @@ namespace BuildingManagementTool.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteBlob(int? id)
+        public async Task<IActionResult> DeleteBlob(int id)
         {
             var user = await _userManager.GetUserAsync(User);
             var containerName = "userid-" + user.Id;
@@ -351,12 +355,11 @@ namespace BuildingManagementTool.Controllers
             {
                 return StatusCode(StatusCodes.Status404NotFound, new
                 {
-                    success = false,
+                    success = false,        
                     message = "The File MetaData was not found"
                 });
             }
 
-           
             var blobUrl = await _blobService.GetBlobUrlAsync(containerName, document.BlobName);
             if (string.IsNullOrEmpty(blobUrl))
             {
@@ -372,6 +375,108 @@ namespace BuildingManagementTool.Controllers
                 success = true,
                 url = blobUrl
             });
+        }
+            
+
+        [HttpPost]
+        public async Task<IActionResult> RenamePropertyCategory(int id, string newName)
+        {
+            var propertyCategory = await _propertyCategoryRepository.GetById(id);
+            if (propertyCategory == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,     
+                    message = "Could not find matching category"
+                });
+            }
+
+            if (newName != null) 
+            {
+                var categories = await _categoryRepository.Categories();
+                var existingCategory = categories.FirstOrDefault(c => c.CategoryName == newName);
+
+                if (propertyCategory.CategoryId != null)
+                {
+                    if (propertyCategory.Category.CategoryName == newName)
+                    {
+                        return Json(new { success = true });
+                    }
+                }
+
+                if (propertyCategory.CustomCategory == newName)
+                {
+                    return Json(new { success = true });
+                }
+
+                if (existingCategory != null)
+                {
+                    propertyCategory.CategoryId = existingCategory.CategoryId;
+                    propertyCategory.CustomCategory = null;  
+                }
+                else
+                {
+                    propertyCategory.CategoryId = null;
+                    propertyCategory.CustomCategory = newName;
+                }
+                await _propertyCategoryRepository.UpdatePropertyCategory(propertyCategory);
+                string newDirectory;
+                if (propertyCategory.CategoryId != null)
+                {
+                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}".Trim().Replace(" ", "-");
+                }
+                else
+                {
+                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim().Replace(" ", "-");
+                }
+
+                var user = await _userManager.GetUserAsync(User);
+                var containerName = "userid-" + user.Id; 
+                
+                var documents = await _documentRepository.GetByPropertyCategoryId(propertyCategory.PropertyCategoryId);
+                foreach (var document in documents) 
+                {
+                    string oldDirectory = document.BlobName.Substring(0, document.BlobName.LastIndexOf('/'));
+                    var fileName = document.BlobName.Substring(document.BlobName.LastIndexOf('/'));
+                    document.BlobName = newDirectory + fileName;
+                    await _documentRepository.UpdateDocumentAsync(document);
+                    await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory);
+                }
+                return Json(new { success = true });
+            }
+            return StatusCode(StatusCodes.Status400BadRequest, new
+            {
+                success = false,
+                message = "Category name cannot be empty"
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProperty(int id)
+        {
+            var property = await _propertyRepository.GetById(id);
+            if (property == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The selected property was not found"
+                });
+            }
+            await _propertyRepository.DeleteProperty(property);
+            var user = await _userManager.GetUserAsync(User);
+            var containerName = "userid-" + user.Id;
+            string prefix = $"{property.PropertyName}".Trim().Replace(" ", "-");
+            var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
+            if (!deleteSuccess)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = "An error occurred while deleting the property, Please try again"
+                });
+            }
+            return Json(new { success = true });
         }
 
     }

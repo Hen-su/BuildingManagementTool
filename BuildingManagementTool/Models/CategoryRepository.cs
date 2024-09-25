@@ -11,16 +11,9 @@ namespace BuildingManagementTool.Models
             _buildingManagementToolDbContext = context;
         }
 
-        public Task AddDefault()
-        {
-            //Use for PropertyCategories Entity
-            throw new NotImplementedException();
-        }
-
         public async Task<IEnumerable<Category>> Categories()
         {
-                return await _buildingManagementToolDbContext.Categories.ToListAsync();
-
+            return await _buildingManagementToolDbContext.Categories.ToListAsync();
         }
 
         public Task DeleteCategory(Category category)
