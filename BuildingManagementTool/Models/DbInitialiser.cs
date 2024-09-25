@@ -27,7 +27,7 @@ namespace BuildingManagementTool.Models
             if (!context.Categories.Any())
             {
                 context.Categories.AddRange(
-                    new Category { CategoryName = "Plumbing/Electrical" },
+                    new Category { CategoryName = "Plumbing-Electrical" },
                     new Category { CategoryName = "Design Engineering" },
                     new Category { CategoryName = "Head Contractor" },
                     new Category { CategoryName = "Consents" },
@@ -35,10 +35,10 @@ namespace BuildingManagementTool.Models
                     new Category { CategoryName = "Site Clearance" },
                     new Category { CategoryName = "Painting Tiles" },
                     new Category { CategoryName = "Foundation" },
-                    new Category { CategoryName = "Kitchen/Bathroom" },
+                    new Category { CategoryName = "Kitchen-Bathroom" },
                     new Category { CategoryName = "Roof" },
-                    new Category { CategoryName = "Door/Windows" },
-                    new Category { CategoryName = "Framing/Carpenter" }
+                    new Category { CategoryName = "Door-Windows" },
+                    new Category { CategoryName = "Framing-Carpenter" }
                 );
                 context.SaveChanges();
             }

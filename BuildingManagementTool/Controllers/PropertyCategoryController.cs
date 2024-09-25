@@ -44,14 +44,15 @@ namespace BuildingManagementTool.Controllers
                 // Fetch documents by category id
 
                 var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
+                var documentCount = documents.Count();
                 if (documents == null || !documents.Any()) 
                 {
-                    previewViewModels.Add(new CategoryPreviewViewModel(category, null));
+                    previewViewModels.Add(new CategoryPreviewViewModel(category, null, 0));
                     continue;
                 }
                 documents = documents.Where(d => d.IsActiveNote == true).Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
-                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
+                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory, documentCount));
             }
 
             var viewModel = new CategoryViewModel(categories, img, property, previewViewModels);
@@ -79,14 +80,15 @@ namespace BuildingManagementTool.Controllers
                 var documentsByCategory = new Dictionary<int, List<Document>>();
                 // Fetch documents by category id
                 var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
+                var documentCount = documents.Count();
                 if (documents == null || !documents.Any())
                 {
-                    previewViewModels.Add(new CategoryPreviewViewModel(category, null));
+                    previewViewModels.Add(new CategoryPreviewViewModel(category, null, 0));
                     continue;
                 }
                 documents = documents.Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
-                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
+                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory, documentCount));
             }
 
             var viewModel = new CategoryViewModel(categories, img, property, previewViewModels);
