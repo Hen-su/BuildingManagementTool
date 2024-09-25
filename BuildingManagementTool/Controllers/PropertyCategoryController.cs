@@ -42,13 +42,14 @@ namespace BuildingManagementTool.Controllers
             {
                 var documentsByCategory = new Dictionary<int, List<Document>>();
                 // Fetch documents by category id
+
                 var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
                 if (documents == null || !documents.Any()) 
                 {
                     previewViewModels.Add(new CategoryPreviewViewModel(category, null));
                     continue;
                 }
-                documents = documents.Take(2).ToList();
+                documents = documents.Where(d => d.IsActiveNote == true).Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory));
             }

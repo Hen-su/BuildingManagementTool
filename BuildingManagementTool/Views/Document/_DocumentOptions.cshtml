@@ -26,11 +26,11 @@
               <a asp-controller="Blob" asp-action="Download" asp-route-id="@Model.DocumentId" class="btn btn-dark mb-2" style="width: 150px";>
             Download 
              </a>
-         
-          <!-- <a href="" target="_blank" class="btn btn-dark mb-2" style="width: 150px;">
+
+            <a id="shareUrlBtn" data-id="@Model.DocumentId" class="btn btn-dark mb-2" style="width: 150px;">
                 Share
             </a>
-            -->
+     
             @if (User.IsInRole("Manager"))
             {
               <a id="deleteConfBtn" data-id="@Model.DocumentId" class="btn btn-danger" style="width: 150px;">
@@ -40,6 +40,10 @@
 
                 <a id="addNoteBtn" data-id="@Model.DocumentId" class="btn btn-success" style="width: 150px;">
                     Add Note
+                </a>
+
+                <a id="renameFileBtn" data-id="@Model.DocumentId" class="btn btn-primary" style="width: 150px;">
+                    Rename
                 </a>
             }
            
@@ -61,8 +65,21 @@
             });
         })
 
+        $("#renameFileBtn").click(function () {
+            var documentId = $(this).data("id"); 
+            var url = "/Document/DocumentRenameFormPartial/" + encodeURIComponent(documentId);
+            $("#modalContainer").load(url, function () {
+                $("#modalContainer").modal("show");
+            });
+        })
 
-
+        $("#shareUrlBtn").click(function () {
+            var documentId = $(this).data("id"); 
+            var url = "/Document/GetDocumentShareUrlPartial/" + encodeURIComponent(documentId);
+            $("#modalContainer").load(url, function () {
+                $("#modalContainer").modal("show");
+            });
+        })
 
         //Returns a partial view
         $("#viewBtn").click(function () {

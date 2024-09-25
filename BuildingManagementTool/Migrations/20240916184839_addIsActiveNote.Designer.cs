@@ -4,6 +4,7 @@ using BuildingManagementTool.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BuildingManagementTool.Migrations
 {
     [DbContext(typeof(BuildingManagementToolDbContext))]
-    partial class BuildingManagementToolDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240916184839_addIsActiveNote")]
+    partial class addIsActiveNote
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -207,57 +210,6 @@ namespace BuildingManagementTool.Migrations
                     b.ToTable("PropertyCategories");
                 });
 
-            modelBuilder.Entity("BuildingManagementTool.Models.PropertyImage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BlobName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDisplay")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("PropertyId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PropertyId");
-
-                    b.ToTable("PropertyImages");
-                });
-
-            modelBuilder.Entity("BuildingManagementTool.Models.UserProperty", b =>
-                {
-                    b.Property<int>("UserPropertyId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserPropertyId"));
-
-                    b.Property<int>("PropertyId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserPropertyId");
-
-                    b.HasIndex("PropertyId");
-
-                    b.ToTable("UserProperties");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -419,28 +371,6 @@ namespace BuildingManagementTool.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
-
-                    b.Navigation("Property");
-                });
-
-            modelBuilder.Entity("BuildingManagementTool.Models.PropertyImage", b =>
-                {
-                    b.HasOne("BuildingManagementTool.Models.Property", "Property")
-                        .WithMany()
-                        .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Property");
-                });
-
-            modelBuilder.Entity("BuildingManagementTool.Models.UserProperty", b =>
-                {
-                    b.HasOne("BuildingManagementTool.Models.Property", "Property")
-                        .WithMany()
-                        .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("Property");
                 });

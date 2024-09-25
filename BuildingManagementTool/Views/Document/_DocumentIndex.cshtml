@@ -6,7 +6,7 @@
 <div class="viewHeader container-fluid viewHeader row row-cols-2 justify-content-between p-0">
     @if (Model.CurrentCategory.CategoryId != null)
     {
-        <h1 class="col">@Model.CurrentCategory.Category.CategoryName</h1>
+        <h1 class="col my-3 fw-bolder">@Model.CurrentCategory.Category.CategoryName</h1>
     }
     else
     {
@@ -15,13 +15,22 @@
     <button class="collapseBtn col btn btn-close" type="button"></button>
 </div>
 
+<h1 class="my-3 fw-bold">Notes</h1>
+<div class="alert alert-dark d-inline-block" role="alert">
+    Select up to 2 notes to display in the canvas
+</div>
+<div id="documentNotesContainer" style="display: none;">
+</div>
+
+<h1 class="my-3 fw-bold">Documents</h1>
 
 @if (User.IsInRole("Manager"))
 {
     <button id="uploadModalBtn" class="btn-success btn-md">Upload</button>
 }
 
-
+<div class="col-auto mt-3 float-left" style="top: 15rem">
+    
 <div class="container-fluid p-0 row justify-content-between" id="documentContainer">
     <partial name="_DocumentList" model="@Model.Documents"></partial>
 </div>
@@ -30,9 +39,7 @@
     </div>
 </div>
 
-<div class="col-auto mt-3 float-left" style="position: fixed; left: 2rem; top: 15rem">
-    <div id="documentNotesContainer" style="display: none;">
-    </div>
+
 </div>
 
 <div id="modalContainer" class="modal shadow" role="dialog"></div>
@@ -238,6 +245,92 @@
         $.get('/Document/GetDocumentNotesByCategory', { propertyCategoryId: propertyCategoryId }, function (response) {
             $('#documentNotesContainer').html(response).slideDown(); 
         });
+
     }
+
+
+
+
+
+    $(document).on("click", "#deleteNoteBtm", function () {
+        var documentId = $(this).data("id");
+
+       
+            $.ajax({
+                url: '/Document/DeleteNoteFromDocument',
+                type: 'POST',
+                data: {
+                    documentId: documentId
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#modalContainer').modal('hide');
+
+                        // Reload only the notes section to see the updated changes
+                        loadDocumentNotesForCategory(@Model.CurrentCategory.PropertyCategoryId);
+
+                    } else {
+                        displayErrorMessage(response);
+                    }
+                    $('#deleteNoteBtm').prop('disabled', false).text('Delete Note');
+                },
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                    $('#deleteNoteBtm').prop('disabled', false).text('Delete Note');
+                }
+            });
+
+
+    });
+
+
+
+
+
+
+    $(document).on("click", "#renameDocumentBtn", function () {
+        var documentId = $(this).data("id");
+        var filename = $("#fileName").val();
+
+        $.ajax({
+            url: '/Document/DocumentFileNameRename',
+            type: 'POST', 
+            data: {
+                documentId: documentId, 
+                filename: filename
+            },
+            success: function (response) {
+                if (response.success) {
+                    $.ajax({
+                        url: '/Document/UpdateList',
+                        type: 'GET',
+                        data: { id: @Model.CurrentCategory.PropertyCategoryId },
+                        success: function (result) {
+                            // Replace the document list with the updated content
+                            $('#documentContainer').html(result);
+                            $('#modalContainer').modal('hide');
+                            $('#documentOptionsContainer').empty();
+                            //to reload the notes list once a document is deleted
+                            loadDocumentNotesForCategory(@Model.CurrentCategory.PropertyCategoryId);
+
+                        },
+                        error: function () {
+                            alert('An error occurred while updating the document list.');
+                        }
+                    });
+                } else {
+                    displayErrorMessage(response);
+                }
+                $('#renameDocumentBtn').prop('disabled', false).text('Rename');
+            },
+            error: function (xhr) {
+                displayErrorMessage(xhr);
+                $('#renameDocumentBtn').prop('disabled', false).text('Rename');
+            }
+        });
+    });
+
+  
+
 
 </script>

@@ -1,0 +1,83 @@
+﻿@model Document
+
+<div id="shareDocumentUrl" class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content px-4">
+        <div class="modal-header">
+            <h2>Document Share Url</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+            <form id="shareDocumentUrlForm">
+                <div class="row justify-content-between">
+                    <div id="documentShareUrlMessage">Fetching URL for @Model.FileName...</div>
+
+                    <div class="row align-items-center mb-3">
+                        <div class="col-10 p-1">
+                            <a id="documentShareUrlLink" href="#" target="_blank" class="form-control text-truncate" title="Document URL">
+                               
+                            </a>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" id="copyUrlBtn" class="btn btn-primary">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+
+
+              
+                    <div id="urlCopiedAlert" class="alert alert-success" role="alert" style="display:none;">
+                        URL Copied!
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <div class="row justify-content-end">
+                <div class="col-auto">
+                    <button type="button" class="btn-secondary rounded me-2" data-bs-dismiss="modal">Close</button>
+          
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var documentId = "@Model.DocumentId"; 
+
+        
+        $.ajax({
+            url: "/Blob/GetDocumentShareUrl?id=" + encodeURIComponent(documentId),
+            type: "GET",
+            success: function (response) {
+                if (response.success) {
+                   
+                    $("#documentShareUrlMessage").text("Document URL for @Model.FileName:");
+                    $("#documentShareUrlLink").text(response.url).attr("href", response.url);
+                } else {
+                    $("#documentShareUrlMessage").text("Error: Unable to fetch the document URL.");
+                }
+            },
+            error: function () {
+                $("#documentShareUrlMessage").text("Error: Unable to fetch the document URL.");
+            }
+        });
+
+     
+        $("#copyUrlBtn").click(function () {
+            var url = $("#documentShareUrlLink").text(); 
+
+        
+            navigator.clipboard.writeText(url).then(function () {
+               
+                $("#urlCopiedAlert").show().delay(2000).fadeOut();
+            }).catch(function (error) {
+                console.error("Failed to copy the URL to clipboard: ", error);
+            });
+        });
+    });
+</script>

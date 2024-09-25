@@ -20,5 +20,7 @@ namespace BuildingManagementTool.Models
         public int PropertyCategoryId { get; set; }
         public PropertyCategory PropertyCategory { get; set; }
         public string? Note { get; set; }
+
+        public bool IsActiveNote { get; set; }
     }
 }

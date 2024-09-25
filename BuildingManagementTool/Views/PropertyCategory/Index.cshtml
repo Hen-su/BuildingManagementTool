@@ -1,6 +1,5 @@
 ﻿@model CategoryViewModel
 
-
 <style>
     .error{
         color: red;
@@ -26,10 +25,10 @@
 
     .propertyBox {
         height: 15rem;
-        border: 1px solid #ddd
+        border: 1px solid #ddd;
     }
 
-    .propertyBoxContainer{
+    .propertyBoxContainer {
         border-left: 5px solid skyblue;
     }
 
@@ -37,7 +36,7 @@
         border-left: 5px solid skyblue;
         border-right: 5px solid skyblue;
     }
-
+      
     .sideBox:first-child{
     border-bottom: 5px solid skyblue;
     }
@@ -55,13 +54,13 @@
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%; /* Full width of the container */
-        height: 100%; /* Full height of the container */
-        z-index: 10; /* Ensure it appears above other content */
-        overflow: auto; /* Enable scrolling if content overflows */
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        overflow: auto;
         padding: 20px;
         box-sizing: border-box;
-        background-color: white; /* Optional: ensure background color */
+        background-color: white;
         max-width: none;
         border: none;
     }
@@ -72,6 +71,36 @@
 
     .canvasRow:last-of-type {
         border-bottom: 5px solid skyblue;
+    }
+
+    @@media print {
+        body * {
+            visibility: hidden; 
+        }
+
+        #categoryContainer, #categoryContainer * {
+            visibility: visible; 
+            page-break-inside: avoid; 
+        }
+
+        #categoryContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            transform: scale(0.8); 
+            transform-origin: top left; 
+            padding: 0;
+        }
+        @@page {
+            margin: 0;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: auto;
+        }
     }
 
     #addCategoryModalBtn {
@@ -97,9 +126,11 @@
 
 </style>
 
+
 @if (User.IsInRole("Manager"))
 {
     <h2 class="mt-5 mb-5">You're in Manage Mode!</h2>
+    <a id="btnPrintCanvas" class="btn btn-info mb-3">Print Canvas</a>
     <a id="addCategoryModalBtn">
         <i class="fas fa-plus"></i>
     </a>
@@ -119,6 +150,22 @@ else
 
 
 <script>
+
+
+   
+        const printBtn = document.getElementById("btnPrintCanvas");
+
+        printBtn.addEventListener('click', function () {
+            print();
+        });
+
+
+
+
+
+
+
+
     $(document).ready(function () {
         $('#categoryModalContainer').on('hidden.bs.modal', function () {
             console.log("emptied");

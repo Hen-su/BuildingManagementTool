@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet.Protocol;
 using System;
@@ -458,6 +459,26 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
+        public async Task GetDocumentShareUrl_DocumentNotFound()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "property/category/test.txt"
+            };
+            _mockDocumentRepository.Setup(repo => repo.GetById(document.DocumentId))
+            .ReturnsAsync((Document)null);
+
+            var result = await _blobController.GetDocumentShareUrl(document.DocumentId);
+
+            _mockDocumentRepository.Verify(repo => repo.GetById(documentId), Times.Once);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+  
+        [Test]
         public async Task RenameCategoryPropertyCategory_ValidId_ReturnSuccess()
         {
             var propertyCategoryId = 1;
@@ -506,6 +527,33 @@ namespace BuildingManagementTool.Tests
             _mockPropertyCategoryRepository.Verify(d => d.UpdatePropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
             _mockDocumentRepository.Verify(d => d.UpdateDocumentAsync(It.IsAny<Document>()), Times.Never);
             _mockBlobService.Verify(b => b.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
+        [Test]
+        public async Task GetDocumentShareUrl_BlobNotFound()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "property/category/test.txt"
+            };
+
+            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+            _mockDocumentRepository.Setup(repo => repo.GetById(documentId))
+                .ReturnsAsync(document);
+
+            _mockBlobService.Setup(service => service.GetBlobUrlAsync("test1", document.BlobName))
+                .ReturnsAsync((string)null);
+
+            var result = await _blobController.GetDocumentShareUrl(documentId);
+
+            _mockDocumentRepository.Verify(repo => repo.GetById(documentId), Times.Once);
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
@@ -566,9 +614,42 @@ namespace BuildingManagementTool.Tests
 
             var result = await _blobController.DeleteProperty(propertyId);
             _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
+        [Test]
+        public async Task GetDocumentShareUrl_Success()
+        {
+            var documentId = 1;
+            var document = new Document
+            {
+                DocumentId = documentId,
+                BlobName = "property/category/test.txt",
+                ContentType = "text/plain",
+                FileName = "test.txt"
+            };
+            var blobUrl = "https://devstoreaccount1/test/category/test.pdf";
+            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+            _mockDocumentRepository.Setup(repo => repo.GetById(documentId))
+                .ReturnsAsync(document);
+
+            _mockBlobService.Setup(service => service.GetBlobUrlAsync(It.IsAny<string>(), document.BlobName))
+                .ReturnsAsync(blobUrl);
+
+            var result = await _blobController.GetDocumentShareUrl(documentId) as OkObjectResult;
+
+            Assert.NotNull(result);
+           
+            var resultJson = JsonConvert.SerializeObject(result.Value); 
+            var resultValue = JObject.Parse(resultJson);  
+
+            Assert.IsTrue(resultValue["success"].Value<bool>(), "Expected 'success' to be true.");
+            Assert.That(resultValue["url"].Value<string>(), Is.EqualTo(blobUrl), "Expected 'url' to match the blob URL.");
         }
 
         [Test]
