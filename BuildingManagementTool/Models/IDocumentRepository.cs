@@ -9,5 +9,7 @@
         Task<List<Document>> GetByPropertyCategoryId(int id);
         Task UpdateDocumentAsync(Document document);
         Task DeleteByPropertyId(int id);
+        Task<List<Document>> GetByPropertyId(int id);
+        Task UpdateByList(List<Document> documents);
     }
 }

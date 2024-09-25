@@ -1,0 +1,188 @@
+﻿@model ManagePropertyFormViewModel
+
+<style>
+    .gallery-item {
+        width: 15rem;
+        height: 10rem;
+    }
+
+    .empty-item {
+        border: 4px dashed #f0f0f0;
+        border-radius: 10px;
+    }
+
+</style>
+
+<div id="managePropertyModal" class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content px-4">
+        <div class="modal-header">
+            <h2>Manage Property</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+            <form id="propertyForm" method="post" enctype="multipart/form-data">
+                <div class="form-group d-flex flex-column">
+                    <label asp-for="PropertyName">Property Name/Address</label>
+                    <input asp-for="PropertyName" id="propertyName" name="PropertyName" class="form-control" list="suggestions" type="text" placeholder="Enter Property Name or Address" value="@Model.PropertyName"></input>
+                    <span asp-validation-for="PropertyName" class="text-danger"></span>
+                </div>
+                <div class="row mt-4">
+                    <h4 class="col-lg-12">Upload Images</h4>
+                    <div class="col-lg-2">
+                        <input type="file" id="image-upload" asp-for="Images" name="Images" accept="image/*" multiple style="display: none;">
+                        <input type="button" value="Browse..." class="btn btn-primary" onclick="document.getElementById('image-upload').click();" />
+                    </div>
+                    <div id="gallery" class="col-lg-10 row row-cols-2 justify-content-end g-2">
+                        @for (int i = 0; i < 4; i++)
+                        {
+                            @if (Model.ImageUrls != null && i < Model.ImageUrls.Count && !string.IsNullOrEmpty(Model.ImageUrls[i]))
+                            {
+                                <div class="col gallery-item d-flex justify-content-center align-items-center">
+                                    <img class="img-thumbnail img-fluid" src="@Model.ImageUrls[i]"></img>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col mx-1 gallery-item empty-item d-flex justify-content-center align-items-center">
+                                    <h5>No Image</h5>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="errorContainer alert alert-danger mt-2" style="display:none;"></div>
+            </form>
+            
+        </div>
+        <div class="modal-footer">
+            <div class="row justify-content-end">
+                <div class="col-auto">
+                    <button type="button" class="btn-secondary rounded me-2" data-bs-dismiss="modal">Close</button>
+                    <button id="savePropertyBtn" form="propertyForm" class="btn-primary rounded" type="button" data-id="@Model.CurrentProperty.PropertyId">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        let fileArray = [];
+        var form = document.getElementById('propertyForm');
+        const fileInput = document.getElementById('image-upload');
+        var errorContainer = form.querySelector('.errorContainer');
+
+        $('#image-upload').on('change', function (event) {
+            const files = event.target.files; // Get the uploaded files
+            console.log(fileArray)
+            // Clear existing error message
+            $(errorContainer).hide();
+            // Add new files to the array
+            for (let i = 0; i < files.length; i++) {
+                if (fileArray.length < 4) {
+                    fileArray.push(files[i]);
+                }
+                else {
+                    $(errorContainer).text("Only a maximum of 4 images is allowed").show();
+                    break;
+                }
+            }
+
+            const gallery = document.getElementById('gallery');
+            const emptyItems = gallery.querySelectorAll('.empty-item'); // Get all empty items
+            const availableCon = emptyItems.length;
+
+            // Keep track of how many images we've added
+            let fileIndex = 0;
+            let itemIndex = 0;
+
+            // Function to handle adding a file to an empty item
+            function addFileToEmptyItem(file) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const img = document.createElement('img');
+                    img.className = 'img-thumbnail img-fluid';
+                    img.src = e.target.result; // Set the image source to the file data URL
+
+                    if (emptyItems[itemIndex]) {
+                        const emptyItem = emptyItems[itemIndex];
+                        emptyItem.innerHTML = ''; // Clear existing content
+                        emptyItem.appendChild(img); // Add the image
+                        emptyItem.classList.remove('empty-item');
+                        itemIndex++;
+                    }
+                };
+                reader.readAsDataURL(file); // Read the file as a Data URL
+            }
+
+            // Add files to empty items up to the number of available empty items
+            while (fileIndex < fileArray.length && itemIndex < availableCon) {
+                addFileToEmptyItem(files[fileIndex]);
+                fileIndex++;
+            }
+
+            // Show error message if more files were selected than empty items
+            if (fileIndex > availableCon) {
+                $(errorContainer).text("Only a maximum of 4 images is allowed").show();
+            }
+        });
+
+        function replaceFiles(fileInput, fileArray) {
+            // Create a DataTransfer object
+            const dataTransfer = new DataTransfer();
+
+            // Loop through your custom fileArray and add each file to the DataTransfer object
+            fileArray.forEach(file => {
+                dataTransfer.items.add(file); // Add each file to the DataTransfer
+            });
+
+            // Set the files property of the input to the files in the DataTransfer object
+            fileInput.files = dataTransfer.files;
+        }
+
+        $(document).on('click', '#savePropertyBtn', function (event) {
+            console.log("Save clicked")
+            var propertyInput = $("#propertyName")
+            var propertyName = propertyInput.val();
+            console.log()
+            var propertyForm = $("#propertyForm")
+            var propertyId = $(this).data('id');
+            if (fileArray.length > 0) {
+                replaceFiles(fileInput, fileArray)
+            }
+            var formData = new FormData(propertyForm[0])
+            formData.append('id', propertyId);
+            $.ajax({
+                url: '/UserProperty/ManagePropertyFormSubmit',
+                type: 'POST',
+                data: formData,
+                contentType: false,  // Important for file uploads (must be false)
+                processData: false,  // Prevent jQuery from processing the FormData
+                success: function (response) {
+                    if (response.success) {
+                        $.ajax({
+                            url: '/UserProperty/UpdatePropertyContainer',
+                            type: 'GET',
+                            success: function (result) {
+                                $('#propertyModalContainer').modal('hide');
+                                $('#propertyContainer').html(result);
+                            },
+                            error: function () {
+                                displayErrorMessage(response);
+                            }
+                        });
+                    } else {
+                        console.log('return validation errors')
+                        $('#propertyModalContainer').html(response);
+                    }
+                },
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                }
+            });
+        })
+
+    })
+</script>

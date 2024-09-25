@@ -7,5 +7,6 @@
         Task AddProperty(Property property);
         Task AddDefaultCategories(Property property);
         Task DeleteProperty(Property property);
+        Task UpdateProperty(Property property);
     }
 }

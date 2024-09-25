@@ -86,7 +86,16 @@ namespace BuildingManagementTool.Models
                 await transaction.RollbackAsync();
                 throw ex;
             }
-            
+        }
+
+        public async Task UpdateProperty(Property property)
+        {
+            if (property == null)
+            {
+                throw new ArgumentNullException("Property id cannot be null.");
+            }
+            _dbContext.Properties.Update(property);
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

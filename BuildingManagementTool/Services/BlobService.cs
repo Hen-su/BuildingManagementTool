@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Metadata;
 
 namespace BuildingManagementTool.Services
 {
@@ -62,7 +63,6 @@ namespace BuildingManagementTool.Services
                 {
                     blobNames.Add(blobItem.Name);
                 }
-
                 return blobNames;
             }
             catch
@@ -143,6 +143,19 @@ namespace BuildingManagementTool.Services
                     await oldBlobClient.DeleteIfExistsAsync();
                 }
             }
+        }
+
+        public async Task<List<string>> GetBlobUrisByPrefix(string containerName, string prefix)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blobs = containerClient.GetBlobsAsync(prefix: prefix);
+            var blobList = new List<string>();
+            await foreach (var blob in blobs) 
+            {
+                var blobClient = containerClient.GetBlobClient(blob.Name);
+                blobList.Add(blobClient.Uri.ToString());
+            }
+            return blobList;
         }
 
     }

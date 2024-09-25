@@ -11,5 +11,6 @@ namespace BuildingManagementTool.Models
         public DbSet<PropertyCategory> PropertyCategories { get; set; }
         public DbSet<Property> Properties { get; set; }
         public DbSet<UserProperty> UserProperties { get; set; }
+        public DbSet<PropertyImage> PropertyImages { get; set; }
     }
 }
