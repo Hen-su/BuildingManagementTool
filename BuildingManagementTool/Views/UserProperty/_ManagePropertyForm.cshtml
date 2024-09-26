@@ -4,11 +4,17 @@
     .gallery-item {
         width: 15rem;
         height: 10rem;
+        border: 4px solid #f0f0f0;
+        border-radius: 10px;
     }
 
     .empty-item {
         border: 4px dashed #f0f0f0;
         border-radius: 10px;
+    }
+
+    .selected-item {
+        border: 4px solid darkgreen;
     }
 
 </style>
@@ -36,11 +42,20 @@
                     <div id="gallery" class="col-lg-10 row row-cols-2 justify-content-end g-2">
                         @for (int i = 0; i < 4; i++)
                         {
-                            @if (Model.ImageUrls != null && i < Model.ImageUrls.Count && !string.IsNullOrEmpty(Model.ImageUrls[i]))
+                            if (Model.ImageUrls != null && i < Model.ImageUrls.Count)
                             {
-                                <div class="col gallery-item d-flex justify-content-center align-items-center">
-                                    <img class="img-thumbnail img-fluid" src="@Model.ImageUrls[i]"></img>
-                                </div>
+                                var dict = Model.ImageUrls[i];
+                                if (dict != null && dict.Count > 0)
+                                {
+                                    var kvp = dict.FirstOrDefault();
+                                    if (kvp.Value != null && kvp.Value.Count > 0 && !string.IsNullOrEmpty(kvp.Value[0]))
+                                    {
+                                        var isSelected = kvp.Value.Count > 2 && kvp.Value[2] == "True" ? "selected-item" : "";
+                                        <div class="col gallery-item d-flex justify-content-center align-items-center @isSelected" data-file="@kvp.Value[0]">
+                                            <img class="img-thumbnail img-fluid" src="@kvp.Value[1]" />
+                                        </div>
+                                    }
+                                }
                             }
                             else
                             {
@@ -130,30 +145,51 @@
         });
 
         function replaceFiles(fileInput, fileArray) {
-            // Create a DataTransfer object
             const dataTransfer = new DataTransfer();
 
-            // Loop through your custom fileArray and add each file to the DataTransfer object
             fileArray.forEach(file => {
-                dataTransfer.items.add(file); // Add each file to the DataTransfer
+                dataTransfer.items.add(file);
             });
 
-            // Set the files property of the input to the files in the DataTransfer object
             fileInput.files = dataTransfer.files;
         }
 
+        $(document).on('click', '.gallery-item', function (event) {
+            console.log('gallery item clicked');
+            const imageItem = $(this);
+            if (imageItem.find('img').length > 0) {
+                console.log('Image found within gallery item');
+                if (imageItem.hasClass('selected-item')) {
+                    console.log('selected-item removed');
+                    imageItem.removeClass('selected-item');
+                } else {
+                    $('.gallery-item').removeClass('selected-item');
+                    imageItem.addClass('selected-item');
+                }
+            } else {
+                console.log('No image found within gallery item');
+            }
+        });
+
         $(document).on('click', '#savePropertyBtn', function (event) {
             console.log("Save clicked")
-            var propertyInput = $("#propertyName")
-            var propertyName = propertyInput.val();
+            const propertyInput = $("#propertyName")
+            const propertyName = propertyInput.val();
             console.log()
-            var propertyForm = $("#propertyForm")
-            var propertyId = $(this).data('id');
+            const propertyForm = $("#propertyForm")
+            const propertyId = $(this).data('id');
+            const selectedItem = $('.selected-item');
+            let selectedItemName = "";
+            if (selectedItem.length > 0) {
+                selectedItemName = selectedItem.data('file')
+            }
+
             if (fileArray.length > 0) {
                 replaceFiles(fileInput, fileArray)
             }
             var formData = new FormData(propertyForm[0])
             formData.append('id', propertyId);
+            formData.append('selectedFileName', selectedItemName);
             $.ajax({
                 url: '/UserProperty/ManagePropertyFormSubmit',
                 type: 'POST',

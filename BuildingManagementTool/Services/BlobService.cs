@@ -145,18 +145,19 @@ namespace BuildingManagementTool.Services
             }
         }
 
-        public async Task<List<string>> GetBlobUrisByPrefix(string containerName, string prefix)
+        public async Task<Dictionary<int, List<string>>> GetBlobUrisByPrefix(string containerName, string prefix)
         {
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             var blobs = containerClient.GetBlobsAsync(prefix: prefix);
-            var blobList = new List<string>();
+            var blobList = new Dictionary<int, List<string>>();
+            var i = 0;
             await foreach (var blob in blobs) 
             {
                 var blobClient = containerClient.GetBlobClient(blob.Name);
-                blobList.Add(blobClient.Uri.ToString());
+                blobList.Add(i, new List<string> { blobClient.Name.Split('/').Last(), blobClient.Uri.ToString() });
+                i++;
             }
             return blobList;
         }
-
     }
 }

@@ -64,5 +64,55 @@ namespace BuildingManagementTool.Models
         {
             get { return _dbContext.PropertyImages; }
         }
+        
+        public async Task<PropertyImage> GetByFileName(string fileName)
+        {
+            if (fileName == null || fileName == "")
+            {
+                throw new ArgumentNullException("File name cannot be null.");
+            }
+            return _dbContext.PropertyImages.FirstOrDefault(pi => pi.FileName == fileName);
+        }
+
+        public async Task SetDisplayImage(PropertyImage propertyImage)
+        {
+            if (propertyImage == null)
+            {
+                throw new ArgumentNullException(nameof(propertyImage), "PropertyImage cannot be null.");
+            }
+
+            var propertyImageList = await GetByPropertyId(propertyImage.PropertyId);
+            if (propertyImageList == null)
+            {
+                throw new ArgumentException("No images found for the given property ID.");
+            }
+            foreach (var image in propertyImageList)
+            {
+                image.IsDisplay = false;
+            }
+            propertyImage.IsDisplay = true;
+            _dbContext.UpdateRange(propertyImageList);
+            _dbContext.Update(propertyImage);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task RemoveDisplayImage(int id)
+        {
+            if (id == null || id == 0)
+            {
+                throw new ArgumentNullException("PropertyId cannot be null.");
+            }
+            var propertyImageList = await GetByPropertyId(id);
+            if (propertyImageList == null)
+            {
+                throw new ArgumentException("No images found for the given property ID.");
+            }
+            foreach (var image in propertyImageList)
+            {
+                image.IsDisplay = false;
+            }
+            _dbContext.UpdateRange(propertyImageList);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }
