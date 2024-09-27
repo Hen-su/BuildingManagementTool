@@ -2,8 +2,10 @@
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using BuildingManagementTool.ViewModels;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Policy;
 
 namespace BuildingManagementTool.Controllers
 {
@@ -33,14 +35,30 @@ namespace BuildingManagementTool.Controllers
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
-            
+            var containerName = "userid-" + user.Id;
             if (user == null) 
             {
                 return BadRequest("A problem occurred while retrieving your data");
             }
             var userId = user.Id;
             var propertyList = await _userPropertyRepository.GetByUserId(userId);
-            return View(propertyList);
+
+            var viewmodelList = new List<PropertyViewModel>();
+            foreach (var property in propertyList)
+            {
+                var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
+                var displayImage = propertyImages.FirstOrDefault(img => img.IsDisplay);
+                if (displayImage != null)
+                {
+                    var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName);
+                    viewmodelList.Add(new PropertyViewModel(property, url.ToString()));
+                }
+                else
+                {
+                    viewmodelList.Add(new PropertyViewModel(property, null));
+                }
+            }
+            return View(viewmodelList);
         }
 
         public async Task<IActionResult> PropertyFormPartial()
@@ -88,14 +106,30 @@ namespace BuildingManagementTool.Controllers
         public async Task<IActionResult> UpdatePropertyContainer()
         {
             var user = await _userManager.GetUserAsync(User);
-            
+            var containerName = "userid-" + user.Id;
             if (user == null)
             {
                 return BadRequest("A problem occurred while retrieving your data");
             }
             var userId = user.Id;
             var propertyList = await _userPropertyRepository.GetByUserId(userId);
-            return PartialView("_PropertyContainer", propertyList);
+
+            var viewmodelList = new List<PropertyViewModel>();
+            foreach (var property in propertyList)
+            {
+                var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
+                var displayImage = propertyImages.FirstOrDefault(img => img.IsDisplay);
+                if (displayImage != null)
+                {
+                    var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName);
+                    viewmodelList.Add(new PropertyViewModel(property, url.ToString()));
+                }
+                else
+                {
+                    viewmodelList.Add(new PropertyViewModel(property, null));
+                }
+            }
+            return PartialView("_PropertyContainer", viewmodelList);
         }
 
         public async Task<IActionResult> DeleteConfirmationPartial(int id)
@@ -141,7 +175,7 @@ namespace BuildingManagementTool.Controllers
                     message = "The selected property could not be found"
                 });
             }
-            var imageList = new List<string>();
+            var imageList = new List<Dictionary<int, List<string>>>();
 
             var images = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
             if (images.Any())
@@ -149,20 +183,37 @@ namespace BuildingManagementTool.Controllers
                 var user = await _userManager.GetUserAsync(User);
                 var containerName = "userid-" + user.Id;
 
-                var prefix = $"{property.PropertyName}/images/".Trim().Replace(" ", "-");
-                var blobUris = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+                var prefix = $"{property.PropertyName}/images/".Trim();
+                var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
             
-                if (blobUris != null && blobUris.Any())
+                if (blobs != null && blobs.Any())
                 {
-                    foreach (var blobUri in blobUris)
+                    int dictionaryCount = 0;
+                    foreach (var kvp in blobs)
                     {
-                        imageList.Add(blobUri);
+                        var updatedList = new List<string>
+                        {
+                            kvp.Value[0],
+                            kvp.Value[1],
+                            images.FirstOrDefault(i => i.FileName == kvp.Value[0]).IsDisplay.ToString()
+                        };
+                        imageList.Add(new Dictionary<int, List<string>> { { kvp.Key, updatedList } });
+                        dictionaryCount++;
+                    }
+
+                    while(dictionaryCount < 5)
+                    {
+                        imageList.Add(new Dictionary<int, List<string>> { { dictionaryCount, new List<string> { null } } });
+                        dictionaryCount++;
                     }
                 }
             }
             else
             {
-                imageList.AddRange(new List<string> { null, null, null, null });
+                for (int i = 0; i < 4; i++)
+                {
+                    imageList.Add(new Dictionary<int, List<string>> { { i, new List<string> { null } } });
+                }
             }
             
             var viewmodel = new ManagePropertyFormViewModel(imageList, property) { PropertyName = property.PropertyName };
@@ -170,7 +221,7 @@ namespace BuildingManagementTool.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ManagePropertyFormSubmit(int id, ManagePropertyFormViewModel formViewModel)
+        public async Task<IActionResult> ManagePropertyFormSubmit(int id, ManagePropertyFormViewModel formViewModel, string? selectedFileName)
         {
             if (!ModelState.IsValid)
             {
@@ -188,13 +239,11 @@ namespace BuildingManagementTool.Controllers
             //Replace copy and replace blobs
             if (currentProperty.PropertyName != formViewModel.PropertyName)
             {
-                var newDirectory = formViewModel.PropertyName.Trim().Replace(" ", "-");
-                string oldDirectory = currentProperty.PropertyName.Trim().Replace(" ", "-");
+                var newDirectory = formViewModel.PropertyName.Trim();
+                string oldDirectory = currentProperty.PropertyName.Trim();
 
                 currentProperty.PropertyName = formViewModel.PropertyName;
                 await _propertyRepository.UpdateProperty(currentProperty);
-
-                
 
                 var documents = await _documentRepository.GetByPropertyId(currentProperty.PropertyId);
                 foreach (var document in documents)
@@ -220,7 +269,7 @@ namespace BuildingManagementTool.Controllers
                             message = $"A blob with the same name already exists. {image.FileName}"
                         });
                     }
-                    var blobName = $"{currentProperty.PropertyName}/images/{image.FileName}".Trim().Replace(" ", "-");
+                    var blobName = $"{currentProperty.PropertyName}/images/{image.FileName}".Trim();
                     bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
                     if (blobExists)
                     {
@@ -249,7 +298,21 @@ namespace BuildingManagementTool.Controllers
                     await _propertyImageRepository.AddPropertyImage(file);
                 }
             }
-
+            if (selectedFileName != null && selectedFileName != "")
+            {
+                var displayImage = await _propertyImageRepository.GetByFileName(currentProperty.PropertyId, selectedFileName);
+                if (displayImage != null) 
+                {
+                    if (!displayImage.IsDisplay)
+                    {
+                        await _propertyImageRepository.SetDisplayImage(displayImage);
+                    }
+                }
+            }
+            else
+            {
+                await _propertyImageRepository.RemoveDisplayImage(currentProperty.PropertyId);
+            }
             return Json(new { success = true });
         }
     }

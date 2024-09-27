@@ -12,6 +12,6 @@ namespace BuildingManagementTool.Models
         Task<Stream> DownloadBlobAsync(string containerName, string blobName);
         Task<bool> DeleteByPrefix(string containerName, string prefix);
         Task RenameBlobDirectory(string containerName, string oldDirectory, string newDirectory);
-        Task<List<string>> GetBlobUrisByPrefix(string containerName, string prefix);
+        Task<Dictionary<int, List<string>>> GetBlobUrisByPrefix(string containerName, string prefix);
     }
 }

@@ -60,11 +60,11 @@ namespace BuildingManagementTool.Controllers
                 string blobName;
                 if (propertyCategory.CategoryId != null)
                 {
-                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}/{file.FileName}".Trim().Replace(" ", "-");
+                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}/{file.FileName}".Trim();
                 }
                 else
                 {
-                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}/{file.FileName}".Trim().Replace(" ", "-");
+                    blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}/{file.FileName}".Trim();
                 }
 
                 bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
@@ -324,11 +324,11 @@ namespace BuildingManagementTool.Controllers
             string prefix;
             if (propertyCategory.CategoryId != null)
             {
-                prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}".Trim().Replace(" ", "-");
+                prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}".Trim();
             }
             else
             {
-                prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim().Replace(" ", "-");
+                prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim();
             }
             var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
             if (!deleteSuccess)
@@ -423,11 +423,11 @@ namespace BuildingManagementTool.Controllers
                 string newDirectory;
                 if (propertyCategory.CategoryId != null)
                 {
-                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}".Trim().Replace(" ", "-");
+                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}".Trim();
                 }
                 else
                 {
-                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim().Replace(" ", "-");
+                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim();
                 }
 
                 var user = await _userManager.GetUserAsync(User);
@@ -466,7 +466,7 @@ namespace BuildingManagementTool.Controllers
             await _propertyRepository.DeleteProperty(property);
             var user = await _userManager.GetUserAsync(User);
             var containerName = "userid-" + user.Id;
-            string prefix = $"{property.PropertyName}".Trim().Replace(" ", "-");
+            string prefix = $"{property.PropertyName}".Trim();
             var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
             if (!deleteSuccess)
             {

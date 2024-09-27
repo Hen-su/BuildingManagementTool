@@ -1,6 +1,10 @@
-﻿@model UserProperty
+﻿@model PropertyViewModel
 
 <style>
+    .card img{
+        width: auto;
+        height: 15rem;
+    }
     .card:hover {
         background-color: lightgrey;
     }
@@ -37,19 +41,34 @@
     .dropdown-toggle::after {
         display: none;
     }
+
+    .img-placeholder{
+        height: 15rem;
+        border-bottom: 1px solid #f0f0f0
+    }
 </style>
 
-<div class="propertyCard col shadow-md p-0" style="width: 25rem;" data-id="@Model.PropertyId">
+<div class="propertyCard col shadow-md p-0" style="width: 25rem;" data-id="@Model.UserProperty.PropertyId">
     <div class="card" style="width: 25rem; position: static">
-        <img class="card-img-top" src="/imgs/sample-house.jpeg" alt="Card image cap">
+        @if (Model.ImageUrl != null)
+        {
+            <img class="card-img-top" src="@Model.ImageUrl" alt="Card image cap">
+        }
+        else
+        {
+           <div class="img-placeholder d-flex justify-content-center align-items-center">
+                <h4>No Image Available</h4>
+            </div> 
+        }
+        
         <div class="card-body">
             <div class="row g-0">
                 <div class="col-lg-11">
-                    <h5 class="card-title">@Model.Property.PropertyName</h5>
+                    <h5 class="card-title">@Model.UserProperty.Property.PropertyName</h5>
                 </div>
                 @if (User.IsInRole("Manager"))
                 {
-                    <partial name="_PropertyDropdownMenu" model="@Model"></partial>
+                    <partial name="_PropertyDropdownMenu" model="@Model.UserProperty"></partial>
                 }
             </div>
             

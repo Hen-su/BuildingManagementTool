@@ -9,7 +9,7 @@ namespace BuildingManagementTool.ViewModels
     {
         [BindNever]
         [ValidateNever]
-        public List<string>? ImageUrls { get; set; } = new List<string>();
+        public List<Dictionary<int, List<string>>>? ImageUrls { get; set; } = new List<Dictionary<int, List<string>>>();
         [BindNever]
         [ValidateNever]
         public Property? CurrentProperty { get; set; } = new Property();
@@ -18,7 +18,7 @@ namespace BuildingManagementTool.ViewModels
         [RegularExpression(@"^[a-zA-Z0-9 _-]+$", ErrorMessage = "Only upper and lowercase alphanumeric characters, hyphens, underscores and spaces are allowed.")]
         public string PropertyName { get; set; }
         public List<IFormFile>? Images { get; set; }
-        public ManagePropertyFormViewModel(List<string> images, Property property) 
+        public ManagePropertyFormViewModel(List<Dictionary<int, List<string>>> images, Property property) 
         {
             ImageUrls = images;
             CurrentProperty = property;
