@@ -39,7 +39,9 @@
                         <input type="file" id="image-upload" asp-for="Images" name="Images" accept="image/*" multiple style="display: none;">
                         <input type="button" value="Browse..." class="btn btn-primary" onclick="document.getElementById('image-upload').click();" />
                     </div>
-                    <div id="gallery" class="col-lg-10 row row-cols-2 justify-content-end g-2">
+                    
+                    <div id="gallery" class="col-lg-10 row row-cols-2 justify-content-end g-2 mt-1" style="position:relative;">
+                        <label style="position:absolute; top: -2.5rem; left:8rem;" for="gallery" class="col-12">Select an image for the display picture</label>
                         @for (int i = 0; i < 4; i++)
                         {
                             if (i < Model.ImageUrls.Count)
@@ -51,20 +53,18 @@
                                     if (kvp.Value != null && kvp.Value.Count > 0 && !string.IsNullOrEmpty(kvp.Value[0]))
                                     {
                                         var isSelected = kvp.Value.Count > 2 && kvp.Value[2] == "True" ? "selected-item" : "";
-                                        <div class="col gallery-item d-flex justify-content-center align-items-center @isSelected" data-file="@kvp.Value[0]">
+                                        <div class="mt-0 col gallery-item d-flex justify-content-center align-items-center @isSelected" data-file="@kvp.Value[0]">
                                             <img class="img-thumbnail img-fluid" src="@kvp.Value[1]" />
                                         </div>
                                     }
                                     else
                                     {
-                                        <div class="col mx-1 gallery-item empty-item d-flex justify-content-center align-items-center">
+                                        <div class="mt-0 col mx-1 gallery-item empty-item d-flex justify-content-center align-items-center">
                                             <h5>No Image</h5>
                                         </div>
                                     }
                                 }
-                                
                             }
-                            
                         }
                     </div>
                 </div>
@@ -128,6 +128,7 @@
                         emptyItem.innerHTML = ''; // Clear existing content
                         emptyItem.appendChild(img); // Add the image
                         emptyItem.classList.remove('empty-item');
+                        emptyItem.setAttribute('data-file', file.name);
                         itemIndex++;
                     }
                 };
@@ -156,7 +157,7 @@
             fileInput.files = dataTransfer.files;
         }
 
-        $(document).on('click', '.gallery-item', function (event) {
+        $(document).off('click', '.gallery-item').on('click', '.gallery-item', function (event) {
             console.log('gallery item clicked');
             const imageItem = $(this);
             if (imageItem.find('img').length > 0) {
@@ -173,7 +174,7 @@
             }
         });
 
-        $(document).on('click', '#savePropertyBtn', function (event) {
+        $(document).off('click', '#savePropertyBtn').on('click', '#savePropertyBtn', function (event) {
             console.log("Save clicked")
             const propertyInput = $("#propertyName")
             const propertyName = propertyInput.val();

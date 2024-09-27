@@ -188,6 +188,7 @@ namespace BuildingManagementTool.Controllers
             
                 if (blobs != null && blobs.Any())
                 {
+                    int dictionaryCount = 0;
                     foreach (var kvp in blobs)
                     {
                         var updatedList = new List<string>
@@ -197,6 +198,13 @@ namespace BuildingManagementTool.Controllers
                             images.FirstOrDefault(i => i.FileName == kvp.Value[0]).IsDisplay.ToString()
                         };
                         imageList.Add(new Dictionary<int, List<string>> { { kvp.Key, updatedList } });
+                        dictionaryCount++;
+                    }
+
+                    while(dictionaryCount < 5)
+                    {
+                        imageList.Add(new Dictionary<int, List<string>> { { dictionaryCount, new List<string> { null } } });
+                        dictionaryCount++;
                     }
                 }
             }
@@ -292,7 +300,7 @@ namespace BuildingManagementTool.Controllers
             }
             if (selectedFileName != null && selectedFileName != "")
             {
-                var displayImage = await _propertyImageRepository.GetByFileName(selectedFileName);
+                var displayImage = await _propertyImageRepository.GetByFileName(currentProperty.PropertyId, selectedFileName);
                 if (displayImage != null) 
                 {
                     if (!displayImage.IsDisplay)

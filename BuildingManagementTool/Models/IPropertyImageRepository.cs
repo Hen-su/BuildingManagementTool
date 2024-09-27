@@ -8,7 +8,7 @@
         Task AddPropertyImage(PropertyImage propertyImage);
         Task DeletePropertyImage(PropertyImage propertyImage);
         Task DeleteByPropertyId(int id);
-        Task<PropertyImage> GetByFileName(string fileName);
+        Task<PropertyImage> GetByFileName(int id, string fileName);
         Task SetDisplayImage(PropertyImage propertyImage);
         Task RemoveDisplayImage(int id);
     }

@@ -65,13 +65,13 @@ namespace BuildingManagementTool.Models
             get { return _dbContext.PropertyImages; }
         }
         
-        public async Task<PropertyImage> GetByFileName(string fileName)
+        public async Task<PropertyImage> GetByFileName(int id, string fileName)
         {
             if (fileName == null || fileName == "")
             {
                 throw new ArgumentNullException("File name cannot be null.");
             }
-            return _dbContext.PropertyImages.FirstOrDefault(pi => pi.FileName == fileName);
+            return _dbContext.PropertyImages.FirstOrDefault(pi => pi.PropertyId == id && pi.FileName == fileName);
         }
 
         public async Task SetDisplayImage(PropertyImage propertyImage)
