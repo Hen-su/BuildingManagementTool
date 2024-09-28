@@ -170,12 +170,12 @@ else
             });
         });
 
-        $(document).off('click', '.manageCategoryModalBtn').on('click', '.manageCategoryModalBtn', function (event) {
+        $(document).off('click', '.editCategoryModalBtn').on('click', '.editCategoryModalBtn', function (event) {
             console.log("manage category clicked", )
             var currentProperty = @Model.Property.PropertyId;
             var currentCategory = $(this).data('id');
             console.log(currentCategory)
-            var url = "/PropertyCategory/ManageCategoryFormPartial/" + encodeURIComponent(currentProperty) + "?currentCategoryId=" + encodeURIComponent(currentCategory);
+            var url = "/PropertyCategory/EditCategoryFormPartial/" + encodeURIComponent(currentProperty) + "?currentCategoryId=" + encodeURIComponent(currentCategory);
             $("#categoryModalContainer").load(url, function () {
                 $("#categoryModalContainer").modal("show");
             });
