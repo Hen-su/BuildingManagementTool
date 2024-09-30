@@ -149,15 +149,20 @@ namespace BuildingManagementTool.Services
         {
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             var blobs = containerClient.GetBlobsAsync(prefix: prefix);
-            var blobList = new Dictionary<int, List<string>>();
-            var i = 0;
-            await foreach (var blob in blobs) 
+            
+            if (blobs != null)
             {
-                var blobClient = containerClient.GetBlobClient(blob.Name);
-                blobList.Add(i, new List<string> { blobClient.Name.Split('/').Last(), blobClient.Uri.ToString() });
-                i++;
+                var blobList = new Dictionary<int, List<string>>();
+                var i = 0;
+                await foreach (var blob in blobs) 
+                {
+                    var blobClient = containerClient.GetBlobClient(blob.Name);
+                    blobList.Add(i, new List<string> { blobClient.Name.Split('/').Last(), blobClient.Uri.ToString() });
+                    i++;
+                }
+                return blobList;
             }
-            return blobList;
+            return null;
         }
     }
 }

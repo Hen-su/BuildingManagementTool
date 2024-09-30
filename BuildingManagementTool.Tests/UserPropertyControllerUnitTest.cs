@@ -1,7 +1,9 @@
-﻿using BuildingManagementTool.Controllers;
+﻿using Azure.Storage.Blobs.Models;
+using BuildingManagementTool.Controllers;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -33,6 +35,7 @@ namespace BuildingManagementTool.Tests
         public void Setup()
         {
             _mockUserPropertyRepository = new Mock<IUserPropertyRepository>();
+            _mockPropertyCategoryRepository = new Mock<IPropertyCategoryRepository>();
             _mockPropertyRepository = new Mock<IPropertyRepository>();
             _mockUserStore = new Mock<IUserStore<ApplicationUser>>();
             _mockUserManager = new Mock<UserManager<ApplicationUser>>(_mockUserStore.Object, null, null, null, null, null, null, null, null);
@@ -194,6 +197,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status400BadRequest), "Expected 400 Bad Request status code.");
         }
+
         [Test]
         public async Task DeleteConfirmationPartial_PropertyNotExist_ReturnError()
         {
@@ -205,6 +209,184 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
         }
+
+        [Test]
+        public async Task ManagePropertyFormPartial_Valid_ReturnPartial()
+        {
+            int id = 1;
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var imageList = new List<Dictionary<int, List<string>>>();
+            var dbImages = new List<PropertyImage>
+            {
+                new PropertyImage {Id = 1, FileName = "image1.jpg", BlobName = "user/property/images/image1.jpg", IsDisplay = false, PropertyId = 1},
+                new PropertyImage {Id = 2, FileName = "image2.jpg", BlobName = "user/property/images/image2.jpg", IsDisplay = false, PropertyId = 1 },
+                new PropertyImage {Id = 3, FileName = "image3.jpg", BlobName = "user/property/images/image3.jpg", IsDisplay = false, PropertyId = 1},
+                new PropertyImage {Id = 3, FileName = "image4.jpg", BlobName = "user/property/images/image4.jpg", IsDisplay = false, PropertyId = 1}
+            };
+            var returnList = new List<Dictionary<int, List<string>>>()
+            {
+                new Dictionary<int, List<string>>
+                {
+                    { 1, new List<string> { "image1.jpg", "Test Property/images/image1.jpg" } }
+                },
+                new Dictionary<int, List<string>>
+                {
+                    { 1, new List<string> { "image2.jpg", "Test Property/images/image2.jpg" } }
+                },
+                new Dictionary<int, List<string>>
+                {
+                    { 1, new List<string> { "image3.jpg", "Test Property/images/image3.jpg" } }
+                },
+                new Dictionary<int, List<string>>
+                {
+                    { 1, new List<string> { "image4.jpg", "Test Property/images/image4.jpg" } }
+                }
+            };
+
+            Dictionary<int, List<string>> blobList = new Dictionary<int, List<string>>
+            {
+                { 0, new List<string> { "image1.jpg", "Test Property/images/image1.jpg" } },
+                { 1, new List<string> { "image2.jpg", "Test Property/images/image2.jpg" } },
+                { 2, new List<string> { "image3.jpg", "Test Property/images/image3.jpg" } },
+                { 3, new List<string> { "image4.jpg", "Test Property/images/image4.jpg" } }
+            };
+
+            var userId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(dbImages);
+            _mockBlobService.Setup(x => x.GetBlobUrisByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(blobList);
+
+            var result = await _userPropertyController.ManagePropertyFormPartial(id);
+            var viewResult = result as PartialViewResult;
+            Assert.IsNotNull(viewResult);
+            Assert.That(viewResult.ViewName, Is.EqualTo("_ManagePropertyForm"));
+        }
+
+        [Test]
+        public async Task ManagePropertyFormPartial_NullPropertyId_ReturnError()
+        {
+            int id = 0;
+            Models.Property property = null;
+            
+            var result = await _userPropertyController.ManagePropertyFormPartial(id);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status400BadRequest), "Expected 400 Bad Request status code.");
+        }
+
+        [Test]
+        public async Task ManagePropertyFormPartial_NotFoundPropertyId_ReturnError()
+        {
+            int id = 1;
+            Models.Property property = null;
+
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+
+            var result = await _userPropertyController.ManagePropertyFormPartial(id);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
+        [Test]
+        public async Task ManagePropertyFormSubmit_ValidPropertyName_ReturnSuccess()
+        {
+            int id = 1;
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name" };
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var userId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
+
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+            _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
+
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task ManagePropertyFormSubmit_ImageUpload_ReturnSuccess()
+        {
+            int id = 1;
+            
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var userId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
+            
+            var fileMock1 = new Mock<IFormFile>();
+            var fileName1 = "image1.jpg";
+            var fileContent1 = new byte[] { 255, 216, 255, 224, 0, 16, 74, 70, 73, 70 }; // Sample binary data for a JPEG image header
+            var memoryStream1 = new MemoryStream(fileContent1);
+
+            fileMock1.Setup(f => f.FileName).Returns(fileName1);
+            fileMock1.Setup(f => f.Length).Returns(memoryStream1.Length);
+            fileMock1.Setup(f => f.OpenReadStream()).Returns(memoryStream1);
+            fileMock1.Setup(f => f.ContentDisposition).Returns($"form-data; name=\"{fileName1}\"; filename=\"{fileName1}\"");
+            fileMock1.Setup(f => f.ContentType).Returns("image/jpeg");
+
+            var files = new List<IFormFile>
+            {
+                fileMock1.Object
+            };
+
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name", Images = files };
+
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+            _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
+            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
+            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
+            _mockBlobService.Setup(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>())).ReturnsAsync((bool)true);
+
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task ManagePropertyFormSubmit_SetDisplay_ReturnSuccess()
+        {
+            int id = 1;
+            string selectedFile = "image1.jpg";
+            PropertyImage propertyImage = new PropertyImage { Id = 1, FileName = "image1.jpg", BlobName = "Test Property/images/image1.jpg", IsDisplay = false, PropertyId = 1 };
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var userId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
+
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name" };
+
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+            _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
+            _mockPropertyImageRepository.Setup(x => x.GetByFileName(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(propertyImage);
+
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, selectedFile);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
 
 
         [TearDown]

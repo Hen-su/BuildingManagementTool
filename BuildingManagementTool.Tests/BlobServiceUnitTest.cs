@@ -531,5 +531,73 @@ namespace BuildingManagementTool.Tests
 
             _mockOldBlobClient.Verify(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Never);
         }
+
+        [Test]
+        public async Task GetBlobUrisByPrefix_Valid_ReturnDictionary()
+        {
+            var containerName = "user";
+            var prefix = "property/images/";
+            var blobName1 = "property/images/test.jpg";
+            var blobName2 = "property/images/test2.jpg";
+            var blobList = new BlobItem[]
+            {
+                BlobsModelFactory.BlobItem(blobName1),
+                BlobsModelFactory.BlobItem(blobName2),
+            };
+
+            Page<BlobItem> page = Page<BlobItem>.FromValues(blobList, null, Mock.Of<Response>());
+            AsyncPageable<BlobItem> pageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { page });
+
+            _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns(_mockBlobContainerClient.Object);
+            
+            _mockBlobContainerClient
+                .Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Returns(pageableBlobList);
+
+            var mockBlobClient1 = new Mock<BlobClient>();
+            mockBlobClient1.SetupGet(client => client.Uri)
+                .Returns(new Uri("https://testaccount.blob.core.windows.net/property/images/test.jpg"));
+            mockBlobClient1.SetupGet(client => client.Name)
+                .Returns(blobName1);
+
+            var mockBlobClient2 = new Mock<BlobClient>();
+            mockBlobClient2.SetupGet(client => client.Uri)
+                .Returns(new Uri("https://testaccount.blob.core.windows.net/property/images/test2.jpg"));
+            mockBlobClient2.SetupGet(client => client.Name)
+                .Returns(blobName2);
+
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(blobName1))
+                .Returns(mockBlobClient1.Object);
+
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(blobName2))
+                .Returns(mockBlobClient2.Object);
+
+            var returnedList = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+            Assert.That(returnedList.Count(), Is.EqualTo(2));
+            Assert.That(returnedList[0], Is.EqualTo(new List<string> { "test.jpg", "https://testaccount.blob.core.windows.net/property/images/test.jpg" }));
+            Assert.That(returnedList[1], Is.EqualTo(new List<string> { "test2.jpg", "https://testaccount.blob.core.windows.net/property/images/test2.jpg" }));
+        }
+
+        [Test]
+        public async Task GetBlobUrisByPrefix_NoBlobs_ReturnNull()
+        {
+            var containerName = "user";
+            var prefix = "property/images/";
+
+            var emptyBlobList = new BlobItem[0];
+            Page<BlobItem> emptyPage = Page<BlobItem>.FromValues(emptyBlobList, null, Mock.Of<Response>());
+            AsyncPageable<BlobItem> emptyPageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { emptyPage });
+
+            _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns(_mockBlobContainerClient.Object);
+
+            _mockBlobContainerClient
+                .Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Returns(emptyPageableBlobList);
+
+            var returnedList = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+            Assert.IsEmpty(returnedList);
+        }
     }
 }
