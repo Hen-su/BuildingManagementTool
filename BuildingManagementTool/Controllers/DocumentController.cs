@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using BuildingManagementTool.Services;
+using SendGrid.Helpers.Mail.Model;
+using Microsoft.AspNetCore.Identity.UI.Services;
+
 
 namespace BuildingManagementTool.Controllers
 {
@@ -11,11 +15,15 @@ namespace BuildingManagementTool.Controllers
     {
         private readonly IDocumentRepository _documentRepository;
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
+        private readonly IEmailSender _emailSender;
+        private readonly RazorViewToStringRenderer _viewToStringRenderer;
 
-        public DocumentController(IDocumentRepository fileRepository, IPropertyCategoryRepository propertyCategoryRepository)
+        public DocumentController(IDocumentRepository fileRepository, IPropertyCategoryRepository propertyCategoryRepository, IEmailSender emailSender, RazorViewToStringRenderer viewToStringRenderer)
         {
             _documentRepository = fileRepository;
             _propertyCategoryRepository = propertyCategoryRepository;
+            _emailSender = emailSender;
+            _viewToStringRenderer = viewToStringRenderer;
         }
 
         public async Task<IActionResult> Index(int id)
@@ -294,6 +302,45 @@ namespace BuildingManagementTool.Controllers
             }
 
             return PartialView("_GetDocumentShareUrl", document);
+        }
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> ShareDocumentUrl(int documentId, string email, string url)
+        {
+            var document = await _documentRepository.GetById(documentId);
+
+            if (document == null)
+            {
+                var problemDetails = new ProblemDetails
+                {
+                    Title = "Document Not Found",
+                    Detail = "The document was not found.",
+                    Status = StatusCodes.Status404NotFound
+                };
+                return StatusCode(StatusCodes.Status404NotFound, problemDetails);
+            }
+
+            var model = new ShareDocumentUrlViewModel
+            {
+                FileName = document.FileName,
+                Url = url
+            };
+
+            var emailContent = await _viewToStringRenderer.RenderViewToStringAsync("Shared/EmailTemplates/ShareDocumentUrlEmail", model, HttpContext);
+
+            try
+            {
+                await _emailSender.SendEmailAsync(email, "Document Share Link", emailContent);
+            }
+            catch (Exception ex)
+            {
+            
+                return Json(new { success = false, message = "Error sending email: " + ex.Message });
+            }
+
+            return Json(new { success = true, message = "Document link shared successfully!" });
         }
 
 
