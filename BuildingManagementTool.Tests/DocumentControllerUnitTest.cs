@@ -1,5 +1,6 @@
 ﻿using BuildingManagementTool.Controllers;
 using BuildingManagementTool.Models;
+using BuildingManagementTool.Services;
 using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,12 @@ using Moq;
 using System.Reflection.Metadata;
 using System.Xml.Linq;
 using Document = BuildingManagementTool.Models.Document;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Components.RenderTree;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+
+
 
 
 namespace BuildingManagementTool.Tests
@@ -17,14 +24,38 @@ namespace BuildingManagementTool.Tests
         private Mock<IDocumentRepository> _mockDocumentRepository;
         private Mock<IPropertyCategoryRepository> _mockPropertyCategoryRepository;
         private DocumentController _documentController;
+        private Mock<IHttpContextAccessor> _mockHttpContextAccessor;
+        private Mock<IServiceProvider> _mockServiceProvider;
+        private Mock<IRazorViewEngine> _mockViewEngine;
+        private Mock<ITempDataProvider> _mockTempDataProvider;
+        private RazorViewToStringRenderer _renderer; 
+        private Mock<IEmailSender> _mockEmailSender;
 
         [SetUp]
         public void Setup()
         {
             _mockDocumentRepository = new Mock<IDocumentRepository>();
             _mockPropertyCategoryRepository = new Mock<IPropertyCategoryRepository>();
-            _documentController = new DocumentController(_mockDocumentRepository.Object, _mockPropertyCategoryRepository.Object);
+            _mockEmailSender = new Mock<IEmailSender>();
+            _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+            _mockServiceProvider = new Mock<IServiceProvider>();
+            _mockViewEngine = new Mock<IRazorViewEngine>();
+            _mockTempDataProvider = new Mock<ITempDataProvider>();
+            _renderer = new RazorViewToStringRenderer(_mockServiceProvider.Object, _mockHttpContextAccessor.Object, _mockViewEngine.Object, _mockTempDataProvider.Object);
+
+            _documentController = new DocumentController(
+                          _mockDocumentRepository.Object,
+                          _mockPropertyCategoryRepository.Object,
+                          _mockEmailSender.Object,
+                          _renderer
+                      );
         }
+
+
+  
+
+
+
 
         [Test]
         public async Task Index_PropertyCategoryExists_ReturnsPartialView()
@@ -535,7 +566,7 @@ namespace BuildingManagementTool.Tests
             var documentId = 1;
             var filename = "newname.txt";
 
-            // Mock the repository to return an empty collection
+            // Mock an empty collection
             _mockDocumentRepository.Setup(d => d.AllDocuments)
                 .Returns(new List<Document>().AsQueryable());
 
@@ -602,9 +633,85 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(result);
             Assert.AreEqual("_GetDocumentShareUrl", result.ViewName);
             Assert.AreEqual(document, result.Model);
+        
         }
 
-            [TearDown]
+        [Test]
+        public async Task ShareDocumentUrl_DocumentNotFound_Fail()
+        {
+            var documentId = 1;
+            var email = "test@example.com";
+            var url = "https://devstoreaccount1/test/category/test.pdf";
+
+            _mockDocumentRepository.Setup(d => d.AllDocuments)
+                .Returns(new List<Document>().AsQueryable());
+
+            var result = await _documentController.ShareDocumentUrl(documentId, email, url);
+
+            Assert.NotNull(result);
+            var objectResult = result as ObjectResult;
+            Assert.NotNull(objectResult);
+            Assert.AreEqual(StatusCodes.Status404NotFound, objectResult.StatusCode);
+        }
+
+
+/*
+        [Test]
+        public async Task ShareDocumentUrl_EmailSendingFails_Fail()
+        {
+            var documentId = 1;
+            var email = "test@example.com";
+            var url = "https://devstoreaccount1/test/category/test.pdf";
+
+            var document = new Document { DocumentId = documentId, FileName = "test.pdf" };
+
+            _mockDocumentRepository.Setup(d => d.GetById(documentId))
+                .ReturnsAsync(document);
+
+            _renderer.Setup(v => v.RenderViewToStringAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<HttpContext>()))
+                .ReturnsAsync("Email Content");
+
+            _mockEmailSender.Setup(e => e.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()))
+                .ThrowsAsync(new Exception("SMTP error"));
+
+            var result = await _documentController.ShareDocumentUrl(documentId, email, url) as JsonResult;
+
+            Assert.IsNotNull(result);
+            var responseObject = result.Value as IDictionary<string, object>;
+            Assert.IsNotNull(responseObject);
+            Assert.AreEqual(false, responseObject["success"]);
+            Assert.IsTrue(responseObject["message"].ToString().Contains("Error sending email: SMTP error"));
+        }
+
+        [Test]
+        public async Task ShareDocumentUrl_EmailSentSuccessfully_Success()
+        {
+            var documentId = 1;
+            var email = "test@example.com";
+            var url = "https://devstoreaccount1/test/category/test.pdf";
+
+            var document = new Document { DocumentId = documentId, FileName = "TestDocument.pdf" };
+            _mockDocumentRepository.Setup(d => d.GetById(documentId)).ReturnsAsync(document);
+
+            _renderer.Setup(v => v.RenderViewToStringAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<HttpContext>()))
+                .ReturnsAsync("Email Content");   The _renderer.Setup isn't working cause its not in the constructor and when i try to add that it doesnt work, creating only a mock of the renderer makes all the other tests to failing due to null object reference issue
+
+            _mockEmailSender.Setup(e => e.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.CompletedTask);
+
+            var result = await _documentController.ShareDocumentUrl(documentId, email, url) as JsonResult;
+
+            Assert.IsNotNull(result);
+            var responseObject = result.Value as IDictionary<string, object>;
+            Assert.IsNotNull(responseObject);
+            Assert.AreEqual(true, responseObject["success"]);
+            Assert.AreEqual("Document link shared successfully!", responseObject["message"]);
+        }
+
+        */
+
+
+        [TearDown]
         public void Teardown()
         {
             _documentController.Dispose();
