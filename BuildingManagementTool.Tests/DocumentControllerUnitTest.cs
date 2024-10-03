@@ -24,10 +24,6 @@ namespace BuildingManagementTool.Tests
         private Mock<IDocumentRepository> _mockDocumentRepository;
         private Mock<IPropertyCategoryRepository> _mockPropertyCategoryRepository;
         private DocumentController _documentController;
-        private Mock<IHttpContextAccessor> _mockHttpContextAccessor;
-        private Mock<IServiceProvider> _mockServiceProvider;
-        private Mock<IRazorViewEngine> _mockViewEngine;
-        private Mock<ITempDataProvider> _mockTempDataProvider;
         private Mock<IRazorViewToStringRenderer> _renderer; 
         private Mock<IEmailSender> _mockEmailSender;
 
@@ -37,10 +33,6 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository = new Mock<IDocumentRepository>();
             _mockPropertyCategoryRepository = new Mock<IPropertyCategoryRepository>();
             _mockEmailSender = new Mock<IEmailSender>();
-            _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-            _mockServiceProvider = new Mock<IServiceProvider>();
-            _mockViewEngine = new Mock<IRazorViewEngine>();
-            _mockTempDataProvider = new Mock<ITempDataProvider>();
             _renderer = new Mock<IRazorViewToStringRenderer>();
 
             _documentController = new DocumentController(
