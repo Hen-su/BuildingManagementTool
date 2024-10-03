@@ -35,11 +35,12 @@ namespace BuildingManagementTool.Controllers
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
-            var containerName = "userid-" + user.Id;
+            
             if (user == null) 
             {
                 return BadRequest("A problem occurred while retrieving your data");
             }
+            var containerName = "userid-" + user.Id;
             var userId = user.Id;
             var propertyList = await _userPropertyRepository.GetByUserId(userId);
 
@@ -106,11 +107,12 @@ namespace BuildingManagementTool.Controllers
         public async Task<IActionResult> UpdatePropertyContainer()
         {
             var user = await _userManager.GetUserAsync(User);
-            var containerName = "userid-" + user.Id;
+            
             if (user == null)
             {
                 return BadRequest("A problem occurred while retrieving your data");
             }
+            var containerName = "userid-" + user.Id;
             var userId = user.Id;
             var propertyList = await _userPropertyRepository.GetByUserId(userId);
 
@@ -175,6 +177,14 @@ namespace BuildingManagementTool.Controllers
                     message = "The selected property could not be found"
                 });
             }
+            var imageList = await GetImageList(property);
+            
+            var viewmodel = new ManagePropertyFormViewModel(imageList, property) { PropertyName = property.PropertyName };
+            return PartialView("_ManagePropertyForm", viewmodel);
+        }
+
+        private async Task<List<Dictionary<int, List<string>>>> GetImageList(Models.Property property)
+        {
             var imageList = new List<Dictionary<int, List<string>>>();
 
             var images = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
@@ -185,7 +195,7 @@ namespace BuildingManagementTool.Controllers
 
                 var prefix = $"{property.PropertyName}/images/".Trim();
                 var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
-            
+
                 if (blobs != null && blobs.Any())
                 {
                     int dictionaryCount = 0;
@@ -201,7 +211,7 @@ namespace BuildingManagementTool.Controllers
                         dictionaryCount++;
                     }
 
-                    while(dictionaryCount < 5)
+                    while (dictionaryCount < 5)
                     {
                         imageList.Add(new Dictionary<int, List<string>> { { dictionaryCount, new List<string> { null } } });
                         dictionaryCount++;
@@ -215,21 +225,18 @@ namespace BuildingManagementTool.Controllers
                     imageList.Add(new Dictionary<int, List<string>> { { i, new List<string> { null } } });
                 }
             }
-            
-            var viewmodel = new ManagePropertyFormViewModel(imageList, property) { PropertyName = property.PropertyName };
-            return PartialView("_ManagePropertyForm", viewmodel);
+            return imageList;
         }
 
         [HttpPost]
-        public async Task<IActionResult> ManagePropertyFormSubmit(int id, ManagePropertyFormViewModel formViewModel, string? selectedFileName)
+        public async Task<IActionResult> ManagePropertyFormSubmit(int id, ManagePropertyFormViewModel formViewModel, string? selectedFileName, string[] filesToRemove)
         {
             if (!ModelState.IsValid)
             {
-                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                {
-                    // Log the error message or display it as needed
-                    Console.WriteLine(error.ErrorMessage);
-                }
+                var property = await _propertyRepository.GetById(id);
+                var imageList = await GetImageList(property);
+                formViewModel.CurrentProperty = property;
+                formViewModel.ImageUrls = imageList;
                 return PartialView("_ManagePropertyForm", formViewModel);
             }
 
@@ -246,13 +253,16 @@ namespace BuildingManagementTool.Controllers
                 await _propertyRepository.UpdateProperty(currentProperty);
 
                 var documents = await _documentRepository.GetByPropertyId(currentProperty.PropertyId);
-                foreach (var document in documents)
+                if (documents != null && documents.Count > 0)
                 {
-                    var categoryFileName = document.BlobName.Substring(document.BlobName.IndexOf('/'));
-                    document.BlobName = newDirectory + categoryFileName;
-                    await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory);
+                    foreach (var document in documents)
+                    {
+                        var categoryFileName = document.BlobName.Substring(document.BlobName.IndexOf('/'));
+                        document.BlobName = newDirectory + categoryFileName;
+                        await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory);
+                    }
+                    await _documentRepository.UpdateByList(documents);
                 }
-                await _documentRepository.UpdateByList(documents);
             }
 
             //Upload Images
@@ -298,6 +308,7 @@ namespace BuildingManagementTool.Controllers
                     await _propertyImageRepository.AddPropertyImage(file);
                 }
             }
+            //Update Image to be displayed
             if (selectedFileName != null && selectedFileName != "")
             {
                 var displayImage = await _propertyImageRepository.GetByFileName(currentProperty.PropertyId, selectedFileName);
@@ -309,9 +320,25 @@ namespace BuildingManagementTool.Controllers
                     }
                 }
             }
+            //Set isDisplay to false if no image is selected
             else
             {
                 await _propertyImageRepository.RemoveDisplayImage(currentProperty.PropertyId);
+            }
+
+            //Delete image if it was removed from gallery
+            if (filesToRemove != null && filesToRemove.Count() > 0)
+            {
+                var imagesList = await _propertyImageRepository.GetByPropertyId(currentProperty.PropertyId);
+                foreach ( var image in imagesList)
+                {
+                    if (filesToRemove.Contains(image.FileName))
+                    {
+                        await _blobService.DeleteBlobAsync(containerName ,image.BlobName);
+                        await _propertyImageRepository.DeletePropertyImage(image);
+                        break;
+                    }
+                }
             }
             return Json(new { success = true });
         }

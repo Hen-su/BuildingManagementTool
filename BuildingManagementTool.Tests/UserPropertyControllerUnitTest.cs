@@ -307,9 +307,40 @@ namespace BuildingManagementTool.Tests
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+            _mockPropertyRepository.Setup(x => x.UpdateProperty(It.IsAny<Models.Property>())).Returns(Task.CompletedTask);
+            _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
+            _mockBlobService.Setup(x => x.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
+            _mockDocumentRepository.Setup(x => x.UpdateByList(It.IsAny<List<Document>>())).Returns(Task.CompletedTask);
+
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, null);
+
+            _mockPropertyRepository.Verify(x => x.UpdateProperty(It.IsAny<Models.Property>()));
+            _mockDocumentRepository.Verify(x => x.GetByPropertyId(It.IsAny<int>()), Times.Once);
+            _mockBlobService.Verify(x => x.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockDocumentRepository.Verify(x => x.UpdateByList(It.IsAny<List<Document>>()), Times.Once);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task ManagePropertyFormSubmit_SamePropertyName_NoUpdateReturnSuccess()
+        {
+            int id = 1;
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "Test Property" };
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var userId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
+
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
 
-            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null);
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, null);
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
             dynamic value = jsonResult.Value.ToString();
@@ -353,7 +384,41 @@ namespace BuildingManagementTool.Tests
             _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
             _mockBlobService.Setup(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>())).ReturnsAsync((bool)true);
 
-            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null);
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, null);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task ManagePropertyFormSubmit_ImageUploadNull_NoUploadReturnSuccess()
+        {
+            int id = 1;
+
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var userId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
+
+            var files = new List<IFormFile>();
+
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name", Images = files };
+
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+            _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
+            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
+            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
+            _mockBlobService.Setup(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>())).ReturnsAsync((bool)true);
+
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, null);
+
+            _mockPropertyImageRepository.Verify(x => x.GetByPropertyId(It.IsAny<int>()), Times.Never);
+            _mockBlobService.Verify(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockBlobService.Verify(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Never);
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
             dynamic value = jsonResult.Value.ToString();
@@ -379,15 +444,120 @@ namespace BuildingManagementTool.Tests
             _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
             _mockPropertyImageRepository.Setup(x => x.GetByFileName(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(propertyImage);
+            _mockPropertyImageRepository.Setup(x => x.SetDisplayImage(It.IsAny<PropertyImage>())).Returns(Task.CompletedTask);
 
-            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, selectedFile);
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, selectedFile, null);
+
+            _mockPropertyImageRepository.Verify(x => x.GetByFileName(It.IsAny<int>(), It.IsAny<string>()), Times.Once);
+            _mockPropertyImageRepository.Verify(x => x.SetDisplayImage(It.IsAny<PropertyImage>()), Times.Once);
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
             dynamic value = jsonResult.Value.ToString();
             Assert.That(value.Equals("{ success = True }"));
         }
 
+        [Test]
+        public async Task ManagePropertyFormSubmit_SetDisplayNotSelected_NoUpdateReturnSuccess()
+        {
+            int id = 1;
+            string selectedFile = "";
+            PropertyImage propertyImage = new PropertyImage { Id = 1, FileName = "image1.jpg", BlobName = "Test Property/images/image1.jpg", IsDisplay = false, PropertyId = 1 };
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var userId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
 
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name" };
+
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+            _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
+            _mockPropertyImageRepository.Setup(x => x.GetByFileName(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(propertyImage);
+            _mockPropertyImageRepository.Setup(x => x.SetDisplayImage(It.IsAny<PropertyImage>())).Returns(Task.CompletedTask);
+
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, selectedFile, null);
+
+            _mockPropertyImageRepository.Verify(x => x.GetByFileName(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+            _mockPropertyImageRepository.Verify(x => x.SetDisplayImage(It.IsAny<PropertyImage>()), Times.Never);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task ManagePropertyFormSubmit_RemoveImage_ReturnSuccess()
+        {
+            int id = 1;
+            string[] fileToRemove = ["image1.jpg"];
+            List<PropertyImage> imageList = new List<PropertyImage> 
+            { 
+                new PropertyImage { Id = 1, FileName = "image1.jpg", BlobName = "Test Property/images/image1.jpg", IsDisplay = false, PropertyId = 1 },
+                new PropertyImage { Id = 2, FileName = "image2.jpg", BlobName = "Test Property/images/image2.jpg", IsDisplay = false, PropertyId = 1 }
+            };
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var userId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
+
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name" };
+
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+            _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
+            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(imageList);
+            _mockPropertyImageRepository.Setup(x => x.DeletePropertyImage(It.IsAny<PropertyImage>())).Returns(Task.CompletedTask);
+            _mockBlobService.Setup(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, fileToRemove);
+
+            _mockPropertyImageRepository.Verify(x => x.DeletePropertyImage(It.IsAny<PropertyImage>()), Times.Once);
+            _mockBlobService.Verify(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task ManagePropertyFormSubmit_RemoveImageNull_NoFilesRemovedReturnSuccess()
+        {
+            int id = 1;
+            string[] fileToRemove = [];
+            List<PropertyImage> imageList = new List<PropertyImage>
+            {
+                new PropertyImage { Id = 1, FileName = "image1.jpg", BlobName = "Test Property/images/image1.jpg", IsDisplay = false, PropertyId = 1 },
+                new PropertyImage { Id = 2, FileName = "image2.jpg", BlobName = "Test Property/images/image2.jpg", IsDisplay = false, PropertyId = 1 }
+            };
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var userId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
+
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name" };
+
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
+            _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
+            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(imageList);
+            _mockPropertyImageRepository.Setup(x => x.DeletePropertyImage(It.IsAny<PropertyImage>())).Returns(Task.CompletedTask);
+            _mockBlobService.Setup(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+
+            var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, fileToRemove);
+
+            _mockPropertyImageRepository.Verify(x => x.DeletePropertyImage(It.IsAny<PropertyImage>()), Times.Never);
+            _mockBlobService.Verify(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
 
         [TearDown]
         public void Teardown()
