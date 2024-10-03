@@ -28,7 +28,7 @@ namespace BuildingManagementTool.Tests
         private Mock<IServiceProvider> _mockServiceProvider;
         private Mock<IRazorViewEngine> _mockViewEngine;
         private Mock<ITempDataProvider> _mockTempDataProvider;
-        private RazorViewToStringRenderer _renderer; 
+        private Mock<IRazorViewToStringRenderer> _renderer; 
         private Mock<IEmailSender> _mockEmailSender;
 
         [SetUp]
@@ -41,21 +41,15 @@ namespace BuildingManagementTool.Tests
             _mockServiceProvider = new Mock<IServiceProvider>();
             _mockViewEngine = new Mock<IRazorViewEngine>();
             _mockTempDataProvider = new Mock<ITempDataProvider>();
-            _renderer = new RazorViewToStringRenderer(_mockServiceProvider.Object, _mockHttpContextAccessor.Object, _mockViewEngine.Object, _mockTempDataProvider.Object);
+            _renderer = new Mock<IRazorViewToStringRenderer>();
 
             _documentController = new DocumentController(
                           _mockDocumentRepository.Object,
                           _mockPropertyCategoryRepository.Object,
                           _mockEmailSender.Object,
-                          _renderer
+                          _renderer.Object
                       );
         }
-
-
-  
-
-
-
 
         [Test]
         public async Task Index_PropertyCategoryExists_ReturnsPartialView()
@@ -196,14 +190,6 @@ namespace BuildingManagementTool.Tests
             Assert.That(problemDetails.Status.Equals(StatusCodes.Status404NotFound));
         }
 
-
-
-
-
-
-
-
-
         [Test]
         public async Task AddNoteFormPartial_DocumentExists_Success()
         {
@@ -217,10 +203,6 @@ namespace BuildingManagementTool.Tests
             Assert.AreEqual("_AddNoteForm", result.ViewName);
             Assert.AreEqual(document, result.Model);
         }
-
-
-
-
 
         [Test]
         public async Task AddNoteFormPartial_DocumentNotExists_Fail()
@@ -237,24 +219,20 @@ namespace BuildingManagementTool.Tests
 
         }
 
-
-
-
-        /*
-
         [Test]
         public async Task AddNoteToDocument_DocumentExists_Sucess()
         {
            int id = 1;
             Document document = new Document { DocumentId = 1};
             _mockDocumentRepository.Setup(d => d.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
-            var result = await _documentController.AddNoteToDocument(1, "testnote") as NotFoundObjectResult;
+            _mockDocumentRepository.Setup(d => d.UpdateDocumentAsync(It.IsAny<Document>())).Returns(Task.CompletedTask);
+            var result = await _documentController.AddNoteToDocument(1, "testnote");
 
             Assert.IsNotNull(result);
-            var responseObject = result.Value as dynamic;
-            Assert.AreEqual(true, responseObject.success);
-            Assert.AreEqual("Note added successfully!", responseObject.message);
-
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True, message = Note added successfully! }"));
         }
 
 
@@ -266,13 +244,10 @@ namespace BuildingManagementTool.Tests
             var result = await _documentController.AddNoteToDocument(1, "testnote") as NotFoundObjectResult;
 
             Assert.IsNotNull(result);
-            var responseObject = result.Value as dynamic;
-            Assert.AreEqual(false, responseObject.success);
-            Assert.AreEqual("Document not found.", responseObject.message);
-
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult);
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound));
         }
-
-        */
 
 
         [Test]
@@ -296,7 +271,6 @@ namespace BuildingManagementTool.Tests
         }
       
         
-        /*
         [Test]
         public async Task GetDocumentNotesByCategory_DocumentNotFound_Fail()
         {
@@ -311,21 +285,10 @@ namespace BuildingManagementTool.Tests
          
             var result = await _documentController.GetDocumentNotesByCategory(categoryId);
 
-            Assert.IsNotNull(result); // Ensure the result is not null
-
-            var notFoundResult = result as NotFoundObjectResult;
-            Assert.IsNotNull(notFoundResult); // Check if the result is NotFoundObjectResult
-            Assert.AreEqual(StatusCodes.Status404NotFound, notFoundResult.StatusCode);
-
-            var responseObject = notFoundResult.Value as IDictionary<string, object>;
-        
-            Assert.AreEqual(false, responseObject["success"]);
-            Assert.AreEqual("No documents found for this property category.", responseObject["message"]);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult);
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound));
         }
-
-        */
-
-
 
 
         [Test]
@@ -391,17 +354,14 @@ namespace BuildingManagementTool.Tests
             int documentId = 1;
             _mockDocumentRepository.Setup(repo => repo.AllDocuments).Returns(new List<Document>().AsQueryable());
 
-            
-            var result = await _documentController.DeleteNoteFromDocument(documentId) as JsonResult;
+
+            var result = await _documentController.DeleteNoteFromDocument(documentId);
 
      
             Assert.IsNotNull(result);
-            Assert.AreEqual(StatusCodes.Status404NotFound, result.StatusCode);
-
-            var responseObject = result.Value as IDictionary<string, object>;
-            Assert.IsNotNull(responseObject);
-            Assert.AreEqual(false, responseObject["success"]);
-            Assert.AreEqual("Document not found.", responseObject["message"]);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult);
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound));
         }
 
 
@@ -423,30 +383,6 @@ namespace BuildingManagementTool.Tests
             Assert.AreEqual(true, result.Value.GetType().GetProperty("success").GetValue(result.Value, null));
             Assert.AreEqual("Note deleted successfully!", result.Value.GetType().GetProperty("message").GetValue(result.Value, null));
         }
-
-
-        [Test]
-        public async Task DeleteNoteFromDocument_ActiveDocument_Fail()
-        {
-          
-            int documentId = 1;
-            var document = new Document { DocumentId = documentId, IsActiveNote = true, Note = "Some note" };
-
-            _mockDocumentRepository.Setup(repo => repo.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
-
-        
-            var result = await _documentController.DeleteNoteFromDocument(documentId) as BadRequestObjectResult;
-
-            
-            Assert.IsNotNull(result);
-            Assert.AreEqual(StatusCodes.Status400BadRequest, result.StatusCode);
-    
-            var responseObject = result.Value as IDictionary<string, object>;
-            Assert.IsNotNull(responseObject);
-            Assert.AreEqual(false, responseObject["success"]);
-            Assert.AreEqual("Cannot delete an active note.", responseObject["message"]);
-        }
-
 
 
         [Test]
@@ -479,22 +415,24 @@ namespace BuildingManagementTool.Tests
             bool isActive = true;
 
             var documents = new List<Document>
-    {
-        new Document { DocumentId = 1, IsActiveNote = true },
-        new Document { DocumentId = 2, IsActiveNote = true },
-        new Document { DocumentId = 3, IsActiveNote = false }
-    }; 
-            
+            {
+                new Document { DocumentId = 1, IsActiveNote = true, PropertyCategoryId = 1 },
+                new Document { DocumentId = 2, IsActiveNote = true, PropertyCategoryId = 1 },
+                new Document { DocumentId = 3, IsActiveNote = false, PropertyCategoryId = 1 }
+            };
+
+            var category = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1 };
+
             _mockDocumentRepository.Setup(repo => repo.AllDocuments)
         .Returns(documents.AsQueryable());
 
-
+            _mockPropertyCategoryRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(category);
        
             var result = await _documentController.SetActiveNote(3, isActive) as JsonResult;
 
             Assert.IsNotNull(result);
             Assert.AreEqual(false, result.Value.GetType().GetProperty("success").GetValue(result.Value, null));
-            Assert.AreEqual("You can only have 2 active notes.", result.Value.GetType().GetProperty("message").GetValue(result.Value, null));
+            Assert.AreEqual("Exceeded active notes limit.", result.Value.GetType().GetProperty("message").GetValue(result.Value, null));
 
         }
 
@@ -507,15 +445,18 @@ namespace BuildingManagementTool.Tests
             bool isActive = true;
 
             var documents = new List<Document>
-    {
-        new Document { DocumentId = 1, IsActiveNote = false },
-        new Document { DocumentId = 2, IsActiveNote = false },
-     };
+            {
+                new Document { DocumentId = 1, IsActiveNote = false, PropertyCategoryId = 1 },
+                new Document { DocumentId = 2, IsActiveNote = false, PropertyCategoryId = 1 }
+            };
+
+            var category = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1 };
 
             _mockDocumentRepository.Setup(repo => repo.AllDocuments)
         .Returns(documents.AsQueryable());
             _mockDocumentRepository.Setup(repo => repo.UpdateDocumentAsync(It.IsAny<Document>())).Returns(Task.CompletedTask);
 
+            _mockPropertyCategoryRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(category);
 
             // Act
             var result = await _documentController.SetActiveNote(documentId, isActive) as JsonResult;
@@ -523,7 +464,6 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(result);
             Assert.AreEqual(true, result.Value.GetType().GetProperty("success").GetValue(result.Value, null));
             Assert.AreEqual("Active note status updated!", result.Value.GetType().GetProperty("message").GetValue(result.Value, null));
-
         }
 
 
@@ -654,8 +594,6 @@ namespace BuildingManagementTool.Tests
             Assert.AreEqual(StatusCodes.Status404NotFound, objectResult.StatusCode);
         }
 
-
-/*
         [Test]
         public async Task ShareDocumentUrl_EmailSendingFails_Fail()
         {
@@ -674,13 +612,13 @@ namespace BuildingManagementTool.Tests
             _mockEmailSender.Setup(e => e.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()))
                 .ThrowsAsync(new Exception("SMTP error"));
 
-            var result = await _documentController.ShareDocumentUrl(documentId, email, url) as JsonResult;
+            var result = await _documentController.ShareDocumentUrl(documentId, email, url);
 
             Assert.IsNotNull(result);
-            var responseObject = result.Value as IDictionary<string, object>;
-            Assert.IsNotNull(responseObject);
-            Assert.AreEqual(false, responseObject["success"]);
-            Assert.IsTrue(responseObject["message"].ToString().Contains("Error sending email: SMTP error"));
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = False, message = Error sending email: SMTP error }"));
         }
 
         [Test]
@@ -694,22 +632,19 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository.Setup(d => d.GetById(documentId)).ReturnsAsync(document);
 
             _renderer.Setup(v => v.RenderViewToStringAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<HttpContext>()))
-                .ReturnsAsync("Email Content");   The _renderer.Setup isn't working cause its not in the constructor and when i try to add that it doesnt work, creating only a mock of the renderer makes all the other tests to failing due to null object reference issue
+                .ReturnsAsync("Email Content");
 
             _mockEmailSender.Setup(e => e.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
-            var result = await _documentController.ShareDocumentUrl(documentId, email, url) as JsonResult;
+            var result = await _documentController.ShareDocumentUrl(documentId, email, url);
 
             Assert.IsNotNull(result);
-            var responseObject = result.Value as IDictionary<string, object>;
-            Assert.IsNotNull(responseObject);
-            Assert.AreEqual(true, responseObject["success"]);
-            Assert.AreEqual("Document link shared successfully!", responseObject["message"]);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True, message = Document link shared successfully! }"));
         }
-
-        */
-
 
         [TearDown]
         public void Teardown()

@@ -5,10 +5,11 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Abstractions;
+using BuildingManagementTool.Models;
 
 namespace BuildingManagementTool.Services
 {
-    public class RazorViewToStringRenderer
+    public class RazorViewToStringRenderer : IRazorViewToStringRenderer
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IServiceProvider _serviceProvider;

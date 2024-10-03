@@ -16,9 +16,9 @@ namespace BuildingManagementTool.Controllers
         private readonly IDocumentRepository _documentRepository;
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IEmailSender _emailSender;
-        private readonly RazorViewToStringRenderer _viewToStringRenderer;
+        private readonly IRazorViewToStringRenderer _viewToStringRenderer;
 
-        public DocumentController(IDocumentRepository fileRepository, IPropertyCategoryRepository propertyCategoryRepository, IEmailSender emailSender, RazorViewToStringRenderer viewToStringRenderer)
+        public DocumentController(IDocumentRepository fileRepository, IPropertyCategoryRepository propertyCategoryRepository, IEmailSender emailSender, IRazorViewToStringRenderer viewToStringRenderer)
         {
             _documentRepository = fileRepository;
             _propertyCategoryRepository = propertyCategoryRepository;
@@ -198,10 +198,9 @@ namespace BuildingManagementTool.Controllers
             if (!document.IsActiveNote)
             {
                 document.Note = null;
+                // Updating the document in the repository
+                await _documentRepository.UpdateDocumentAsync(document);
             }
-            // Updating the document in the repository
-            await _documentRepository.UpdateDocumentAsync(document);
-
             return Json(new { success = true, message = "Note deleted successfully!" });
         }
 
@@ -303,8 +302,6 @@ namespace BuildingManagementTool.Controllers
 
             return PartialView("_GetDocumentShareUrl", document);
         }
-
-
 
         [HttpPost]
         public async Task<IActionResult> ShareDocumentUrl(int documentId, string email, string url)

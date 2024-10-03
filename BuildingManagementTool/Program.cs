@@ -56,7 +56,7 @@ builder.Services.AddScoped<IPropertyImageRepository, PropertyImageRepository>();
 // Add Email Sender
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("AuthMessageSenderOptions"));
-builder.Services.AddScoped<RazorViewToStringRenderer>();
+builder.Services.AddScoped<IRazorViewToStringRenderer, RazorViewToStringRenderer>();
 
 // Add external authentication providers
 builder.Services.AddAuthentication()
