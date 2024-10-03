@@ -1,4 +1,5 @@
 ﻿using BuildingManagementTool.Models;
+using BuildingManagementTool.Models.Validation;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
@@ -7,10 +8,8 @@ namespace BuildingManagementTool.ViewModels
 {
     public class ManagePropertyFormViewModel
     {
-        [BindNever]
         [ValidateNever]
         public List<Dictionary<int, List<string>>>? ImageUrls { get; set; } = new List<Dictionary<int, List<string>>>();
-        [BindNever]
         [ValidateNever]
         public Property? CurrentProperty { get; set; } = new Property();
         [Required(ErrorMessage = "The property name cannot be empty")]

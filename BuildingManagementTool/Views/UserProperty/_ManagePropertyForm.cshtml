@@ -2,10 +2,18 @@
 
 <style>
     .gallery-item {
-        width: 15rem;
+        max-width: 15rem;
+        width: 100%;
         height: 10rem;
         border: 4px solid #f0f0f0;
         border-radius: 10px;
+        position:relative;
+    }
+    
+    .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 
     .empty-item {
@@ -15,6 +23,19 @@
 
     .selected-item {
         border: 4px solid darkgreen;
+    }
+
+    .remove-img-btn {
+        position:absolute;
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
+        top: -0.5rem;
+        right: -0.5rem;
+    }
+
+    .remove-img-btn:hover {
+        filter: brightness(80%);
     }
 
 </style>
@@ -54,7 +75,8 @@
                                     {
                                         var isSelected = kvp.Value.Count > 2 && kvp.Value[2] == "True" ? "selected-item" : "";
                                         <div class="mt-0 col gallery-item d-flex justify-content-center align-items-center @isSelected" data-file="@kvp.Value[0]">
-                                            <img class="img-thumbnail img-fluid" src="@kvp.Value[1]" />
+                                            <button type="button" class="remove-img-btn fas fa-xmark"></button>
+                                            <img class="img-fluid" src="@kvp.Value[1]" />
                                         </div>
                                     }
                                     else
@@ -86,6 +108,7 @@
 <script>
     $(document).ready(function () {
         let fileArray = [];
+        let filesToRemove = [];
         var form = document.getElementById('propertyForm');
         const fileInput = document.getElementById('image-upload');
         var errorContainer = form.querySelector('.errorContainer');
@@ -110,7 +133,7 @@
             const emptyItems = gallery.querySelectorAll('.empty-item'); // Get all empty items
             const availableCon = emptyItems.length;
 
-            // Keep track of how many images we've added
+            // Keep track of images added
             let fileIndex = 0;
             let itemIndex = 0;
 
@@ -123,10 +146,16 @@
                     img.className = 'img-thumbnail img-fluid';
                     img.src = e.target.result; // Set the image source to the file data URL
 
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-img-btn fas fa-xmark';
+                    removeBtn.type = 'button';
+                    removeBtn.setAttribute('data-file', file.name);
+
                     if (emptyItems[itemIndex]) {
                         const emptyItem = emptyItems[itemIndex];
                         emptyItem.innerHTML = ''; // Clear existing content
                         emptyItem.appendChild(img); // Add the image
+                        emptyItem.appendChild(removeBtn);
                         emptyItem.classList.remove('empty-item');
                         emptyItem.setAttribute('data-file', file.name);
                         itemIndex++;
@@ -193,6 +222,7 @@
             var formData = new FormData(propertyForm[0])
             formData.append('id', propertyId);
             formData.append('selectedFileName', selectedItemName);
+            formData.append('filesToRemove', filesToRemove);
             $.ajax({
                 url: '/UserProperty/ManagePropertyFormSubmit',
                 type: 'POST',
@@ -222,6 +252,34 @@
                 }
             });
         })
+        
+        $(document).off('click', '.remove-img-btn').on('click', '.remove-img-btn', function (event) {
+            event.stopPropagation();
+            const parentDiv = $(this).parent('div');
+            const img = parentDiv.find('img');
+            img.remove();
+            const noImage = document.createElement('h5');
+            noImage.textContent = 'No Image';
+            parentDiv.addClass('empty-item')
+            parentDiv.removeClass('selected-item')
+            parentDiv.append(noImage);
+            
+            if (parentDiv.data('file') !== undefined && parentDiv.data('file') != null) {
+                const fileName = parentDiv.data('file');
+                filesToRemove.push(fileName)
+                parentDiv.removeData('file');
+                console.log('FilesToRemove', filesToRemove);
+            }
 
+            if ($(this).data('file') !== undefined && $(this).data('file') !== null) {
+                const fileName = $(this).data('file');
+                fileArray = fileArray.filter(file => file.name !== fileName);
+                parentDiv.removeData('file');
+                console.log('fileArray', fileArray);
+                console.log($(this).data('file'))
+            }
+
+            $(this).remove();
+        })
     })
 </script>
