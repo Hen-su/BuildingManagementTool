@@ -24,9 +24,9 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
-        private readonly RazorViewToStringRenderer _viewRenderer;
+        private readonly IRazorViewToStringRenderer _viewRenderer;
 
-        public ResendEmailConfirmationModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender, RazorViewToStringRenderer viewRenderer)
+        public ResendEmailConfirmationModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender, IRazorViewToStringRenderer viewRenderer)
         {
             _userManager = userManager;
             _emailSender = emailSender;

@@ -1,8 +1,5 @@
 ﻿@model DocumentViewModel
 
-
-
-
 <div class="viewHeader container-fluid viewHeader row row-cols-2 justify-content-between p-0">
     @if (Model.CurrentCategory.CategoryId != null)
     {
@@ -248,10 +245,6 @@
 
     }
 
-
-
-
-
     $(document).on("click", "#deleteNoteBtm", function () {
         var documentId = $(this).data("id");
 
@@ -282,11 +275,6 @@
 
 
     });
-
-
-
-
-
 
     $(document).on("click", "#renameDocumentBtn", function () {
         var documentId = $(this).data("id");
@@ -329,8 +317,4 @@
             }
         });
     });
-
-  
-
-
 </script>

@@ -18,10 +18,13 @@ namespace BuildingManagementTool.Controllers
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IBlobService _blobService;
         private readonly IPropertyImageRepository _propertyImageRepository;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly InvitationService _invitationService;
 
         public UserPropertyController(IUserPropertyRepository userPropertyRepository, IPropertyRepository propertyRepository, 
             UserManager<ApplicationUser> userManager, IDocumentRepository documentRepository, 
-            IPropertyCategoryRepository propertyCategoryRepository, IBlobService blobService, IPropertyImageRepository propertyImageRepository)
+            IPropertyCategoryRepository propertyCategoryRepository, IBlobService blobService, IPropertyImageRepository propertyImageRepository, 
+            RoleManager<IdentityRole> roleManager, InvitationService invitationService)
         {
             _userPropertyRepository = userPropertyRepository;
             _propertyRepository = propertyRepository;
@@ -30,17 +33,20 @@ namespace BuildingManagementTool.Controllers
             _propertyCategoryRepository = propertyCategoryRepository;
             _blobService = blobService;
             _propertyImageRepository = propertyImageRepository;
+            _roleManager = roleManager;
+            _invitationService = invitationService;
         }
 
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
-            var containerName = "userid-" + user.Id;
+            
             if (user == null) 
             {
                 return BadRequest("A problem occurred while retrieving your data");
             }
             var userId = user.Id;
+            var containerName = "userid-" + userId;
             var propertyList = await _userPropertyRepository.GetByUserId(userId);
 
             var viewmodelList = new List<PropertyViewModel>();
@@ -48,14 +54,15 @@ namespace BuildingManagementTool.Controllers
             {
                 var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
                 var displayImage = propertyImages.FirstOrDefault(img => img.IsDisplay);
+                var role = await _roleManager.FindByIdAsync(property.RoleId);
                 if (displayImage != null)
                 {
                     var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName);
-                    viewmodelList.Add(new PropertyViewModel(property, url.ToString()));
+                    viewmodelList.Add(new PropertyViewModel(property, url.ToString(), role.Name));
                 }
                 else
                 {
-                    viewmodelList.Add(new PropertyViewModel(property, null));
+                    viewmodelList.Add(new PropertyViewModel(property, null, role.Name));
                 }
             }
             return View(viewmodelList);
@@ -92,10 +99,13 @@ namespace BuildingManagementTool.Controllers
 
             await _propertyRepository.AddProperty(newProperty);
 
+            var role = await _roleManager.FindByNameAsync("Manager");
+
             var newUserProperty = new UserProperty
             {
                 PropertyId = newProperty.PropertyId,
-                UserId = userId
+                UserId = userId,
+                RoleId = role.Id
             };
 
             await _userPropertyRepository.AddUserProperty(newUserProperty);
@@ -119,14 +129,15 @@ namespace BuildingManagementTool.Controllers
             {
                 var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
                 var displayImage = propertyImages.FirstOrDefault(img => img.IsDisplay);
+                var role = await _roleManager.FindByIdAsync(property.RoleId);
                 if (displayImage != null)
                 {
                     var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName);
-                    viewmodelList.Add(new PropertyViewModel(property, url.ToString()));
+                    viewmodelList.Add(new PropertyViewModel(property, url.ToString(), role.Name));
                 }
                 else
                 {
-                    viewmodelList.Add(new PropertyViewModel(property, null));
+                    viewmodelList.Add(new PropertyViewModel(property, null, role.Name));
                 }
             }
             return PartialView("_PropertyContainer", viewmodelList);
@@ -215,8 +226,18 @@ namespace BuildingManagementTool.Controllers
                     imageList.Add(new Dictionary<int, List<string>> { { i, new List<string> { null } } });
                 }
             }
-            
-            var viewmodel = new ManagePropertyFormViewModel(imageList, property) { PropertyName = property.PropertyName };
+            var userPropertyList = await _userPropertyRepository.GetByPropertyId(property.PropertyId);
+            var emailList = new Dictionary<int, string>();
+            if (userPropertyList != null && userPropertyList.Any())
+            {
+                foreach (var item in userPropertyList)
+                {
+                    var user = await _userManager.FindByIdAsync(item.UserId);
+                    var email = await _userManager.GetEmailAsync(user);
+                    emailList.Add(item.UserPropertyId, email);
+                }
+            }
+            var viewmodel = new ManagePropertyFormViewModel(imageList, property, property.PropertyName, emailList);
             return PartialView("_ManagePropertyForm", viewmodel);
         }
 
@@ -313,6 +334,13 @@ namespace BuildingManagementTool.Controllers
             {
                 await _propertyImageRepository.RemoveDisplayImage(currentProperty.PropertyId);
             }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendInviteEmail(int id, string email)
+        {
+            await _invitationService.InviteUserAsync(email, id);
             return Json(new { success = true });
         }
     }
