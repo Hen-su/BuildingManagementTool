@@ -1,9 +1,15 @@
 ﻿using BuildingManagementTool.Models;
+using BuildingManagementTool.Services;
 using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs.Models;
+
+
 
 namespace BuildingManagementTool.Controllers
 {
@@ -14,54 +20,38 @@ namespace BuildingManagementTool.Controllers
         private readonly IPropertyRepository _propertyRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IDocumentRepository _documentRepository;
-        public PropertyCategoryController(IPropertyCategoryRepository propertyCategoryRepository, IPropertyRepository propertyRepository, ICategoryRepository categoryRepository, IDocumentRepository documentRepository)
+        private readonly IPropertyImageRepository _propertyImageRepository;  
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IBlobService _blobService;
+        public PropertyCategoryController(
+            IPropertyCategoryRepository propertyCategoryRepository,
+            IPropertyRepository propertyRepository,
+            ICategoryRepository categoryRepository,
+            IDocumentRepository documentRepository,
+            IPropertyImageRepository propertyImageRepository,
+            UserManager<ApplicationUser> userManager, 
+            IBlobService blobService)
         {
             _propertyCategoryRepository = propertyCategoryRepository;
             _propertyRepository = propertyRepository;
             _categoryRepository = categoryRepository;
             _documentRepository = documentRepository;
+            _propertyImageRepository = propertyImageRepository;  
+            _userManager = userManager;
+            _blobService = blobService;
         }
 
         public async Task<IActionResult> Index(int id)
         {
-            var property = await _propertyRepository.GetById(id);
-            if (property == null) 
+            if (id == null || id == 0)
             {
-                return StatusCode(StatusCodes.Status404NotFound, new
+                return StatusCode(StatusCodes.Status400BadRequest, new
                 {
                     success = false,
-                    message = "The selected property could not be found"
+                    message = "The property id cannot be null"
                 });
             }
-            var categories = await _propertyCategoryRepository.GetByPropertyId(id);
-            var img = "/imgs/sample-house.jpeg";
 
-            
-            List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
-            foreach (var category in categories)
-            {
-                var documentsByCategory = new Dictionary<int, List<Document>>();
-                // Fetch documents by category id
-
-                var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
-                var documentCount = documents.Count();
-                if (documents == null || !documents.Any()) 
-                {
-                    previewViewModels.Add(new CategoryPreviewViewModel(category, null, 0));
-                    continue;
-                }
-                documents = documents.Where(d => d.IsActiveNote == true).Take(2).ToList();
-                documentsByCategory[category.PropertyCategoryId] = documents;
-                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory, documentCount));
-            }
-
-            var viewModel = new CategoryViewModel(categories, img, property, previewViewModels);
-            return View(viewModel);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> UpdateCategoryCanvas(int id)
-        {
             var property = await _propertyRepository.GetById(id);
             if (property == null)
             {
@@ -71,31 +61,167 @@ namespace BuildingManagementTool.Controllers
                     message = "The selected property could not be found"
                 });
             }
-            var categories = await _propertyCategoryRepository.GetByPropertyId(id);
-            var img = "/imgs/sample-house.jpeg";
 
+            var imageList = new List<Dictionary<int, List<string>>>();
+            var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
+
+            if (propertyImages.Any())
+            {
+                var user = await _userManager.GetUserAsync(User);
+                var containerName = "userid-" + user.Id;
+                var prefix = $"{property.PropertyName}/images/".Trim();
+                var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+
+                if (blobs != null && blobs.Any())
+                {
+                    int dictionaryCount = 0;
+                    foreach (var kvp in blobs)
+                    {
+                        var updatedList = new List<string>
+                {
+                    kvp.Value[0], // Blob URL
+                    kvp.Value[1], // Blob details
+                    propertyImages.FirstOrDefault(i => i.FileName == kvp.Value[0])?.IsDisplay.ToString() 
+                };
+                        imageList.Add(new Dictionary<int, List<string>> { { kvp.Key, updatedList } });
+                        dictionaryCount++;
+                    }
+
+                    while (dictionaryCount < 4)
+                    {
+                        imageList.Add(new Dictionary<int, List<string>> { { dictionaryCount, new List<string> { null } } });
+                        dictionaryCount++;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    imageList.Add(new Dictionary<int, List<string>> { { i, new List<string> { null } } });
+                }
+            }
+
+            var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
+
             foreach (var category in categories)
             {
                 var documentsByCategory = new Dictionary<int, List<Document>>();
-                // Fetch documents by category id
+
                 var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
                 var documentCount = documents.Count();
+
                 if (documents == null || !documents.Any())
                 {
                     previewViewModels.Add(new CategoryPreviewViewModel(category, null, 0));
                     continue;
                 }
-                documents = documents.Take(2).ToList();
+
+                documents = documents.Where(d => d.IsActiveNote == true).Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory, documentCount));
             }
 
-            var viewModel = new CategoryViewModel(categories, img, property, previewViewModels);
+            var managePropertyFormViewModel = new ManagePropertyFormViewModel(imageList, property);
+            var viewModel = new CategoryViewModel(categories, managePropertyFormViewModel, property, previewViewModels);
+            return View(viewModel);
+        }
+
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> UpdateCategoryCanvas(int id)
+        {
+            if (id == null || id == 0)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    success = false,
+                    message = "The property id cannot be null or less than 1."
+                });
+            }
+
+            var property = await _propertyRepository.GetById(id);
+            if (property == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The selected property could not be found"
+                });
+            }
+
+            var imageList = new List<Dictionary<int, List<string>>>();
+            var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
+
+            if (propertyImages.Any())
+            {
+                var user = await _userManager.GetUserAsync(User);
+                var containerName = "userid-" + user.Id;
+                var prefix = $"{property.PropertyName}/images/".Trim();
+                var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+
+                if (blobs != null && blobs.Any())
+                {
+                    int dictionaryCount = 0;
+                    foreach (var kvp in blobs)
+                    {
+                        var updatedList = new List<string>
+                {
+                    kvp.Value[0],
+                    kvp.Value[1],
+                    propertyImages.FirstOrDefault(i => i.FileName == kvp.Value[0])?.IsDisplay.ToString() 
+                };
+                        imageList.Add(new Dictionary<int, List<string>> { { kvp.Key, updatedList } });
+                        dictionaryCount++;
+                    }
+
+                    while (dictionaryCount < 4)
+                    {
+                        imageList.Add(new Dictionary<int, List<string>> { { dictionaryCount, new List<string> { null } } });
+                        dictionaryCount++;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    imageList.Add(new Dictionary<int, List<string>> { { i, new List<string> { null } } });
+                }
+            }
+
+            var categories = await _propertyCategoryRepository.GetByPropertyId(id);
+            List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
+
+            foreach (var category in categories)
+            {
+                var documentsByCategory = new Dictionary<int, List<Document>>();
+
+                var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
+                var documentCount = documents.Count();
+
+                if (documents == null || !documents.Any())
+                {
+                    previewViewModels.Add(new CategoryPreviewViewModel(category, null, 0));
+                    continue;
+                }
+
+                documents = documents.Where(d => d.IsActiveNote == true).Take(2).ToList();
+                documentsByCategory[category.PropertyCategoryId] = documents;
+                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory, documentCount));
+            }
+
+            var managePropertyFormViewModel = new ManagePropertyFormViewModel(imageList, property);
+            var viewModel = new CategoryViewModel(categories, managePropertyFormViewModel, property, previewViewModels);
             return PartialView("_CategoryCanvas", viewModel);
         }
 
-        //test id being used in call function
+
+
+
         [HttpGet]
         public async Task<IActionResult> CategoryFormPartial(int id)
         {

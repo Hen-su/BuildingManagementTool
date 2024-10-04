@@ -23,7 +23,10 @@
         </div>
         <div class="propertyBoxContainer col-lg-6 d-flex justify-content-between align-items-center">
             <div class="w-100 h-auto propertyBox">
-                <img src="@Model.PropertyImageUrl" class="img-fluid" alt="Property Image" />
+                
+
+                <partial name="_PropertyImgCarousel" model="Model.ManagePropertyFormViewModel"></partial>
+
             </div>
         </div>
         <div class="col-lg-3 p-0 sideBoxContainer">

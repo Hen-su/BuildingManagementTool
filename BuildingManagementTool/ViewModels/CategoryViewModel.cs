@@ -6,13 +6,13 @@ namespace BuildingManagementTool.ViewModels
     {
         public Property Property { get; set; }
         public IEnumerable<PropertyCategory> PropertyCategories { get; } = new List<PropertyCategory>();
-        public string? PropertyImageUrl { get; }
+        public ManagePropertyFormViewModel ManagePropertyFormViewModel { get; set; }
         public List<CategoryPreviewViewModel> CategoryPreviewViewModels { get; set; }
-        
-        public CategoryViewModel(IEnumerable<PropertyCategory> propertyCategories, string? propertyImageUrl, Property property, List<CategoryPreviewViewModel> previewViewModels) 
+
+        public CategoryViewModel(IEnumerable<PropertyCategory> propertyCategories, ManagePropertyFormViewModel managePropertyFormViewModel, Property property, List<CategoryPreviewViewModel> previewViewModels)
         {
             PropertyCategories = propertyCategories;
-            PropertyImageUrl = propertyImageUrl;
+            ManagePropertyFormViewModel = managePropertyFormViewModel;
             Property = property;
             CategoryPreviewViewModels = previewViewModels;
         }
