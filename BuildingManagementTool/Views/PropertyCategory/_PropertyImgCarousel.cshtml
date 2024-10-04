@@ -85,6 +85,23 @@
             background-color: #717171;
         }
 </style>
+@{
+    var totalDisplayImgs = 0;
+
+    for (int i = 0; i < Model.ImageUrls.Count; i++)
+    {
+        var dict = Model.ImageUrls[i];
+        if (dict != null && dict.Count > 0)
+        {
+            var kvp = dict.FirstOrDefault();
+            if (kvp.Value != null && kvp.Value.Count > 1 && !string.IsNullOrEmpty(kvp.Value[1]))
+            {
+                totalDisplayImgs++;
+            }
+        }
+    }
+
+}
 
 <div class="slideshow-container">
     @if (Model.ImageUrls != null && Model.ImageUrls.Any(urlDict => urlDict != null && urlDict.Any(kvp => kvp.Value != null && kvp.Value.Count > 1)))
@@ -97,16 +114,16 @@
                 var kvp = dict.FirstOrDefault();
                 if (kvp.Value != null && kvp.Value.Count > 1 && !string.IsNullOrEmpty(kvp.Value[1]))
                 {
-                    var imageUrl = kvp.Value[1]; 
+                    var imageUrl = kvp.Value[1];
                     <div class="mySlides">
-                        <img class="card-img-top" src="@imageUrl" alt="Property Image" /> 
-                        <div class="text">@((i + 1) + " / " + Model.ImageUrls.Count)</div>
+                        <img class="card-img-top" src="@imageUrl" alt="Property Image" />
+                        <div class="text">@((i + 1) + " / " + totalDisplayImgs)</div>
                     </div>
                 }
             }
         }
-         <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
-         <a class="next" onclick="plusSlides(1)">&#10095;</a> 
+        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides(1)">&#10095;</a>
     }
 
     else
@@ -120,17 +137,11 @@
 <div style="text-align:center">
     @if (Model.ImageUrls != null && Model.ImageUrls.Any(urlDict => urlDict != null && urlDict.Any(kvp => kvp.Value != null && kvp.Value.Count > 1)))
     {
-        for (int i = 0; i < Model.ImageUrls.Count; i++)
+        for (int i = 0; i < totalDisplayImgs; i++)
         {
-            var dict = Model.ImageUrls[i];
-            if (dict != null && dict.Count > 0)
-            {
-                var kvp = dict.FirstOrDefault();
-                if (kvp.Value != null && kvp.Value.Count > 1 && !string.IsNullOrEmpty(kvp.Value[1]))
-                {
-                    <span class="dot" onclick="currentSlide(@(i + 1))"></span>
-                }
-            }
+
+            <span class="dot" onclick="currentSlide(@(i + 1))"></span>
+
         }
     }
 </div>
