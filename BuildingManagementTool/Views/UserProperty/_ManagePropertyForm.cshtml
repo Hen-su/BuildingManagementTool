@@ -74,15 +74,21 @@
                 <div class="row mt-4">
                     <h4 class="col-lg-12">Add Viewers</h4>
                     <div class="col-lg-6">
-                        <input id="viewerEmail" class="col-lg-6" type="email" placeholder="Enter a recipient's email" required></input>
+                        <label asp-for="@Model.AddViewerViewModel.Email"></label>
+                        <input asp-for=@Model.AddViewerViewModel.Email id="viewerEmail" class="col-lg-6" type="email" placeholder="Enter a recipient's email" required></input>
+                        <span asp-validation-for="@Model.AddViewerViewModel.Email" class="text-danger"></span>
                         <button id="sendInviteBtn" form="viewerForm" type="button" class="btn btn-primary" data-id="@Model.CurrentProperty.PropertyId">Send Invite</button>
                     </div>
+                    
                     <ul class="list-group">
                         @if (Model.ViewerEmails.Any())
                         {
                             foreach (var email in Model.ViewerEmails)
                             {
-                                <li class="list-group-item" data-id="@email.Key">@email.Value</li>
+                                <li class="list-group-item" data-id="@email.Key">
+                                    @email.Value
+                                    <i class="fas fa-x removeEmailBtn" style="cursor:pointer;" data-id="@Model.CurrentProperty.PropertyId"></i>
+                                </li>
                             }
                         }
                     </ul>
@@ -244,14 +250,43 @@
             console.log("Send invite clicked")
             var emailValue = $('#viewerEmail').val();
             var propertyId = $(this).data('id');
+            var sendBtn = $(this);
             console.log(emailValue)
             $.ajax({
                 url: '/UserProperty/SendInviteEmail',
                 type: 'POST',
                 data: {  id: propertyId, email: emailValue },
                 success: function (response) {
-                    $('#viewerList').append(`<li class="list-group-item">${email}</li>`);
-                    $('#viewerEmail').val('');
+                    sendBtn.prop("disabled", true);
+                    sendBtn.text("Invite sent");
+                },
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                }
+            });
+        })
+
+        $("#viewerEmail").change(function () {
+            var sendBtn = $("#sendInviteBtn");
+            console.log("Email changed");
+            if (sendBtn.prop("disabled")) {
+                sendBtn.prop("disabled", false);
+            }
+        });
+
+        $(document).off('click', '.removeEmailBtn').on('click', '.removeEmailBtn', function (event) {
+            console.log("remove email clicked")
+            var listitem = $(this).closest('li');
+            var emailValue = listitem.contents().filter(function () {
+                return this.nodeType === 3;
+            }).text().trim()
+            var propertyId = $(this).data('id');
+            $.ajax({
+                url: '/UserProperty/DeleteUserProperty',
+                type: 'POST',
+                data: { id: propertyId, email: emailValue },
+                success: function (response) {
+                    listitem.remove();
                 },
                 error: function (xhr) {
                     displayErrorMessage(xhr);

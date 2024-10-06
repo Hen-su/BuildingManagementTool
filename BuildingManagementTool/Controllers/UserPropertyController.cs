@@ -166,26 +166,9 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_PropertyDeleteConfirmation", property);
         }
 
-        public async Task<IActionResult> ManagePropertyFormPartial(int id)
+        private async Task<ManagePropertyFormViewModel> CreateViewModel(int id)
         {
-            if (id == null || id == 0)
-            {
-                return StatusCode(StatusCodes.Status400BadRequest, new
-                {
-                    success = false,
-                    message = "The property id cannot be null"
-                });
-            }
-
             var property = await _propertyRepository.GetById(id);
-            if (property == null)
-            {
-                return StatusCode(StatusCodes.Status404NotFound, new
-                {
-                    success = false,
-                    message = "The selected property could not be found"
-                });
-            }
             var imageList = new List<Dictionary<int, List<string>>>();
 
             var images = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
@@ -196,7 +179,7 @@ namespace BuildingManagementTool.Controllers
 
                 var prefix = $"{property.PropertyName}/images/".Trim();
                 var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
-            
+
                 if (blobs != null && blobs.Any())
                 {
                     int dictionaryCount = 0;
@@ -212,7 +195,7 @@ namespace BuildingManagementTool.Controllers
                         dictionaryCount++;
                     }
 
-                    while(dictionaryCount < 5)
+                    while (dictionaryCount < 5)
                     {
                         imageList.Add(new Dictionary<int, List<string>> { { dictionaryCount, new List<string> { null } } });
                         dictionaryCount++;
@@ -234,10 +217,28 @@ namespace BuildingManagementTool.Controllers
                 {
                     var user = await _userManager.FindByIdAsync(item.UserId);
                     var email = await _userManager.GetEmailAsync(user);
-                    emailList.Add(item.UserPropertyId, email);
+                    if (email != User.Identity.Name)
+                    {
+                        emailList.Add(item.UserPropertyId, email);
+                    }
                 }
             }
             var viewmodel = new ManagePropertyFormViewModel(imageList, property, property.PropertyName, emailList);
+            return viewmodel;
+        }
+
+        public async Task<IActionResult> ManagePropertyFormPartial(int id)
+        {
+            if (id == null || id == 0)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    success = false,
+                    message = "The property id cannot be null"
+                });
+            }
+
+            var viewmodel = await CreateViewModel(id);
             return PartialView("_ManagePropertyForm", viewmodel);
         }
 
@@ -338,9 +339,44 @@ namespace BuildingManagementTool.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SendInviteEmail(int id, string email)
+        public async Task<IActionResult> SendInviteEmail(int id, AddViewerViewModel addViewerViewModel)
         {
-            await _invitationService.InviteUserAsync(email, id);
+            if (!ModelState.IsValid)
+            {
+                var viewmodel = await CreateViewModel(id);
+                viewmodel.AddViewerViewModel = addViewerViewModel;
+                return PartialView("_ManagePropertyForm", viewmodel);
+            }
+            await _invitationService.InviteUserAsync(addViewerViewModel.Email, id);
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteUserProperty(int id, string email)
+        {
+            if (id == null || id == 0)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    success = false,
+                    message = $"Invalid property id"
+                });
+            }
+            if (email == null || email == "")
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    success = false,
+                    message = $"Invalid user email"
+                });
+            }
+            var user = await _userManager.FindByEmailAsync(email);
+            var userId = user.Id;
+            var userProperty = await _userPropertyRepository.GetByPropertyId(id);
+            if (userProperty != null) 
+            { 
+                await _userPropertyRepository.DeleteByUserIdAndPropertyId(id, userId);
+            }
             return Json(new { success = true });
         }
     }

@@ -21,9 +21,10 @@ namespace BuildingManagementTool.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUrlHelperFactory _urlHelperFactory;
         private readonly IRazorViewToStringRenderer _razorViewToStringRenderer;
+        private readonly IInvitationRepository _invitationRepository;
 
         public InvitationService(BuildingManagementToolDbContext dbContext, UserManager<ApplicationUser> userManager, IEmailSender emailSender, 
-            RoleManager<IdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IUrlHelperFactory urlHelperFactory, IRazorViewToStringRenderer razorViewToStringRenderer)
+            RoleManager<IdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IUrlHelperFactory urlHelperFactory, IRazorViewToStringRenderer razorViewToStringRenderer, IInvitationRepository invitationRepository)
         {
             _dbContext = dbContext;
             _userManager = userManager;
@@ -32,22 +33,28 @@ namespace BuildingManagementTool.Services
             _httpContextAccessor = httpContextAccessor;
             _urlHelperFactory = urlHelperFactory;
             _razorViewToStringRenderer = razorViewToStringRenderer;
+            _invitationRepository = invitationRepository;
         }
 
         public async Task InviteUserAsync(string email, int propertyId)
         {
+            
+            var existingInvitations = await _invitationRepository.GetInvitationByEmailAndPropertyAsync(email, propertyId);
+            if (existingInvitations != null) 
+            {
+                return;
+            }
             var existingUser = await _userManager.FindByEmailAsync(email);
-
             if (existingUser != null)
-            {
-                // If the user exists, link them to the property
-                await LinkExistingUserToPropertyAsync(existingUser, propertyId);
-            }
-            else
-            {
-                // If the user doesn't exist, send an email invite (without a token)
-                await SendInvitationEmailAsync(email, propertyId);
-            }
+                {
+                    // If the user exists, link them to the property
+                    await LinkExistingUserToPropertyAsync(existingUser, propertyId);
+                }
+                else
+                {
+                    // If the user doesn't exist, send an email invite (without a token)
+                    await SendInvitationEmailAsync(email, propertyId);
+                }
         }
 
         private async Task LinkExistingUserToPropertyAsync(ApplicationUser user, int propertyId)
@@ -71,15 +78,15 @@ namespace BuildingManagementTool.Services
                 var httpContext = _httpContextAccessor.HttpContext;
                 var urlHelper = _urlHelperFactory.GetUrlHelper(new ActionContext(httpContext, httpContext.GetRouteData(), new ActionDescriptor()));
                 var callbackUrl = urlHelper.Page(
-                        "/Account/Register",
+                        "/Account/Login",
                         pageHandler: null,
-                        values: null,
+                        values: new { area = "Identity" },
                         protocol: httpContext.Request.Scheme);
 
                 var model = new EmailViewModel { Username = user.FirstName, EmailLink = callbackUrl };
                 var viewPath = "Shared/EmailTemplates/InviteToLogin";
                 var htmlContent = await _razorViewToStringRenderer.RenderViewToStringAsync(viewPath, model, httpContext);
-                // Notify the user via email
+                // notify the user via email
                 await _emailSender.SendEmailAsync(user.Email, "New Property Access",
                     htmlContent);
             }
@@ -105,17 +112,42 @@ namespace BuildingManagementTool.Services
             var callbackUrl = urlHelper.Page(
                     "/Account/Register",
                     pageHandler: null,
-                    values: null,
+                    values: new { area = "Identity" },
                     protocol: httpContext.Request.Scheme);
             
             var model = new EmailViewModel { Username = user.FirstName, EmailLink = callbackUrl };
             var viewPath = "Shared/EmailTemplates/InviteToRegister";
             var htmlContent = await _razorViewToStringRenderer.RenderViewToStringAsync(viewPath, model, httpContext);
 
-            // Send the invitation email
+            //send invite to register
             await _emailSender.SendEmailAsync(email, "Invite to view property",
                 htmlContent);
         }
 
+        public async Task LinkUserToPropertyOnRegisterConfirm(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            var invitations = await _invitationRepository.GetPendingInvitationsByEmailAsync(email);
+            if (invitations != null)
+            {
+                foreach (var invite in invitations)
+                {
+                    var role = await _roleManager.FindByNameAsync("Viewer");
+                    var userProperty = new UserProperty
+                    {
+                        UserId = user.Id,
+                        PropertyId = invite.PropertyId,
+                        RoleId = role.Id
+                    };
+
+                    invite.Status = "Completed";
+                    invite.AcceptedOn = DateTime.UtcNow;
+                    _dbContext.Invitations.Update(invite);
+                    _dbContext.UserProperties.Add(userProperty);
+                    await _dbContext.SaveChangesAsync();
+                }
+            }
+        }
     }
 }
+  

@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace BuildingManagementTool.Models
@@ -44,6 +45,25 @@ namespace BuildingManagementTool.Models
             }
             var userPropertyList = await _dbContext.UserProperties.Where(u => u.PropertyId==id).ToListAsync();
             return userPropertyList;
+        }
+
+        public async Task DeleteByUserIdAndPropertyId(int id, string userId)
+        {
+            if (id == 0)
+            {
+                throw new ArgumentNullException("Property id cannot be null.");
+            }
+            if (userId == null || userId == "")
+            {
+                throw new ArgumentNullException("Email cannot be null.");
+            }
+            var userProperty = await _dbContext.UserProperties.FirstOrDefaultAsync(u => u.PropertyId == id && u.UserId == userId);
+            if (userProperty == null) 
+            {
+                throw new InvalidOperationException($"No user-property association found for Property ID {id} and User ID {userId}.");
+            }
+            _dbContext.UserProperties.Remove(userProperty);
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

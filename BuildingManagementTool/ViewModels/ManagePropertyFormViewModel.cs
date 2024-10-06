@@ -19,6 +19,9 @@ namespace BuildingManagementTool.ViewModels
         public string PropertyName { get; set; }
         public List<IFormFile>? Images { get; set; }
         public Dictionary<int, string> ViewerEmails { get; set; }
+        [BindNever]
+        [ValidateNever]
+        public AddViewerViewModel AddViewerViewModel { get; set; }
         public ManagePropertyFormViewModel(List<Dictionary<int, List<string>>> images, Property property, string propertyName, Dictionary<int, string> emails) 
         {
             ImageUrls = images;
