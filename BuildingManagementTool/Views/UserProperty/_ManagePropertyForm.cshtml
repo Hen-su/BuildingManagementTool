@@ -27,6 +27,7 @@
         </div>
 
         <div class="modal-body">
+            <div asp-validation-summary="All" class="text-danger"></div>
             <form id="propertyForm" method="post" enctype="multipart/form-data">
                 <div class="form-group d-flex flex-column">
                     <label asp-for="PropertyName">Property Name/Address</label>
@@ -74,9 +75,9 @@
                 <div class="row mt-4">
                     <h4 class="col-lg-12">Add Viewers</h4>
                     <div class="col-lg-6">
-                        <label asp-for="@Model.AddViewerViewModel.Email"></label>
-                        <input asp-for=@Model.AddViewerViewModel.Email id="viewerEmail" class="col-lg-6" type="email" placeholder="Enter a recipient's email" required></input>
-                        <span asp-validation-for="@Model.AddViewerViewModel.Email" class="text-danger"></span>
+                        <label asp-for="AddViewerViewModel.Email"></label>
+                        <input asp-for=AddViewerViewModel.Email name="Email" id="viewerEmail" class="col-lg-6" type="email" placeholder="Enter a recipient's email" required></input>
+                        <span asp-validation-for="AddViewerViewModel.Email" class="text-danger"></span>
                         <button id="sendInviteBtn" form="viewerForm" type="button" class="btn btn-primary" data-id="@Model.CurrentProperty.PropertyId">Send Invite</button>
                     </div>
                     
@@ -257,8 +258,14 @@
                 type: 'POST',
                 data: {  id: propertyId, email: emailValue },
                 success: function (response) {
-                    sendBtn.prop("disabled", true);
-                    sendBtn.text("Invite sent");
+                    if (response.success) {
+                        sendBtn.prop("disabled", true);
+                        sendBtn.text("Invite sent");
+                    }
+                    else{
+                        console.log('return validation errors')
+                        $('#propertyModalContainer').html(response);
+                    }
                 },
                 error: function (xhr) {
                     displayErrorMessage(xhr);

@@ -223,7 +223,8 @@ namespace BuildingManagementTool.Controllers
                     }
                 }
             }
-            var viewmodel = new ManagePropertyFormViewModel(imageList, property, property.PropertyName, emailList);
+            var addViewerViewModel = new AddViewerViewModel();
+            var viewmodel = new ManagePropertyFormViewModel(imageList, property, property.PropertyName, emailList) { AddViewerViewModel = addViewerViewModel };
             return viewmodel;
         }
 
