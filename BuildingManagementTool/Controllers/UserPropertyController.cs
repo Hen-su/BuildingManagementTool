@@ -342,5 +342,49 @@ namespace BuildingManagementTool.Controllers
             }
             return Json(new { success = true });
         }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> SearchPropertyByName(string keyword)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return BadRequest("A problem occurred while retrieving your data");
+            }
+            var containerName = "userid-" + user.Id;
+            var userId = user.Id;
+            var propertyList = await _userPropertyRepository.GetByUserId(userId);
+
+            var viewmodelList = new List<PropertyViewModel>();
+            var filterKeyword = keyword.ToLower();
+
+
+            foreach (var property in propertyList)
+            {
+
+                if (property.Property.PropertyName.ToLower().Contains(filterKeyword))
+                {
+
+                    var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
+                    var displayImage = propertyImages.FirstOrDefault(img => img.IsDisplay);
+                    if (displayImage != null)
+                    {
+                        var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName);
+                        viewmodelList.Add(new PropertyViewModel(property, url.ToString()));
+                    }
+                    else
+                    {
+                        viewmodelList.Add(new PropertyViewModel(property, null));
+                    }
+                }
+            }
+            return PartialView("_PropertyContainer", viewmodelList);
+        }
+
+
+
     }
 }
