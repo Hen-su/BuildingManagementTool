@@ -2,6 +2,7 @@
 using BuildingManagementTool.Models;
 using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Moq;
@@ -20,6 +21,9 @@ namespace BuildingManagementTool.Tests
         private Mock<IPropertyRepository> _mockPropertyRepository;
         private Mock<ICategoryRepository> _mockCategoryRepository;
         private Mock<IDocumentRepository> _mockDocumentRepository;
+        private Mock<IPropertyImageRepository> _mockPropertyImageRepository;
+        private Mock<UserManager<ApplicationUser>> _mockUserManager;
+        private Mock<IBlobService> _mockBlobService;
         private PropertyCategoryController _propertyCategoryController;
 
         [SetUp]
@@ -29,9 +33,35 @@ namespace BuildingManagementTool.Tests
             _mockPropertyRepository = new Mock<IPropertyRepository>();
             _mockCategoryRepository = new Mock<ICategoryRepository>();
             _mockDocumentRepository = new Mock<IDocumentRepository>();
-            _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object, _mockPropertyRepository.Object, _mockCategoryRepository.Object, _mockDocumentRepository.Object);
+            _mockPropertyImageRepository = new Mock<IPropertyImageRepository>();
+            _mockUserManager = MockUserManager<ApplicationUser>();  // Use a helper method to mock UserManager
+            _mockBlobService = new Mock<IBlobService>();
+
+            // Pass all dependencies into the controller
+            _propertyCategoryController = new PropertyCategoryController(
+                _mockPropertyCategoryRepository.Object,
+                _mockPropertyRepository.Object,
+                _mockCategoryRepository.Object,
+                _mockDocumentRepository.Object,
+                _mockPropertyImageRepository.Object,
+                _mockUserManager.Object,
+                _mockBlobService.Object);
         }
-        
+        private Mock<UserManager<TUser>> MockUserManager<TUser>() where TUser : class
+        {
+            var store = new Mock<IUserStore<TUser>>();
+            return new Mock<UserManager<TUser>>(
+                store.Object,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+        }
+
         [Test]
         public async Task Index_PropertyExists_ReturnView()
         {
@@ -45,11 +75,11 @@ namespace BuildingManagementTool.Tests
             };
             _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
             _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(list.Where(p => p.PropertyId == id));
-            var img = "/imgs/sample-house.jpeg";
+      
 
-            var viewModel = new CategoryViewModel(list, img, property, null);
+            var viewModel = new CategoryViewModel(list, null, property, null);
 
-            var result = await _propertyCategoryController.Index(id);
+            var result = await _propertyCategoryController.Index(id); 
             var viewResult = (ViewResult) result;
             var resultViewModel = viewResult.Model as CategoryViewModel;
             Assert.IsNotNull(result);
@@ -83,8 +113,8 @@ namespace BuildingManagementTool.Tests
             };
             _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
             _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(id)).ReturnsAsync(list.Where(p => p.PropertyId == id));
-            var img = "/imgs/sample-house.jpeg";
-            var viewModel = new CategoryViewModel(list, img, property, null);
+        
+            var viewModel = new CategoryViewModel(list, null, property, null);
 
             var result = await _propertyCategoryController.UpdateCategoryCanvas(id);
             var viewResult = result as PartialViewResult;

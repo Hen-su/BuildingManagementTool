@@ -559,6 +559,169 @@ namespace BuildingManagementTool.Tests
             Assert.That(value.Equals("{ success = True }"));
         }
 
+
+
+        [Test]
+        public async Task SearchPropertyByName_UserIsNull_Fail()
+        {
+            
+            _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
+                .ReturnsAsync((ApplicationUser)null);
+
+        
+            var result = await _userPropertyController.SearchPropertyByName("test");
+
+            Assert.IsInstanceOf<BadRequestObjectResult>(result); 
+        }
+
+
+
+        [Test]
+        public async Task SearchPropertyByName_UserNotNull_Sucess()
+        {
+           
+            var user = new ApplicationUser { Id = "user123" };
+            var propertyId1 = 1; 
+            var propertyId2 = 2; 
+
+            var userProperties = new List<UserProperty>
+    {
+        new UserProperty
+        {
+            PropertyId = propertyId1,
+            Property = new BuildingManagementTool.Models.Property { PropertyName = "Test Property One" } 
+        },
+        new UserProperty
+        {
+            PropertyId = propertyId2,
+            Property = new BuildingManagementTool.Models.Property { PropertyName = "Another Property" }
+        }
+    };
+
+            _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            _mockUserPropertyRepository.Setup(x => x.GetByUserId(user.Id))
+                .ReturnsAsync(userProperties);
+
+        
+            _mockBlobService.Setup(x => x.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync("https://examplebloburl.com/image.jpg");
+
+            var result = await _userPropertyController.SearchPropertyByName("Test");
+
+
+           
+            var viewResult = result as PartialViewResult; 
+            Assert.IsNotNull(viewResult); 
+
+            var model = viewResult?.Model as List<PropertyViewModel>; 
+            Assert.IsNotNull(model); 
+
+            Assert.AreEqual(1, model?.Count); 
+            Assert.AreEqual("Test Property One", model?[0].UserProperty.Property.PropertyName); 
+        }
+
+
+
+
+
+
+        [Test]
+        public async Task SearchPropertyByName_NoPropertiesFound_Fail()
+        {
+            var user = new ApplicationUser { Id = "user123" };
+            _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            _mockUserPropertyRepository.Setup(x => x.GetByUserId(user.Id))
+                .ReturnsAsync(new List<UserProperty>()); 
+
+            var result = await _userPropertyController.SearchPropertyByName("test");
+
+          
+            Assert.That(result, Is.InstanceOf<PartialViewResult>());
+
+            var viewResult = result as PartialViewResult;
+            Assert.IsNotNull(viewResult);
+            var model = viewResult.Model as List<PropertyViewModel>;
+
+            Assert.IsNotNull(model);
+            Assert.IsEmpty(model); 
+        }
+
+
+
+        [Test]
+        public async Task SearchPropertyByName_PropertiesFound_Success()
+        {
+          
+            var user = new ApplicationUser { Id = "user123" };
+            _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            var propertyId1 = 1;
+            var propertyId2 = 2;
+
+            var userProperties = new List<UserProperty>
+    {
+        new UserProperty
+        {
+            PropertyId = propertyId1,
+            Property = new BuildingManagementTool.Models.Property { PropertyName = "Test Property One" } 
+        },
+        new UserProperty
+        {
+            PropertyId = propertyId2,
+            Property = new BuildingManagementTool.Models.Property { PropertyName = "Another Property" } 
+        }
+    };
+
+            _mockUserPropertyRepository.Setup(x => x.GetByUserId(user.Id))
+                .ReturnsAsync(userProperties);
+
+            var propertyImages = new List<PropertyImage>
+    {
+        new PropertyImage { BlobName = "image1.png", IsDisplay = true },
+        new PropertyImage { BlobName = "image2.png", IsDisplay = true }
+    };
+
+            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(propertyId1))
+                .ReturnsAsync(propertyImages); 
+
+            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(propertyId2))
+                .ReturnsAsync(new List<PropertyImage>());
+
+            _mockBlobService.Setup(x => x.GetBlobUrlAsync($"userid-{user.Id}", "image1.png"))
+                .ReturnsAsync("http://example.com/image1.png");
+
+            _mockBlobService.Setup(x => x.GetBlobUrlAsync($"userid-{user.Id}", "image2.png"))
+                .ReturnsAsync("http://example.com/image2.png");
+
+          
+            var result = await _userPropertyController.SearchPropertyByName("Test");
+
+        
+            Assert.That(result, Is.InstanceOf<PartialViewResult>());
+
+            var viewResult = result as PartialViewResult;
+            Assert.IsNotNull(viewResult);
+            var model = viewResult.Model as List<PropertyViewModel>;
+
+            Assert.IsNotNull(model);
+            Assert.IsNotEmpty(model); 
+
+        
+            Assert.AreEqual(1, model.Count); 
+            Assert.AreEqual("Test Property One", model[0].UserProperty.Property.PropertyName); 
+            Assert.AreEqual("http://example.com/image1.png", model[0].ImageUrl); 
+        }
+
+
+
+
+
+
         [TearDown]
         public void Teardown()
         {
