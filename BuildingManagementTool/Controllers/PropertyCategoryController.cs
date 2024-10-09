@@ -24,6 +24,7 @@ namespace BuildingManagementTool.Controllers
         private readonly IPropertyImageRepository _propertyImageRepository;  
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IBlobService _blobService;
+        private readonly IAuthorizationService _authorizationService;
         public PropertyCategoryController(
             IPropertyCategoryRepository propertyCategoryRepository,
             IPropertyRepository propertyRepository,
@@ -31,7 +32,9 @@ namespace BuildingManagementTool.Controllers
             IDocumentRepository documentRepository,
             IPropertyImageRepository propertyImageRepository,
             UserManager<ApplicationUser> userManager, 
-            IBlobService blobService)
+            IBlobService blobService, 
+            IAuthorizationService authorizationService,
+            IUserPropertyRepository userPropertyRepository)
         {
             _propertyCategoryRepository = propertyCategoryRepository;
             _propertyRepository = propertyRepository;
@@ -65,42 +68,27 @@ namespace BuildingManagementTool.Controllers
             }
 
             var imageList = new List<Dictionary<int, List<string>>>();
-            var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
+            var propertyImages = await _propertyImageRepository.GetByPropertyId(userproperty.PropertyId);
 
             if (propertyImages.Any())
             {
-                var user = await _userManager.GetUserAsync(User);
-                var containerName = "userid-" + user.Id;
-                var prefix = $"{property.PropertyName}/images/".Trim();
+                var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(userproperty.PropertyId);
+                var containerName = "userid-" + managerId;
+                var prefix = $"{userproperty.Property.PropertyName}/images/".Trim();
                 var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
 
                 if (blobs != null && blobs.Any())
                 {
-                    int dictionaryCount = 0;
                     foreach (var kvp in blobs)
                     {
                         var updatedList = new List<string>
-                {
-                    kvp.Value[0], // Blob URL
-                    kvp.Value[1], // Blob details
-                    propertyImages.FirstOrDefault(i => i.FileName == kvp.Value[0])?.IsDisplay.ToString() 
-                };
+                        {
+                            kvp.Value[0], // Blob URL
+                            kvp.Value[1], // Blob details
+                            propertyImages.FirstOrDefault(i => i.FileName == kvp.Value[0])?.IsDisplay.ToString() 
+                        };
                         imageList.Add(new Dictionary<int, List<string>> { { kvp.Key, updatedList } });
-                        dictionaryCount++;
                     }
-
-                    while (dictionaryCount < 4)
-                    {
-                        imageList.Add(new Dictionary<int, List<string>> { { dictionaryCount, new List<string> { null } } });
-                        dictionaryCount++;
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    imageList.Add(new Dictionary<int, List<string>> { { i, new List<string> { null } } });
                 }
             }
 
@@ -124,7 +112,7 @@ namespace BuildingManagementTool.Controllers
                 documentsByCategory[category.PropertyCategoryId] = documents;
                 previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory, documentCount, userproperty.Role.Name));
             }
-            var viewModel = new CategoryViewModel(categories, img, userproperty.Property, previewViewModels, userproperty.Role.Name);
+            var viewModel = new CategoryViewModel(categories, imageList, userproperty.Property, previewViewModels, userproperty.Role.Name);
             return viewModel;
         }
 

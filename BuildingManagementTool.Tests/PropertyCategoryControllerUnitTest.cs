@@ -26,7 +26,6 @@ namespace BuildingManagementTool.Tests
         private Mock<ICategoryRepository> _mockCategoryRepository;
         private Mock<IDocumentRepository> _mockDocumentRepository;
         private Mock<IPropertyImageRepository> _mockPropertyImageRepository;
-        private Mock<UserManager<ApplicationUser>> _mockUserManager;
         private Mock<IBlobService> _mockBlobService;
 
         private Mock<IUserStore<ApplicationUser>> _mockUserStore;
@@ -46,12 +45,21 @@ namespace BuildingManagementTool.Tests
             _mockUserPropertyRepository = new Mock<IUserPropertyRepository>();
             _mockCategoryRepository = new Mock<ICategoryRepository>();
             _mockDocumentRepository = new Mock<IDocumentRepository>();
+            _mockPropertyImageRepository = new Mock<IPropertyImageRepository>();
+            _mockBlobService = new Mock<IBlobService>();
             _mockUserStore = new Mock<IUserStore<ApplicationUser>>();
             _mockUserManager = new Mock<UserManager<ApplicationUser>>(_mockUserStore.Object, null, null, null, null, null, null, null, null);
             _mockAuthorizationService = new Mock<IAuthorizationService>();
 
-            _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object, _mockPropertyRepository.Object, _mockUserPropertyRepository.Object, 
-                _mockCategoryRepository.Object, _mockDocumentRepository.Object, _mockUserManager.Object, _mockAuthorizationService.Object);
+            _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object,
+                                                                         _mockPropertyRepository.Object,
+                                                                         _mockCategoryRepository.Object,
+                                                                         _mockDocumentRepository.Object,
+                                                                         _mockPropertyImageRepository.Object,
+                                                                         _mockUserManager.Object,
+                                                                         _mockBlobService.Object,
+                                                                         _mockAuthorizationService.Object, 
+                                                                         _mockUserPropertyRepository.Object);
         }
 
         [Test]
