@@ -6,6 +6,8 @@ using System.Linq;
 using BuildingManagementTool.Services;
 using SendGrid.Helpers.Mail.Model;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Identity;
+using BuildingManagementTool.Services.Authorization;
 
 
 namespace BuildingManagementTool.Controllers
@@ -17,20 +19,61 @@ namespace BuildingManagementTool.Controllers
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IEmailSender _emailSender;
         private readonly IRazorViewToStringRenderer _viewToStringRenderer;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IUserPropertyRepository _userPropertyRepository;
+        private readonly IAuthorizationService _authorizationService;
 
-        public DocumentController(IDocumentRepository fileRepository, IPropertyCategoryRepository propertyCategoryRepository, IEmailSender emailSender, IRazorViewToStringRenderer viewToStringRenderer)
+        public DocumentController(IDocumentRepository fileRepository, IPropertyCategoryRepository propertyCategoryRepository, 
+            IEmailSender emailSender, IRazorViewToStringRenderer viewToStringRenderer, UserManager<ApplicationUser> userManager, 
+            IUserPropertyRepository userPropertyRepository, IAuthorizationService authorizationService)
         {
             _documentRepository = fileRepository;
             _propertyCategoryRepository = propertyCategoryRepository;
             _emailSender = emailSender;
             _viewToStringRenderer = viewToStringRenderer;
+            _userManager = userManager;
+            _userPropertyRepository = userPropertyRepository;
+            _authorizationService = authorizationService;
+        }
+
+        private async Task<AuthorizationResult> CheckAuthorizationByPropertyId(int id)
+        {
+            // Create a requirement instance with the actual property ID
+            var requirement = new UserPropertyManagerRequirement(id);
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, null, requirement);
+            return authorizationResult;
+        }
+
+        private async Task<string> GetRoleName(int propertyId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var userId = user.Id;
+
+            var userproperty = await _userPropertyRepository.GetByPropertyIdAndUserId(propertyId, userId);
+
+            return userproperty.Role.Name;
+        }
+
+        private async Task<DocumentViewModel> CreateDocumentViewModel(int id)
+        {
+            var currentCategory = await _propertyCategoryRepository.GetById(id);
+            if (currentCategory == null)
+            {
+                return null;
+            }
+
+            IEnumerable<Document> documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == id).ToList();
+
+            var roleName = await GetRoleName(currentCategory.PropertyId);
+
+            var viewModel = new DocumentViewModel(documents, currentCategory, roleName);
+            return viewModel;
         }
 
         public async Task<IActionResult> Index(int id)
         {
-
-            var currentCategory = await _propertyCategoryRepository.GetById(id);
-            if (currentCategory == null)
+            var viewModel = await CreateDocumentViewModel(id);
+            if (viewModel == null)
             {
                 var problemDetails = new ProblemDetails
                 {
@@ -40,9 +83,6 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-            IEnumerable<Document> documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == id).ToList();
-
-            var viewModel = new DocumentViewModel(documents, currentCategory);
             return PartialView("_DocumentIndex", viewModel);
         }
 
@@ -63,6 +103,7 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_DocumentList", documents);
         }
 
+        
         [HttpGet]
         public async Task<IActionResult> UploadFormPartial(int id)
         {
@@ -81,9 +122,9 @@ namespace BuildingManagementTool.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetDocumentOptions(int documentId)
+        public async Task<IActionResult> GetDocumentOptions(int documentId)
         {
-            var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
+            var document = await _documentRepository.GetById(documentId);
             if (document == null)
             {
                 var problemDetails = new ProblemDetails
@@ -94,9 +135,14 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-            return PartialView("_DocumentOptions", document);
+
+            var roleName = await GetRoleName(document.PropertyCategory.PropertyId);
+
+            var viewModel = new DocumentOptionsViewModel(document, roleName);
+            return PartialView("_DocumentOptions", viewModel);
         }
 
+        
         [HttpGet]
         public async Task<IActionResult> AddNoteFormPartial(int id)
         {
@@ -111,10 +157,15 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-
+            var authorizationResult = await CheckAuthorizationByPropertyId(document.PropertyCategory.PropertyId);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             return PartialView("_AddNoteForm", document); 
         }
 
+        
         [HttpPost]
         public async Task<IActionResult> AddNoteToDocument(int documentId, string note)
         {
@@ -123,7 +174,11 @@ namespace BuildingManagementTool.Controllers
             {
                 return NotFound(new { success = false, message = "Document not found." });
             }
-
+            var authorizationResult = await CheckAuthorizationByPropertyId(document.PropertyCategory.PropertyId);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             // Adding the note to the document
             document.Note = note;
 
@@ -151,22 +206,20 @@ namespace BuildingManagementTool.Controllers
             }
 
             // Get all documents for the given property category
-            IEnumerable<Document> documents = _documentRepository.AllDocuments
-                .Where(d => d.PropertyCategoryId == propertyCategoryId).ToList();
+            IEnumerable<Document> documents = await _documentRepository.GetByPropertyCategoryId(currentCategory.PropertyCategoryId);
 
             // Check if documents are available
             if (!documents.Any())
             {
                 return NotFound(new { success = false, message = "No documents found for this property category." });
             }
-
+            var roleName = await GetRoleName(currentCategory.PropertyId);
+            var viewModel = new DocumentNotesViewModel(documents, roleName);
             // Return the partial view with the list of documents and their notes
-            return PartialView("_DocumentNotes", documents);
+            return PartialView("_DocumentNotes", viewModel);
         }
 
-
-
-
+        
         [HttpGet]
         public async Task<IActionResult> NoteDeleteConfFormPartial(int id)
         {
@@ -181,10 +234,15 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-
+            var authorizationResult = await CheckAuthorizationByPropertyId(document.PropertyCategory.PropertyId);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             return PartialView("_NoteDeleteConfForm", document);
         }
 
+        
         [HttpPost]
         public async Task<IActionResult> DeleteNoteFromDocument(int documentId)
         {
@@ -193,7 +251,11 @@ namespace BuildingManagementTool.Controllers
             {
                 return NotFound(new { success = false, message = "Document not found." });
             }
-        
+            var authorizationResult = await CheckAuthorizationByPropertyId(document.PropertyCategory.PropertyId);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             // Deleting only the inactive note to the document
             if (!document.IsActiveNote)
             {
@@ -213,6 +275,7 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_ActiveNotesWarning");
         }
 
+        
         [HttpPost]
         public async Task<IActionResult> SetActiveNote(int documentId, bool isActive)
         {
@@ -221,7 +284,11 @@ namespace BuildingManagementTool.Controllers
             {
                 return Json(new { success = false, message = "Document not found." });
             }
-
+            var authorizationResult = await CheckAuthorizationByPropertyId(document.PropertyCategory.PropertyId);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             var currentCategory = await _propertyCategoryRepository.GetById(document.PropertyCategoryId);
             if (currentCategory == null)
             {
@@ -245,7 +312,7 @@ namespace BuildingManagementTool.Controllers
             }
         }
 
-
+        
         [HttpGet]
         public async Task<IActionResult> DocumentRenameFormPartial(int id)
         {
@@ -260,10 +327,15 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-
+            var authorizationResult = await CheckAuthorizationByPropertyId(document.PropertyCategory.PropertyId);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             return PartialView("_DocumentRenameForm", document);
         }
 
+        
         [HttpPost]
         public async Task<IActionResult> DocumentFileNameRename(int documentId, string filename)
         {
@@ -278,7 +350,11 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-
+            var authorizationResult = await CheckAuthorizationByPropertyId(document.PropertyCategory.PropertyId);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             document.FileName = filename;
             await _documentRepository.UpdateDocumentAsync(document);
 

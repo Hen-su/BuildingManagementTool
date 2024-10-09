@@ -1,14 +1,18 @@
 ﻿using BuildingManagementTool.Controllers;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,36 +22,55 @@ namespace BuildingManagementTool.Tests
     {
         private Mock<IPropertyCategoryRepository> _mockPropertyCategoryRepository;
         private Mock<IPropertyRepository> _mockPropertyRepository;
+        private Mock<IUserPropertyRepository> _mockUserPropertyRepository;
         private Mock<ICategoryRepository> _mockCategoryRepository;
         private Mock<IDocumentRepository> _mockDocumentRepository;
+
+        private Mock<IUserStore<ApplicationUser>> _mockUserStore;
+        private Mock<UserManager<ApplicationUser>> _mockUserManager;
+        private Mock<RoleManager<IdentityRole>> _mockRoleManager;
+        private Mock<IRoleStore<IdentityRole>> _mockRoleStore;
+        private Mock<IAuthorizationService> _mockAuthorizationService;
+
         private PropertyCategoryController _propertyCategoryController;
+        
 
         [SetUp]
         public void Setup()
         {
             _mockPropertyCategoryRepository = new Mock<IPropertyCategoryRepository>();
             _mockPropertyRepository = new Mock<IPropertyRepository>();
+            _mockUserPropertyRepository = new Mock<IUserPropertyRepository>();
             _mockCategoryRepository = new Mock<ICategoryRepository>();
             _mockDocumentRepository = new Mock<IDocumentRepository>();
-            _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object, _mockPropertyRepository.Object, _mockCategoryRepository.Object, _mockDocumentRepository.Object);
+            _mockUserStore = new Mock<IUserStore<ApplicationUser>>();
+            _mockUserManager = new Mock<UserManager<ApplicationUser>>(_mockUserStore.Object, null, null, null, null, null, null, null, null);
+            _mockAuthorizationService = new Mock<IAuthorizationService>();
+
+            _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object, _mockPropertyRepository.Object, _mockUserPropertyRepository.Object, 
+                _mockCategoryRepository.Object, _mockDocumentRepository.Object, _mockUserManager.Object, _mockAuthorizationService.Object);
         }
         
         [Test]
         public async Task Index_PropertyExists_ReturnView()
         {
             int id = 1;
-            Models.Property property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
             var list = new List<PropertyCategory>
             {
                 new PropertyCategory{ PropertyCategoryId = 1 ,PropertyId = 1, CategoryId = 1 },
                 new PropertyCategory{ PropertyCategoryId = 2 ,PropertyId = 1, CategoryId = 2 },
                 new PropertyCategory{ PropertyCategoryId = 3 ,PropertyId = 2, CategoryId = 1 },
             };
-            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+            var userId = Guid.NewGuid().ToString();
+            var roleId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var role = new IdentityRole() { Id = roleId, NormalizedName = "Manager" };
+            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, UserId = userId, RoleId = role.Id, Role = role };
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(x => x.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
             _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(list.Where(p => p.PropertyId == id));
-            var img = "/imgs/sample-house.jpeg";
-
-            var viewModel = new CategoryViewModel(list, img, property, null);
 
             var result = await _propertyCategoryController.Index(id);
             var viewResult = (ViewResult) result;
@@ -60,8 +83,15 @@ namespace BuildingManagementTool.Tests
         public async Task Index_PropertyNotExists_ReturnError()
         {
             int id = 1;
-            Models.Property property = null;
-            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+            var userId = Guid.NewGuid().ToString();
+            var roleId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var role = new IdentityRole() { Id = roleId, NormalizedName = "Manager" };
+            var userproperty = (UserProperty)null;
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(x => x.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
 
             var result = await _propertyCategoryController.Index(id);
 
@@ -74,17 +104,22 @@ namespace BuildingManagementTool.Tests
         public async Task UpdateCategoryCanvas_PropertyExists_ReturnPartial()
         {
             int id = 1;
-            Models.Property property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
             var list = new List<PropertyCategory>
             {
                 new PropertyCategory{ PropertyCategoryId = 1 ,PropertyId = 1, CategoryId = 1 },
                 new PropertyCategory{ PropertyCategoryId = 2 ,PropertyId = 1, CategoryId = 2 },
                 new PropertyCategory{ PropertyCategoryId = 3 ,PropertyId = 2, CategoryId = 1 },
             };
-            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
-            _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(id)).ReturnsAsync(list.Where(p => p.PropertyId == id));
-            var img = "/imgs/sample-house.jpeg";
-            var viewModel = new CategoryViewModel(list, img, property, null);
+            var userId = Guid.NewGuid().ToString();
+            var roleId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var role = new IdentityRole() { Id = roleId, NormalizedName = "Manager" };
+            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, UserId = userId, RoleId = role.Id, Role = role };
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(x => x.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
+            _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(list.Where(p => p.PropertyId == id));
 
             var result = await _propertyCategoryController.UpdateCategoryCanvas(id);
             var viewResult = result as PartialViewResult;
@@ -98,8 +133,15 @@ namespace BuildingManagementTool.Tests
         public async Task UpdateCategoryCanvas_PropertyNotExists_ReturnError()
         {
             int id = 1;
-            Models.Property property = null;
-            _mockPropertyRepository.Setup(p => p.GetById(id)).ReturnsAsync(property);
+            var userId = Guid.NewGuid().ToString();
+            var roleId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var role = new IdentityRole() { Id = roleId, NormalizedName = "Manager" };
+            var userproperty = (UserProperty)null;
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(x => x.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
 
             var result = await _propertyCategoryController.UpdateCategoryCanvas(id);
 
@@ -160,6 +202,7 @@ namespace BuildingManagementTool.Tests
             };
             string categoryName = "NewCategory";
             _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _propertyCategoryController.AddCategory(1, categoryName);
             _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Once);
@@ -238,6 +281,7 @@ namespace BuildingManagementTool.Tests
             };
             string categoryName = "NewCategory";
             _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _propertyCategoryController.AddCategory(1, categoryName);
             _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Once);
@@ -312,7 +356,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
         }
-
+        
         [TearDown]
         public void Teardown()
         {

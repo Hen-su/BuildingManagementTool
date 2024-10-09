@@ -1,0 +1,98 @@
+﻿@model EmailViewModel
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background-color: #ffffff;
+            color: #007bff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+            .content p {
+                margin: 0 0 10px;
+            }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            background-color: #ffffff;
+            border-top: 1px solid #dddddd;
+        }
+
+        #logo {
+            width: 50px;
+            height: auto;
+            vertical-align: middle;
+        }
+
+        .logo-heading-container {
+            display: flex;
+            align-items: center;
+        }
+
+            .logo-heading-container h3 {
+                margin: 0;
+                font-size: 24px;
+                font-weight: normal;
+            }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container">
+                <div class="logo-heading-container">
+                    <img id="logo" src="https://icons.veryicon.com/png/o/file-type/doctype/folder-314.png" alt="BMT logo" />
+                    <h3>BuildingManagementCanvas</h3>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <div class="header">
+            <h1>Password Reset Request</h1>
+        </div>
+        <div class="content">
+            <p>Hello @Model.Username,</p>
+            <p>A user has given you access to a property. Click the link below and register to access the documents</p>
+            <a href="@Model.EmailLink" class="btn">Register</a>
+        </div>
+        <div class="footer">
+            <h2>Bulding Management Canvas</h2>
+            <p> AHA &copy; 2024 - BuildingManagementTool </p>
+        </div>
+    </div>
+</body>
+</html>

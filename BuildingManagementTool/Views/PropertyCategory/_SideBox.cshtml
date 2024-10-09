@@ -10,7 +10,10 @@
         {
             <h4 class="col-11">@Model.PropertyCategory.CustomCategory</h4>
         }
-        <partial name="_CategoryDropdownMenu" model="Model.PropertyCategory"></partial>
+        @if(Model.Role == "Manager")
+        {
+            <partial name="_CategoryDropdownMenu" model="Model.PropertyCategory"></partial>
+        }
     </div>
     <div class="previewContainer mt-3 container align-content-lg-start">
         <partial name="_CategoryPreview" model="Model"></partial>

@@ -23,9 +23,9 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
-        private readonly RazorViewToStringRenderer _viewToStringRenderer;
+        private readonly IRazorViewToStringRenderer _viewToStringRenderer;
 
-        public ForgotPasswordModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender, RazorViewToStringRenderer razorViewToStringRenderer)
+        public ForgotPasswordModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender, IRazorViewToStringRenderer razorViewToStringRenderer)
         {
             _userManager = userManager;
             _emailSender = emailSender;

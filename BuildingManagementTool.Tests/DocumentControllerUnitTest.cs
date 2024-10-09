@@ -13,6 +13,10 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Components.RenderTree;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 
 
@@ -27,6 +31,13 @@ namespace BuildingManagementTool.Tests
         private Mock<IRazorViewToStringRenderer> _renderer; 
         private Mock<IEmailSender> _mockEmailSender;
 
+        private Mock<IUserPropertyRepository> _mockUserPropertyRepository;
+        private Mock<IUserStore<ApplicationUser>> _mockUserStore;
+        private Mock<UserManager<ApplicationUser>> _mockUserManager;
+        private Mock<RoleManager<IdentityRole>> _mockRoleManager;
+        private Mock<IRoleStore<IdentityRole>> _mockRoleStore;
+        private Mock<IAuthorizationService> _mockAuthorizationService;
+
         [SetUp]
         public void Setup()
         {
@@ -35,11 +46,19 @@ namespace BuildingManagementTool.Tests
             _mockEmailSender = new Mock<IEmailSender>();
             _renderer = new Mock<IRazorViewToStringRenderer>();
 
+            _mockUserPropertyRepository = new Mock<IUserPropertyRepository>();
+            _mockUserStore = new Mock<IUserStore<ApplicationUser>>();
+            _mockUserManager = new Mock<UserManager<ApplicationUser>>(_mockUserStore.Object, null, null, null, null, null, null, null, null);
+            _mockAuthorizationService = new Mock<IAuthorizationService>();
+
             _documentController = new DocumentController(
                           _mockDocumentRepository.Object,
                           _mockPropertyCategoryRepository.Object,
                           _mockEmailSender.Object,
-                          _renderer.Object
+                          _renderer.Object,
+                          _mockUserManager.Object,
+                          _mockUserPropertyRepository.Object,
+                          _mockAuthorizationService.Object
                       );
         }
 
@@ -48,6 +67,16 @@ namespace BuildingManagementTool.Tests
         {
             int id = 1;
             PropertyCategory propertyCategory = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1 };
+            var userId = Guid.NewGuid().ToString();
+            var roleId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var role = new IdentityRole() { Id = roleId, NormalizedName = "Manager" };
+            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, UserId = userId, RoleId = role.Id, Role = role };
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+            _mockUserPropertyRepository.Setup(x => x.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
             _mockPropertyCategoryRepository.Setup(p => p.GetById((id))).ReturnsAsync(propertyCategory);
 
             var documents = new List<Document>
@@ -75,7 +104,17 @@ namespace BuildingManagementTool.Tests
         public async Task Index_PropertyCategoryNotExists_()
         {
             int id = 1;
-            PropertyCategory propertyCategory = null; 
+            PropertyCategory propertyCategory = null;
+            var userId = Guid.NewGuid().ToString();
+            var roleId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var role = new IdentityRole() { Id = roleId, NormalizedName = "Manager" };
+            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, UserId = userId, RoleId = role.Id, Role = role };
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+            _mockUserPropertyRepository.Setup(x => x.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
             _mockPropertyCategoryRepository.Setup(p => p.GetById((id))).ReturnsAsync(propertyCategory);
 
             var result = await _documentController.Index(id) as Object;
@@ -88,27 +127,35 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
-        public void GetDocumentPreview_DocumentFound_Success()
+        public async Task GetDocumentOptions_DocumentFound_Success()
         {
             var documentId = 1;
-            var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", PropertyCategoryId = 1 } };
+            var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1 };
+            var document = new Document { DocumentId = 1, FileName = "Document 1", PropertyCategoryId = 1, PropertyCategory = propertyCategory };
+            var userId = Guid.NewGuid().ToString();
+            var roleId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var role = new IdentityRole() { Id = roleId, Name = "Manager" };
+            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, UserId = userId, RoleId = role.Id, Role = role };
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(x => x.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
+            _mockDocumentRepository.Setup(repo => repo.GetById(It.IsAny<int>()))
+               .ReturnsAsync(document);
 
-            _mockDocumentRepository.Setup(repo => repo.AllDocuments)
-               .Returns(document);
-
-            var result = _documentController.GetDocumentOptions(documentId) as PartialViewResult;
+            var result = await _documentController.GetDocumentOptions(documentId) as PartialViewResult;
 
             Assert.IsNotNull(result);
             Assert.AreEqual("_DocumentOptions", result.ViewName);
-            Assert.AreEqual(document[0], result.Model);
         }
 
          
         [Test]
-        public void GetDocumentPreview_DocumentFound_Fail()
+        public async Task GetDocumentOptions_DocumentFound_Fail()
         {
             var documentId = 1;
-            var result = _documentController.GetDocumentOptions(documentId) as Object;
+            var result = await _documentController.GetDocumentOptions(documentId);
             var objectResult = (ObjectResult)result;
             var problemDetails = (ProblemDetails)objectResult.Value;
             Assert.Multiple(() =>
@@ -186,8 +233,10 @@ namespace BuildingManagementTool.Tests
         public async Task AddNoteFormPartial_DocumentExists_Success()
         {
             int id = 1;
-            Document document = new Document { DocumentId = 1};
+            PropertyCategory propertyCategory = new PropertyCategory { PropertyId = 1 };
+            Document document = new Document { DocumentId = 1, PropertyCategory = propertyCategory};
             _mockDocumentRepository.Setup(d => d.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _documentController.AddNoteFormPartial(id) as PartialViewResult;
 
@@ -214,10 +263,13 @@ namespace BuildingManagementTool.Tests
         [Test]
         public async Task AddNoteToDocument_DocumentExists_Sucess()
         {
-           int id = 1;
-            Document document = new Document { DocumentId = 1};
+            int id = 1;
+            PropertyCategory propertyCategory = new PropertyCategory { PropertyId = 1 };
+            Document document = new Document { DocumentId = 1, PropertyCategory = propertyCategory };
             _mockDocumentRepository.Setup(d => d.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
             _mockDocumentRepository.Setup(d => d.UpdateDocumentAsync(It.IsAny<Document>())).Returns(Task.CompletedTask);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
+
             var result = await _documentController.AddNoteToDocument(1, "testnote");
 
             Assert.IsNotNull(result);
@@ -249,10 +301,8 @@ namespace BuildingManagementTool.Tests
             int categoryId = 1;
             _mockPropertyCategoryRepository.Setup(repo => repo.GetById(categoryId)).ReturnsAsync((PropertyCategory)null);
 
-          
             var result = await _documentController.GetDocumentNotesByCategory(categoryId) as ObjectResult;
 
-         
             Assert.IsNotNull(result);
             Assert.AreEqual(StatusCodes.Status404NotFound, result.StatusCode);
 
@@ -266,15 +316,13 @@ namespace BuildingManagementTool.Tests
         [Test]
         public async Task GetDocumentNotesByCategory_DocumentNotFound_Fail()
         {
-        
             int categoryId = 1;
             var category = new PropertyCategory { PropertyCategoryId = categoryId };
 
             _mockPropertyCategoryRepository.Setup(repo => repo.GetById(categoryId)).ReturnsAsync(category);
-            _mockDocumentRepository.Setup(d => d.AllDocuments)
-                                   .Returns(new List<Document>().AsQueryable()); // No documents for this category
-
-         
+            _mockDocumentRepository.Setup(d => d.GetByPropertyCategoryId(It.IsAny<int>()))
+                                   .ReturnsAsync(new List<Document>()); // No documents for this category
+            
             var result = await _documentController.GetDocumentNotesByCategory(categoryId);
 
             var objectResult = result as ObjectResult;
@@ -286,10 +334,9 @@ namespace BuildingManagementTool.Tests
         [Test]
         public async Task GetDocumentNotesByCategory_DocumentsFound_Success()
         {
-          
             int categoryId = 1;
             var category = new PropertyCategory { PropertyCategoryId = categoryId };
-
+          
             var documents = new List<Document>
         {
             new Document { DocumentId = 1, PropertyCategoryId = categoryId, Note = "Note 1" },
@@ -297,17 +344,28 @@ namespace BuildingManagementTool.Tests
         };
 
             _mockPropertyCategoryRepository.Setup(repo => repo.GetById(categoryId)).ReturnsAsync(category);
-            _mockDocumentRepository.Setup(repo => repo.AllDocuments).Returns(documents.AsQueryable());
+            _mockDocumentRepository.Setup(repo => repo.GetByPropertyCategoryId(It.IsAny<int>())).ReturnsAsync(documents);
+
+            var userId = Guid.NewGuid().ToString();
+            var roleId = Guid.NewGuid().ToString();
+            var email = "example@example.com";
+            var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
+            var role = new IdentityRole() { Id = roleId, Name = "Manager" };
+            var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
+            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, Property = property, UserId = userId, RoleId = role.Id, Role = role };
+            _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(u => u.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
 
             var result = await _documentController.GetDocumentNotesByCategory(categoryId) as PartialViewResult;
 
-            
             Assert.IsNotNull(result);
             Assert.AreEqual("_DocumentNotes", result.ViewName);
 
-            var model = result.Model as IEnumerable<Document>;
+            var model = result.Model as DocumentNotesViewModel;
             Assert.IsNotNull(model);
-            Assert.AreEqual(2, model.Count());
+            Assert.That(model.Documents.Count(), Is.EqualTo(2));
+            Assert.That(model.Role, Is.EqualTo("Manager"));
         }
 
         [Test]
@@ -329,9 +387,11 @@ namespace BuildingManagementTool.Tests
         public async Task NoteDeleteConfFormPartial_DocumentExists_Success()
         {
             int id = 1;
-            Document document = new Document { DocumentId = 1 };
+            var category = new PropertyCategory { PropertyCategoryId = 1 };
+            Document document = new Document { DocumentId = 1, PropertyCategory = category };
 
             _mockDocumentRepository.Setup(d => d.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _documentController.NoteDeleteConfFormPartial(id) as PartialViewResult;
 
@@ -361,12 +421,13 @@ namespace BuildingManagementTool.Tests
         [Test]
         public async Task DeleteNoteFromDocument_InActiveNoteDocument_Success()
         {
-          
             int documentId = 1;
-            var document = new Document { DocumentId = documentId, IsActiveNote = false, Note = "Some note" };
+            PropertyCategory propertyCategory = new PropertyCategory { PropertyId = 1 };
+            var document = new Document { DocumentId = documentId, IsActiveNote = false, Note = "Some note", PropertyCategory = propertyCategory };
 
             _mockDocumentRepository.Setup(repo => repo.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
             _mockDocumentRepository.Setup(repo => repo.UpdateDocumentAsync(document)).Returns(Task.CompletedTask);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _documentController.DeleteNoteFromDocument(documentId) as JsonResult;
 
@@ -387,10 +448,9 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository.Setup(repo => repo.AllDocuments)
                 .Returns(new List<Document>().AsQueryable());
 
-           
+
             var result = await _documentController.SetActiveNote(documentId, isActive) as JsonResult;
 
-            
             Assert.IsNotNull(result);
             Assert.AreEqual(false, result.Value.GetType().GetProperty("success").GetValue(result.Value, null));
             Assert.AreEqual("Document not found.", result.Value.GetType().GetProperty("message").GetValue(result.Value, null));
@@ -406,11 +466,12 @@ namespace BuildingManagementTool.Tests
             int documentId = 1;
             bool isActive = true;
 
+            PropertyCategory propertyCategory = new PropertyCategory { PropertyId = 1 };
             var documents = new List<Document>
             {
-                new Document { DocumentId = 1, IsActiveNote = true, PropertyCategoryId = 1 },
-                new Document { DocumentId = 2, IsActiveNote = true, PropertyCategoryId = 1 },
-                new Document { DocumentId = 3, IsActiveNote = false, PropertyCategoryId = 1 }
+                new Document { DocumentId = 1, IsActiveNote = true, PropertyCategoryId = 1, PropertyCategory = propertyCategory },
+                new Document { DocumentId = 2, IsActiveNote = true, PropertyCategoryId = 1, PropertyCategory = propertyCategory },
+                new Document { DocumentId = 3, IsActiveNote = false, PropertyCategoryId = 1, PropertyCategory = propertyCategory }
             };
 
             var category = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1 };
@@ -419,7 +480,8 @@ namespace BuildingManagementTool.Tests
         .Returns(documents.AsQueryable());
 
             _mockPropertyCategoryRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(category);
-       
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
+
             var result = await _documentController.SetActiveNote(3, isActive) as JsonResult;
 
             Assert.IsNotNull(result);
@@ -435,21 +497,19 @@ namespace BuildingManagementTool.Tests
             // Arrange
             int documentId = 1;
             bool isActive = true;
-
+            var category = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1 };
             var documents = new List<Document>
             {
-                new Document { DocumentId = 1, IsActiveNote = false, PropertyCategoryId = 1 },
-                new Document { DocumentId = 2, IsActiveNote = false, PropertyCategoryId = 1 }
+                new Document { DocumentId = 1, IsActiveNote = false, PropertyCategoryId = 1, PropertyCategory = category },
+                new Document { DocumentId = 2, IsActiveNote = false, PropertyCategoryId = 1, PropertyCategory = category }
             };
-
-            var category = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1 };
 
             _mockDocumentRepository.Setup(repo => repo.AllDocuments)
         .Returns(documents.AsQueryable());
             _mockDocumentRepository.Setup(repo => repo.UpdateDocumentAsync(It.IsAny<Document>())).Returns(Task.CompletedTask);
 
             _mockPropertyCategoryRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(category);
-
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
             // Act
             var result = await _documentController.SetActiveNote(documentId, isActive) as JsonResult;
 
@@ -479,9 +539,11 @@ namespace BuildingManagementTool.Tests
         public async Task DocumentRenameFormPartial_DocumentExists_Success()
         {
             int id = 1;
-            Document document = new Document { DocumentId = 1 };
+            var category = new PropertyCategory { PropertyCategoryId = 1, CategoryId = 1, PropertyId = 1 };
+            Document document = new Document { DocumentId = 1, PropertyCategory = category };
 
             _mockDocumentRepository.Setup(d => d.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _documentController.DocumentRenameFormPartial(id) as PartialViewResult;
 
@@ -517,13 +579,14 @@ namespace BuildingManagementTool.Tests
            
             var documentId = 1;
             var oldFilename = "oldname.txt";  
-            var newFilename = "newname.txt";  
-            var document = new Document { DocumentId = documentId, FileName = oldFilename };
+            var newFilename = "newname.txt";
+            PropertyCategory propertyCategory = new PropertyCategory { PropertyId = 1 };
+            var document = new Document { DocumentId = documentId, FileName = oldFilename, PropertyCategory = propertyCategory };
 
             _mockDocumentRepository.Setup(d => d.AllDocuments)
                 .Returns(new List<Document> { document }.AsQueryable());
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
-           
             var result = await _documentController.DocumentFileNameRename(documentId, newFilename) as JsonResult;
 
             Assert.IsNotNull(result); 

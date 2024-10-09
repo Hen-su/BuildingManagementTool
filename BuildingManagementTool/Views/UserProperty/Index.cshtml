@@ -74,7 +74,7 @@
             });
         });
 
-        $(document).on('click', '.deletePropertyModalBtn', function (event) {
+        $(document).off('click', '.deletePropertyModalBtn').on('click', '.deletePropertyModalBtn', function (event) {
             event.stopPropagation();
             console.log("deleteConf clicked")
             var propertyId = $(this).data("id");
@@ -83,7 +83,7 @@
             });
         })
 
-        $(document).on('click', '#addPropertyBtn', function (event) {
+        $(document).off('click', '#addPropertyBtn').on('click', '#addPropertyBtn', function (event) {
             console.log("Add clicked")
             var propertyName = $("#propertyName").val();
             console.log()
@@ -118,7 +118,7 @@
             return
         })
 
-        $(document).on('click', '#deletePropertyConfirmBtn', function (event) {
+        $(document).off('click', '#deletePropertyConfirmBtn').on('click', '#deletePropertyConfirmBtn', function (event) {
             console.log("Delete clicked")
             var propertyId = $("#deletePropertyConfirmBtn").data('id');
             $.ajax({

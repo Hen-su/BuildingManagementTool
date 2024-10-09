@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BuildingManagementTool.Models;
+using BuildingManagementTool.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,10 +19,12 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
     public class ConfirmEmailModel : PageModel
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IInvitationService _invitationService;
 
-        public ConfirmEmailModel(UserManager<ApplicationUser> userManager)
+        public ConfirmEmailModel(UserManager<ApplicationUser> userManager, IInvitationService invitationService)
         {
             _userManager = userManager;
+            _invitationService = invitationService;
         }
 
         /// <summary>
@@ -46,6 +49,10 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
             code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
             var result = await _userManager.ConfirmEmailAsync(user, code);
             StatusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
+
+            //Link UserProperty if invitation exists
+            await _invitationService.LinkUserToPropertyOnRegisterConfirm(user.Email);
+
             return Page();
         }
     }
