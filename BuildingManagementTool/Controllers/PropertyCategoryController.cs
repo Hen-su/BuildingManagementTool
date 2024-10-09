@@ -5,7 +5,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs.Models;
+
+
 
 namespace BuildingManagementTool.Controllers
 {
@@ -17,16 +21,26 @@ namespace BuildingManagementTool.Controllers
         private readonly IUserPropertyRepository _userPropertyRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IDocumentRepository _documentRepository;
+        private readonly IPropertyImageRepository _propertyImageRepository;  
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IAuthorizationService _authorizationService;
-        public PropertyCategoryController(IPropertyCategoryRepository propertyCategoryRepository, IPropertyRepository propertyRepository, IUserPropertyRepository userPropertyRepository, 
-            ICategoryRepository categoryRepository, IDocumentRepository documentRepository, UserManager<ApplicationUser> userManager, IAuthorizationService authorizationService)
+        private readonly IBlobService _blobService;
+        public PropertyCategoryController(
+            IPropertyCategoryRepository propertyCategoryRepository,
+            IPropertyRepository propertyRepository,
+            ICategoryRepository categoryRepository,
+            IDocumentRepository documentRepository,
+            IPropertyImageRepository propertyImageRepository,
+            UserManager<ApplicationUser> userManager, 
+            IBlobService blobService)
         {
             _propertyCategoryRepository = propertyCategoryRepository;
             _propertyRepository = propertyRepository;
             _userPropertyRepository = userPropertyRepository;
             _categoryRepository = categoryRepository;
             _documentRepository = documentRepository;
+            _propertyImageRepository = propertyImageRepository;  
+            _userManager = userManager;
+            _blobService = blobService;
             _userManager = userManager;
             _authorizationService = authorizationService;
         }
@@ -50,15 +64,52 @@ namespace BuildingManagementTool.Controllers
                 return null;
             }
 
+            var imageList = new List<Dictionary<int, List<string>>>();
+            var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
+
+            if (propertyImages.Any())
+            {
+                var user = await _userManager.GetUserAsync(User);
+                var containerName = "userid-" + user.Id;
+                var prefix = $"{property.PropertyName}/images/".Trim();
+                var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+
+                if (blobs != null && blobs.Any())
+                {
+                    int dictionaryCount = 0;
+                    foreach (var kvp in blobs)
+                    {
+                        var updatedList = new List<string>
+                {
+                    kvp.Value[0], // Blob URL
+                    kvp.Value[1], // Blob details
+                    propertyImages.FirstOrDefault(i => i.FileName == kvp.Value[0])?.IsDisplay.ToString() 
+                };
+                        imageList.Add(new Dictionary<int, List<string>> { { kvp.Key, updatedList } });
+                        dictionaryCount++;
+                    }
+
+                    while (dictionaryCount < 4)
+                    {
+                        imageList.Add(new Dictionary<int, List<string>> { { dictionaryCount, new List<string> { null } } });
+                        dictionaryCount++;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    imageList.Add(new Dictionary<int, List<string>> { { i, new List<string> { null } } });
+                }
+            }
+
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
-            var img = "/imgs/sample-house.jpeg";
-
-
             List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
+
             foreach (var category in categories)
             {
                 var documentsByCategory = new Dictionary<int, List<Document>>();
-                // Fetch documents by category id
 
                 var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
                 var documentCount = 0;
@@ -90,6 +141,9 @@ namespace BuildingManagementTool.Controllers
             }
             return View(viewModel);
         }
+
+
+
 
         [HttpGet]
         public async Task<IActionResult> UpdateCategoryCanvas(int id)

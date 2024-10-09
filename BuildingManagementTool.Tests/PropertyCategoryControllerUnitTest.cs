@@ -25,6 +25,9 @@ namespace BuildingManagementTool.Tests
         private Mock<IUserPropertyRepository> _mockUserPropertyRepository;
         private Mock<ICategoryRepository> _mockCategoryRepository;
         private Mock<IDocumentRepository> _mockDocumentRepository;
+        private Mock<IPropertyImageRepository> _mockPropertyImageRepository;
+        private Mock<UserManager<ApplicationUser>> _mockUserManager;
+        private Mock<IBlobService> _mockBlobService;
 
         private Mock<IUserStore<ApplicationUser>> _mockUserStore;
         private Mock<UserManager<ApplicationUser>> _mockUserManager;
@@ -50,7 +53,7 @@ namespace BuildingManagementTool.Tests
             _propertyCategoryController = new PropertyCategoryController(_mockPropertyCategoryRepository.Object, _mockPropertyRepository.Object, _mockUserPropertyRepository.Object, 
                 _mockCategoryRepository.Object, _mockDocumentRepository.Object, _mockUserManager.Object, _mockAuthorizationService.Object);
         }
-        
+
         [Test]
         public async Task Index_PropertyExists_ReturnView()
         {

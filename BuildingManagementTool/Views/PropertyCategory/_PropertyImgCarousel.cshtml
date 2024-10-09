@@ -1,0 +1,178 @@
+﻿@model ManagePropertyFormViewModel
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .slideshow-container {
+        max-width: 1000px;
+        position: relative;
+        margin: auto;
+        height: 28rem; 
+        overflow: hidden;
+    }
+
+    .slideshow-container img{
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+
+        .slideshow-container h3{
+            padding-top:12rem;
+        }
+
+    .mySlides {
+        display: none;
+    }
+
+    .prev, .next {
+        cursor: pointer;
+        position: absolute;
+        top: 50%;
+        width: auto;
+        margin-top: -22px;
+        padding: 16px;
+        color: white;
+        font-weight: bold;
+        font-size: 18px;
+        transition: 0.6s ease;
+        border-radius: 0 3px 3px 0;
+        user-select: none;
+        text-decoration:none;
+    }
+
+    .next {
+        right: 0;
+        border-radius: 3px 0 0 3px;
+    }
+
+        .prev:hover, .next:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+    .text {
+        color: #f2f2f2;
+        font-size: 15px;
+        padding: 8px 12px;
+        position: absolute;
+        bottom: 8px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .numbertext {
+        color: #f2f2f2;
+        font-size: 12px;
+        padding: 8px 12px;
+        position: absolute;
+        top: 0;
+    }
+
+    .dot {
+        cursor: pointer;
+        height: 15px;
+        width: 15px;
+        margin: 0 2px;
+        background-color: #bbb;
+        border-radius: 50%;
+        display: inline-block;
+        transition: background-color 0.6s ease;
+    }
+
+        .active, .dot:hover {
+            background-color: #717171;
+        }
+</style>
+@{
+    var totalDisplayImgs = 0;
+
+    for (int i = 0; i < Model.ImageUrls.Count; i++)
+    {
+        var dict = Model.ImageUrls[i];
+        if (dict != null && dict.Count > 0)
+        {
+            var kvp = dict.FirstOrDefault();
+            if (kvp.Value != null && kvp.Value.Count > 1 && !string.IsNullOrEmpty(kvp.Value[1]))
+            {
+                totalDisplayImgs++;
+            }
+        }
+    }
+
+}
+
+<div class="slideshow-container">
+    @if (Model.ImageUrls != null && Model.ImageUrls.Any(urlDict => urlDict != null && urlDict.Any(kvp => kvp.Value != null && kvp.Value.Count > 1)))
+    {
+        for (int i = 0; i < Model.ImageUrls.Count; i++)
+        {
+            var dict = Model.ImageUrls[i];
+            if (dict != null && dict.Count > 0)
+            {
+                var kvp = dict.FirstOrDefault();
+                if (kvp.Value != null && kvp.Value.Count > 1 && !string.IsNullOrEmpty(kvp.Value[1]))
+                {
+                    var imageUrl = kvp.Value[1];
+                    <div class="mySlides">
+                        <img class="card-img-top" src="@imageUrl" alt="Property Image" />
+                        <div class="text">@((i + 1) + " / " + totalDisplayImgs)</div>
+                    </div>
+                }
+            }
+        }
+        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+    }
+
+    else
+    {
+        <h3 class="text-center">No images for this property</h3>
+    }
+
+
+</div>
+
+<div style="text-align:center">
+    @if (Model.ImageUrls != null && Model.ImageUrls.Any(urlDict => urlDict != null && urlDict.Any(kvp => kvp.Value != null && kvp.Value.Count > 1)))
+    {
+        for (int i = 0; i < totalDisplayImgs; i++)
+        {
+
+            <span class="dot" onclick="currentSlide(@(i + 1))"></span>
+
+        }
+    }
+</div>
+
+<script>
+    let slideIndex = 1;
+    showSlides(slideIndex);
+
+    // Next/previous controls
+    function plusSlides(n) {
+        showSlides(slideIndex += n);
+    }
+
+    // Thumbnail image controls
+    function currentSlide(n) {
+        showSlides(slideIndex = n);
+    }
+
+    function showSlides(n) {
+        let i;
+        let slides = document.getElementsByClassName("mySlides");
+        let dots = document.getElementsByClassName("dot");
+        if (n > slides.length) { slideIndex = 1 }
+        if (n < 1) { slideIndex = slides.length }
+        for (i = 0; i < slides.length; i++) {
+            slides[i].style.display = "none";
+        }
+        for (i = 0; i < dots.length; i++) {
+            dots[i].className = dots[i].className.replace(" active", "");
+        }
+        slides[slideIndex - 1].style.display = "block";
+        dots[slideIndex - 1].className += " active";
+    }
+</script>

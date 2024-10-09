@@ -29,13 +29,31 @@
     #addPropertyModalBtn:hover {
         background-color: #0056b3;
     }
+
+ #searchForm {
+    max-width: 40rem;     
+    width: 100%;           
+    margin: 0 auto;        
+    padding: 0 1rem;       
+}
+
+@@media (max-width: 768px) {
+    #searchForm {
+        max-width: 100%;  
+    }
+    
+    #searchPropertyInput {
+        width: 100%;      
+    }
+}
+
 </style>
 
 
 <h1 class="text-center mb-4">Welcome @currentUser.FirstName!</h1>
-<form class="d-flex align-items-center mb-4">
-    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-    <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
+<form id="searchForm" class="d-flex align-items-center mb-4">
+    <input id="searchPropertyInput" class="form-control mr-sm-2" type="search" placeholder="Search Properties (Ex. Property Address)" aria-label="Search">
+    <button id="searchPropertyBtn" class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
 </form>
 
 <div id="propertyContainer" class="container row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 justify-content-between">
@@ -169,4 +187,36 @@
             $('.errorContainer').text(message).show();
         }
     })
+
+
+
+
+
+
+
+    $(document).on('click', '#searchPropertyBtn', function (event) {
+        event.preventDefault(); 
+        console.log("Search clicked");
+
+        var keyword = $("#searchPropertyInput").val();
+
+        $.ajax({
+            url: '/UserProperty/SearchPropertyByName',
+            type: 'GET',
+            data: { keyword: keyword },
+            success: function (result) {
+                console.log('Results for searched property');
+                
+                $('#propertyContainer').html(result);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error: " + error);
+            }
+        });
+
+        return false; 
+    });
+
+
+
 </script>
