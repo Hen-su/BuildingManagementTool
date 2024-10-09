@@ -348,6 +348,7 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
             _mockBlobService.Setup(x => x.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
             _mockDocumentRepository.Setup(x => x.UpdateByList(It.IsAny<List<Document>>())).Returns(Task.CompletedTask);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, null);
 
@@ -421,6 +422,7 @@ namespace BuildingManagementTool.Tests
             _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
             _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
             _mockBlobService.Setup(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>())).ReturnsAsync((bool)true);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, null);
             Assert.IsInstanceOf<JsonResult>(result);
@@ -484,6 +486,7 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
             _mockPropertyImageRepository.Setup(x => x.GetByFileName(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(propertyImage);
             _mockPropertyImageRepository.Setup(x => x.SetDisplayImage(It.IsAny<PropertyImage>())).Returns(Task.CompletedTask);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, selectedFile, null);
 
@@ -515,6 +518,7 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
             _mockPropertyImageRepository.Setup(x => x.GetByFileName(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(propertyImage);
             _mockPropertyImageRepository.Setup(x => x.SetDisplayImage(It.IsAny<PropertyImage>())).Returns(Task.CompletedTask);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, selectedFile, null);
 
@@ -588,6 +592,7 @@ namespace BuildingManagementTool.Tests
             _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(imageList);
             _mockPropertyImageRepository.Setup(x => x.DeletePropertyImage(It.IsAny<PropertyImage>())).Returns(Task.CompletedTask);
             _mockBlobService.Setup(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, fileToRemove);
             _mockPropertyImageRepository.Verify(x => x.DeletePropertyImage(It.IsAny<PropertyImage>()), Times.Never);

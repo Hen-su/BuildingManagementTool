@@ -173,14 +173,8 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_PropertyDeleteConfirmation", property);
         }
 
-        private async Task<ManagePropertyFormViewModel> CreateManagePropertyFormViewModel(int id)
+        private async Task<List<Dictionary<int, List<string>>>> GetImageList(Property property)
         {
-            var property = await _propertyRepository.GetById(id);
-            if (property == null)
-            {
-                return null;
-            }
-
             var imageList = new List<Dictionary<int, List<string>>>();
 
             var images = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
@@ -221,6 +215,18 @@ namespace BuildingManagementTool.Controllers
                     imageList.Add(new Dictionary<int, List<string>> { { i, new List<string> { null } } });
                 }
             }
+            return imageList;
+        }
+
+        private async Task<ManagePropertyFormViewModel> CreateManagePropertyFormViewModel(int id)
+        {
+            var property = await _propertyRepository.GetById(id);
+            if (property == null)
+            {
+                return null;
+            }
+
+            var imageList = await GetImageList(property);
             var userPropertyList = await _userPropertyRepository.GetByPropertyId(property.PropertyId);
             var emailList = new Dictionary<int, string>();
             if (userPropertyList != null && userPropertyList.Any())

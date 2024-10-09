@@ -725,6 +725,7 @@ namespace BuildingManagementTool.Tests
             var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _blobController.DeleteProperty(propertyId);
             _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
