@@ -17,7 +17,7 @@ namespace BuildingManagementTool.Models
             {
                 throw new ArgumentNullException(nameof(userId), "UserId cannot be null.");
             }
-            return await _dbContext.UserProperties.Where(u => u.UserId == userId).Include(u => u.Property).ToListAsync();
+            return await _dbContext.UserProperties.Where(u => u.UserId == userId).Include(u => u.Property).Include(u => u.Role).ToListAsync();
         }
 
         public async Task AddUserProperty(UserProperty property)
@@ -47,23 +47,38 @@ namespace BuildingManagementTool.Models
             return userPropertyList;
         }
 
-        public async Task DeleteByUserIdAndPropertyId(int id, string userId)
+        public async Task<UserProperty> GetByPropertyIdAndUserId(int id, string userId)
         {
-            if (id == 0)
+            if (id == null || id == 0)
             {
                 throw new ArgumentNullException("Property id cannot be null.");
             }
             if (userId == null || userId == "")
             {
-                throw new ArgumentNullException("Email cannot be null.");
+                throw new ArgumentNullException("UserId cannot be null.");
             }
-            var userProperty = await _dbContext.UserProperties.FirstOrDefaultAsync(u => u.PropertyId == id && u.UserId == userId);
+            var userProperty = await _dbContext.UserProperties.Include(u => u.Property).Include(u => u.Role).FirstOrDefaultAsync(u => u.PropertyId == id && u.UserId == userId);
+            return userProperty;
+        }
+
+        public async Task DeleteUserProperty(UserProperty userProperty)
+        {
             if (userProperty == null) 
             {
-                throw new InvalidOperationException($"No user-property association found for Property ID {id} and User ID {userId}.");
+                throw new InvalidOperationException("Invalid user property");
             }
             _dbContext.UserProperties.Remove(userProperty);
             await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<string> GetManagerUserIdByPropertyId(int id)
+        {
+            if (id == null || id == 0)
+            {
+                throw new ArgumentNullException("Property id cannot be null.");
+            }
+            var userproperty = await _dbContext.UserProperties.FirstOrDefaultAsync(p => p.Role.Name == "Manager");
+            return userproperty.UserId;
         }
     }
 }

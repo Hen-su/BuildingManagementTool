@@ -6,12 +6,10 @@ namespace BuildingManagementTool.ViewModels
     {
         public UserProperty UserProperty { get; set; }
         public string ImageUrl { get; set; }
-        public string Role {  get; set; }
-        public PropertyViewModel(UserProperty userProperty, string url, string role) 
+        public PropertyViewModel(UserProperty userProperty, string url) 
         {
             UserProperty = userProperty;
             ImageUrl = url;
-            Role = role;
         }
     }
 }

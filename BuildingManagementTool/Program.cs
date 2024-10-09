@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Twitter;
+using BuildingManagementTool.Services.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("BuildingManagementToolDbContextConnection") ?? throw new InvalidOperationException("Connection string 'BuildingManagementToolDbContextConnection' not found.");
@@ -58,7 +60,7 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("AuthMessageSenderOptions"));
 builder.Services.AddScoped<IRazorViewToStringRenderer, RazorViewToStringRenderer>();
 builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
-builder.Services.AddScoped<InvitationService>();
+builder.Services.AddScoped<IInvitationService, InvitationService>();
 // Add external authentication providers
 builder.Services.AddAuthentication()
    .AddGoogle(options =>
@@ -81,6 +83,14 @@ builder.Services.AddAuthentication()
        twitterOptions.ConsumerSecret = config["Authentication:Twitter:ConsumerSecret"];
        twitterOptions.RetrieveUserDetails = true;
    });
+// Add custom role authorization
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PropertyManagerOnly", policy =>
+        policy.Requirements.Add(new UserPropertyManagerRequirement(0))); // Dummy ID for initialization
+});
+
+builder.Services.AddScoped<IAuthorizationHandler, UserPropertyManagerHandler>();
 
 var app = builder.Build();
 

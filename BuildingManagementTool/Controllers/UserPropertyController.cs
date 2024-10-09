@@ -1,14 +1,19 @@
 ﻿using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
+using BuildingManagementTool.Services.Authorization;
 using BuildingManagementTool.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Security.Policy;
+using Property = BuildingManagementTool.Models.Property;
 
 namespace BuildingManagementTool.Controllers
 {
+    [Authorize]
     public class UserPropertyController : Controller
     {
         private readonly IUserPropertyRepository _userPropertyRepository;
@@ -18,13 +23,14 @@ namespace BuildingManagementTool.Controllers
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IBlobService _blobService;
         private readonly IPropertyImageRepository _propertyImageRepository;
+        private readonly IInvitationService _invitationService;
+        private readonly IAuthorizationService _authorizationService;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly InvitationService _invitationService;
 
         public UserPropertyController(IUserPropertyRepository userPropertyRepository, IPropertyRepository propertyRepository, 
             UserManager<ApplicationUser> userManager, IDocumentRepository documentRepository, 
             IPropertyCategoryRepository propertyCategoryRepository, IBlobService blobService, IPropertyImageRepository propertyImageRepository, 
-            RoleManager<IdentityRole> roleManager, InvitationService invitationService)
+            RoleManager<IdentityRole> roleManager, IInvitationService invitationService, IAuthorizationService authorizationService)
         {
             _userPropertyRepository = userPropertyRepository;
             _propertyRepository = propertyRepository;
@@ -35,18 +41,26 @@ namespace BuildingManagementTool.Controllers
             _propertyImageRepository = propertyImageRepository;
             _roleManager = roleManager;
             _invitationService = invitationService;
+            _authorizationService = authorizationService;
         }
 
-        public async Task<IActionResult> Index()
+        private async Task<AuthorizationResult> CheckAuthorizationByPropertyId(int id)
+        {
+            // Create a requirement instance with the actual property ID
+            var requirement = new UserPropertyManagerRequirement(id);
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, null, requirement);
+            return authorizationResult;
+        }
+
+        private async Task<List<PropertyViewModel>> CreatePropertyViewModels()
         {
             var user = await _userManager.GetUserAsync(User);
-            
-            if (user == null) 
+
+            if (user == null)
             {
-                return BadRequest("A problem occurred while retrieving your data");
+                return null;
             }
             var userId = user.Id;
-            var containerName = "userid-" + userId;
             var propertyList = await _userPropertyRepository.GetByUserId(userId);
 
             var viewmodelList = new List<PropertyViewModel>();
@@ -54,18 +68,31 @@ namespace BuildingManagementTool.Controllers
             {
                 var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
                 var displayImage = propertyImages.FirstOrDefault(img => img.IsDisplay);
-                var role = await _roleManager.FindByIdAsync(property.RoleId);
+
+                var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(property.PropertyId);
+
                 if (displayImage != null)
                 {
+                    var containerName = "userid-" + managerId;
                     var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName);
-                    viewmodelList.Add(new PropertyViewModel(property, url.ToString(), role.Name));
+                    viewmodelList.Add(new PropertyViewModel(property, url.ToString()));
                 }
                 else
                 {
-                    viewmodelList.Add(new PropertyViewModel(property, null, role.Name));
+                    viewmodelList.Add(new PropertyViewModel(property, null));
                 }
             }
-            return View(viewmodelList);
+            return viewmodelList;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var viewModelList = await CreatePropertyViewModels();
+            if (viewModelList == null)
+            {
+                return BadRequest("A problem occurred while retrieving your data");
+            }
+            return View(viewModelList);
         }
 
         public async Task<IActionResult> PropertyFormPartial()
@@ -115,32 +142,12 @@ namespace BuildingManagementTool.Controllers
 
         public async Task<IActionResult> UpdatePropertyContainer()
         {
-            var user = await _userManager.GetUserAsync(User);
-            var containerName = "userid-" + user.Id;
-            if (user == null)
+            var viewModelList = await CreatePropertyViewModels();
+            if (viewModelList == null)
             {
                 return BadRequest("A problem occurred while retrieving your data");
             }
-            var userId = user.Id;
-            var propertyList = await _userPropertyRepository.GetByUserId(userId);
-
-            var viewmodelList = new List<PropertyViewModel>();
-            foreach (var property in propertyList)
-            {
-                var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
-                var displayImage = propertyImages.FirstOrDefault(img => img.IsDisplay);
-                var role = await _roleManager.FindByIdAsync(property.RoleId);
-                if (displayImage != null)
-                {
-                    var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName);
-                    viewmodelList.Add(new PropertyViewModel(property, url.ToString(), role.Name));
-                }
-                else
-                {
-                    viewmodelList.Add(new PropertyViewModel(property, null, role.Name));
-                }
-            }
-            return PartialView("_PropertyContainer", viewmodelList);
+            return PartialView("_PropertyContainer", viewModelList);
         }
 
         public async Task<IActionResult> DeleteConfirmationPartial(int id)
@@ -166,9 +173,14 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_PropertyDeleteConfirmation", property);
         }
 
-        private async Task<ManagePropertyFormViewModel> CreateViewModel(int id)
+        private async Task<ManagePropertyFormViewModel> CreateManagePropertyFormViewModel(int id)
         {
             var property = await _propertyRepository.GetById(id);
+            if (property == null)
+            {
+                return null;
+            }
+
             var imageList = new List<Dictionary<int, List<string>>>();
 
             var images = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
@@ -238,14 +250,31 @@ namespace BuildingManagementTool.Controllers
                     message = "The property id cannot be null"
                 });
             }
-
-            var viewmodel = await CreateViewModel(id);
+            var authorizationResult = await CheckAuthorizationByPropertyId(id);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+            var viewmodel = await CreateManagePropertyFormViewModel(id);
+            if (viewmodel == null) 
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = "A problem occurred when processing your request. Please try again"
+                });
+            }
             return PartialView("_ManagePropertyForm", viewmodel);
         }
 
         [HttpPost]
         public async Task<IActionResult> ManagePropertyFormSubmit(int id, ManagePropertyFormViewModel formViewModel, string? selectedFileName)
         {
+            var authorizationResult = await CheckAuthorizationByPropertyId(id);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             if (!ModelState.IsValid)
             {
                 foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
@@ -342,9 +371,14 @@ namespace BuildingManagementTool.Controllers
         [HttpPost]
         public async Task<IActionResult> SendInviteEmail(int id, AddViewerViewModel addViewerViewModel)
         {
+            var authorizationResult = await CheckAuthorizationByPropertyId(id);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             if (!ModelState.IsValid)
             {
-                var viewmodel = await CreateViewModel(id);
+                var viewmodel = await CreateManagePropertyFormViewModel(id);
                 viewmodel.AddViewerViewModel = addViewerViewModel;
                 return PartialView("_ManagePropertyForm", viewmodel);
             }
@@ -371,12 +405,17 @@ namespace BuildingManagementTool.Controllers
                     message = $"Invalid user email"
                 });
             }
+            var authorizationResult = await CheckAuthorizationByPropertyId(id);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             var user = await _userManager.FindByEmailAsync(email);
             var userId = user.Id;
-            var userProperty = await _userPropertyRepository.GetByPropertyId(id);
+            var userProperty = await _userPropertyRepository.GetByPropertyIdAndUserId(id, userId);
             if (userProperty != null) 
             { 
-                await _userPropertyRepository.DeleteByUserIdAndPropertyId(id, userId);
+                await _userPropertyRepository.DeleteUserProperty(userProperty);
             }
             return Json(new { success = true });
         }

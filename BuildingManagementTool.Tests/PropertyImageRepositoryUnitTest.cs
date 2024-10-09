@@ -188,7 +188,7 @@ namespace BuildingManagementTool.Tests
         public async Task GetByFilename_InvalidName_ThrowEx()
         {
             int id = 1;
-            string name = "image1.jpg";
+            string name = null;
             Assert.ThrowsAsync<ArgumentNullException>(async () =>
             await _propertyImageRepository.GetByFileName(id, name));
         }
