@@ -6,6 +6,8 @@
         Task AddUserProperty(UserProperty userProperty);
         Task DeleteByPropertyId(int id);
         Task<IEnumerable<UserProperty>> GetByPropertyId(int id);
-        Task DeleteByUserIdAndPropertyId(int id, string userId);
+        Task<UserProperty> GetByPropertyIdAndUserId(int id, string userId);
+        Task DeleteUserProperty(UserProperty userProperty);
+        Task<string> GetManagerUserIdByPropertyId(int id);
     }
 }

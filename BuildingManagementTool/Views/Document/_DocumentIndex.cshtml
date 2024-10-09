@@ -21,7 +21,7 @@
 
 <h1 class="my-3 fw-bold">Documents</h1>
 
-@if (User.IsInRole("Manager"))
+@if (Model.Role == "Manager")
 {
     <button id="uploadModalBtn" class="btn-success btn-md">Upload</button>
 }
@@ -242,38 +242,33 @@
         $.get('/Document/GetDocumentNotesByCategory', { propertyCategoryId: propertyCategoryId }, function (response) {
             $('#documentNotesContainer').html(response).slideDown(); 
         });
-
     }
 
     $(document).on("click", "#deleteNoteBtm", function () {
         var documentId = $(this).data("id");
+        $.ajax({
+            url: '/Document/DeleteNoteFromDocument',
+            type: 'POST',
+            data: {
+                documentId: documentId
+            },
+            success: function (response) {
+                if (response.success) {
+                    $('#modalContainer').modal('hide');
 
-       
-            $.ajax({
-                url: '/Document/DeleteNoteFromDocument',
-                type: 'POST',
-                data: {
-                    documentId: documentId
-                },
-                success: function (response) {
-                    if (response.success) {
-                        $('#modalContainer').modal('hide');
+                    // Reload only the notes section to see the updated changes
+                    loadDocumentNotesForCategory(@Model.CurrentCategory.PropertyCategoryId);
 
-                        // Reload only the notes section to see the updated changes
-                        loadDocumentNotesForCategory(@Model.CurrentCategory.PropertyCategoryId);
-
-                    } else {
-                        displayErrorMessage(response);
-                    }
-                    $('#deleteNoteBtm').prop('disabled', false).text('Delete Note');
-                },
-                error: function (xhr) {
-                    displayErrorMessage(xhr);
-                    $('#deleteNoteBtm').prop('disabled', false).text('Delete Note');
+                } else {
+                    displayErrorMessage(response);
                 }
-            });
-
-
+                $('#deleteNoteBtm').prop('disabled', false).text('Delete Note');
+            },
+            error: function (xhr) {
+                displayErrorMessage(xhr);
+                $('#deleteNoteBtm').prop('disabled', false).text('Delete Note');
+            }
+        });
     });
 
     $(document).on("click", "#renameDocumentBtn", function () {

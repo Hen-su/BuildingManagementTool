@@ -38,5 +38,11 @@ namespace BuildingManagementTool.Models
                 await _dbContext.SaveChangesAsync();
             }
         }
+
+        public async Task UpdateInvitationAsync(Invitation invitation)
+        {
+            _dbContext.Invitations.Update(invitation);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }

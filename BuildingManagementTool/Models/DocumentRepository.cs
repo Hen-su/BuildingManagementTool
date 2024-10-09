@@ -32,7 +32,7 @@ namespace BuildingManagementTool.Models
 
         public async Task<Document> GetById(int id)
         {
-            return await _buildingManagementToolDbContext.Documents.FirstOrDefaultAsync(d => d.DocumentId == id);
+            return await _buildingManagementToolDbContext.Documents.Include(d => d.PropertyCategory).FirstOrDefaultAsync(d => d.DocumentId == id);
         }
 
         public async Task<List<Document>> GetByPropertyCategoryId(int id)

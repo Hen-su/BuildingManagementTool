@@ -6,5 +6,6 @@
         Task<List<Invitation>> GetPendingInvitationsByEmailAsync(string email);
         Task AddInvitationAsync(Invitation invitation);
         Task DeleteInvitationAsync(int invitationId);
+        Task UpdateInvitationAsync(Invitation invitation);
     }
 }

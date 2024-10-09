@@ -19,9 +19,9 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
     public class ConfirmEmailModel : PageModel
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly InvitationService _invitationService;
+        private readonly IInvitationService _invitationService;
 
-        public ConfirmEmailModel(UserManager<ApplicationUser> userManager, InvitationService invitationService)
+        public ConfirmEmailModel(UserManager<ApplicationUser> userManager, IInvitationService invitationService)
         {
             _userManager = userManager;
             _invitationService = invitationService;

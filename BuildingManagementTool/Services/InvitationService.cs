@@ -12,9 +12,8 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace BuildingManagementTool.Services
 {
-    public class InvitationService
+    public class InvitationService : IInvitationService
     {
-        private readonly BuildingManagementToolDbContext _dbContext;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -22,11 +21,12 @@ namespace BuildingManagementTool.Services
         private readonly IUrlHelperFactory _urlHelperFactory;
         private readonly IRazorViewToStringRenderer _razorViewToStringRenderer;
         private readonly IInvitationRepository _invitationRepository;
+        private readonly IUserPropertyRepository _userPropertyRepository;
 
-        public InvitationService(BuildingManagementToolDbContext dbContext, UserManager<ApplicationUser> userManager, IEmailSender emailSender, 
-            RoleManager<IdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IUrlHelperFactory urlHelperFactory, IRazorViewToStringRenderer razorViewToStringRenderer, IInvitationRepository invitationRepository)
+        public InvitationService(UserManager<ApplicationUser> userManager, IEmailSender emailSender, 
+            RoleManager<IdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IUrlHelperFactory urlHelperFactory, 
+            IRazorViewToStringRenderer razorViewToStringRenderer, IInvitationRepository invitationRepository, IUserPropertyRepository userPropertyRepository)
         {
-            _dbContext = dbContext;
             _userManager = userManager;
             _emailSender = emailSender;
             _roleManager = roleManager;
@@ -34,11 +34,11 @@ namespace BuildingManagementTool.Services
             _urlHelperFactory = urlHelperFactory;
             _razorViewToStringRenderer = razorViewToStringRenderer;
             _invitationRepository = invitationRepository;
+            _userPropertyRepository = userPropertyRepository;
         }
 
         public async Task InviteUserAsync(string email, int propertyId)
         {
-            
             var existingInvitations = await _invitationRepository.GetInvitationByEmailAndPropertyAsync(email, propertyId);
             if (existingInvitations != null) 
             {
@@ -59,8 +59,7 @@ namespace BuildingManagementTool.Services
 
         private async Task LinkExistingUserToPropertyAsync(ApplicationUser user, int propertyId)
         {
-            var existingLink = await _dbContext.UserProperties
-                .FirstOrDefaultAsync(up => up.UserId == user.Id && up.PropertyId == propertyId);
+            var existingLink = await _userPropertyRepository.GetByPropertyIdAndUserId(propertyId, user.Id);
 
             if (existingLink == null)
             {
@@ -72,8 +71,7 @@ namespace BuildingManagementTool.Services
                     RoleId = role.Id
                 };
 
-                _dbContext.UserProperties.Add(userProperty);
-                await _dbContext.SaveChangesAsync();
+                await _userPropertyRepository.AddUserProperty(userProperty);
                 //set up email content
                 var httpContext = _httpContextAccessor.HttpContext;
                 var urlHelper = _urlHelperFactory.GetUrlHelper(new ActionContext(httpContext, httpContext.GetRouteData(), new ActionDescriptor()));
@@ -104,8 +102,7 @@ namespace BuildingManagementTool.Services
                 InvitedBy = user.Id
             };
 
-            _dbContext.Invitations.Add(invitation);
-            await _dbContext.SaveChangesAsync();
+            await _invitationRepository.AddInvitationAsync(invitation);
             //set up email content
             var httpContext = _httpContextAccessor.HttpContext;
             var urlHelper = _urlHelperFactory.GetUrlHelper(new ActionContext(httpContext, httpContext.GetRouteData(), new ActionDescriptor()));
@@ -142,9 +139,8 @@ namespace BuildingManagementTool.Services
 
                     invite.Status = "Completed";
                     invite.AcceptedOn = DateTime.UtcNow;
-                    _dbContext.Invitations.Update(invite);
-                    _dbContext.UserProperties.Add(userProperty);
-                    await _dbContext.SaveChangesAsync();
+                    await _invitationRepository.UpdateInvitationAsync(invite);
+                    await _userPropertyRepository.AddUserProperty(userProperty);
                 }
             }
         }

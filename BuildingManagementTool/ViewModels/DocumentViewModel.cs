@@ -6,11 +6,12 @@ namespace BuildingManagementTool.ViewModels
     {
         public IEnumerable<Document>? Documents { get; set; }
         public PropertyCategory CurrentCategory { get; set; }
-
-        public DocumentViewModel(IEnumerable<Document> documents, PropertyCategory currentCategory) 
+        public string Role {  get; set; }
+        public DocumentViewModel(IEnumerable<Document> documents, PropertyCategory currentCategory, string role) 
         {
             Documents = documents;
             CurrentCategory = currentCategory;
+            Role = role;
         }
     }
 }

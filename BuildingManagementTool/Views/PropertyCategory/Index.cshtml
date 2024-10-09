@@ -127,10 +127,9 @@
 </style>
 
 
-@if (User.IsInRole("Manager"))
+@if (Model.Role == "Manager")
 {
     <h2 class="mt-5 mb-5">You're in Manage Mode!</h2>
-    <a id="btnPrintCanvas" class="btn btn-info mb-3">Print Canvas</a>
     <a id="addCategoryModalBtn">
         <i class="fas fa-plus"></i>
     </a>
@@ -139,7 +138,7 @@ else
 {
     <h2 class="mt-5 mb-5">You're in View Mode!</h2>
 }
-
+<a id="btnPrintCanvas" class="btn btn-info mb-3">Print Canvas</a>
 <h2 class="text-center mb-4">@Model.Property.PropertyName</h2>
 
 <div id="categoryContainer">

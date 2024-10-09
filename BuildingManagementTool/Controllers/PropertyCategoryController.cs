@@ -1,6 +1,8 @@
 ﻿using BuildingManagementTool.Models;
+using BuildingManagementTool.Services.Authorization;
 using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,31 +14,46 @@ namespace BuildingManagementTool.Controllers
     {
         private readonly IPropertyCategoryRepository _propertyCategoryRepository;
         private readonly IPropertyRepository _propertyRepository;
+        private readonly IUserPropertyRepository _userPropertyRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IDocumentRepository _documentRepository;
-        public PropertyCategoryController(IPropertyCategoryRepository propertyCategoryRepository, IPropertyRepository propertyRepository, ICategoryRepository categoryRepository, IDocumentRepository documentRepository)
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IAuthorizationService _authorizationService;
+        public PropertyCategoryController(IPropertyCategoryRepository propertyCategoryRepository, IPropertyRepository propertyRepository, IUserPropertyRepository userPropertyRepository, 
+            ICategoryRepository categoryRepository, IDocumentRepository documentRepository, UserManager<ApplicationUser> userManager, IAuthorizationService authorizationService)
         {
             _propertyCategoryRepository = propertyCategoryRepository;
             _propertyRepository = propertyRepository;
+            _userPropertyRepository = userPropertyRepository;
             _categoryRepository = categoryRepository;
             _documentRepository = documentRepository;
+            _userManager = userManager;
+            _authorizationService = authorizationService;
         }
 
-        public async Task<IActionResult> Index(int id)
+        private async Task<AuthorizationResult> CheckAuthorizationByPropertyId(int id)
         {
-            var property = await _propertyRepository.GetById(id);
-            if (property == null) 
+            // Create a requirement instance with the actual property ID
+            var requirement = new UserPropertyManagerRequirement(id);
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, null, requirement);
+            return authorizationResult;
+        }
+
+        private async Task<CategoryViewModel> CreateCategoryViewModel(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var userId = user.Id;
+
+            var userproperty = await _userPropertyRepository.GetByPropertyIdAndUserId(id, userId);
+            if (userproperty == null)
             {
-                return StatusCode(StatusCodes.Status404NotFound, new
-                {
-                    success = false,
-                    message = "The selected property could not be found"
-                });
+                return null;
             }
+
             var categories = await _propertyCategoryRepository.GetByPropertyId(id);
             var img = "/imgs/sample-house.jpeg";
 
-            
+
             List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
             foreach (var category in categories)
             {
@@ -44,26 +61,41 @@ namespace BuildingManagementTool.Controllers
                 // Fetch documents by category id
 
                 var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
-                var documentCount = documents.Count();
-                if (documents == null || !documents.Any()) 
+                var documentCount = 0;
+                if (documents == null)
                 {
-                    previewViewModels.Add(new CategoryPreviewViewModel(category, null, 0));
+
+                    previewViewModels.Add(new CategoryPreviewViewModel(category, null, documentCount, userproperty.Role.Name));
                     continue;
                 }
+                documentCount = documents.Count();
                 documents = documents.Where(d => d.IsActiveNote == true).Take(2).ToList();
                 documentsByCategory[category.PropertyCategoryId] = documents;
-                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory, documentCount));
+                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory, documentCount, userproperty.Role.Name));
             }
+            var viewModel = new CategoryViewModel(categories, img, userproperty.Property, previewViewModels, userproperty.Role.Name);
+            return viewModel;
+        }
 
-            var viewModel = new CategoryViewModel(categories, img, property, previewViewModels);
+        public async Task<IActionResult> Index(int id)
+        {
+            var viewModel = await CreateCategoryViewModel(id);
+            if (viewModel == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "The selected property could not be found"
+                });
+            }
             return View(viewModel);
         }
 
         [HttpGet]
         public async Task<IActionResult> UpdateCategoryCanvas(int id)
         {
-            var property = await _propertyRepository.GetById(id);
-            if (property == null)
+            var viewModel = await CreateCategoryViewModel(id);
+            if (viewModel == null)
             {
                 return StatusCode(StatusCodes.Status404NotFound, new
                 {
@@ -71,31 +103,9 @@ namespace BuildingManagementTool.Controllers
                     message = "The selected property could not be found"
                 });
             }
-            var categories = await _propertyCategoryRepository.GetByPropertyId(id);
-            var img = "/imgs/sample-house.jpeg";
-
-            List<CategoryPreviewViewModel> previewViewModels = new List<CategoryPreviewViewModel>();
-            foreach (var category in categories)
-            {
-                var documentsByCategory = new Dictionary<int, List<Document>>();
-                // Fetch documents by category id
-                var documents = await _documentRepository.GetByPropertyCategoryId(category.PropertyCategoryId);
-                var documentCount = documents.Count();
-                if (documents == null || !documents.Any())
-                {
-                    previewViewModels.Add(new CategoryPreviewViewModel(category, null, 0));
-                    continue;
-                }
-                documents = documents.Take(2).ToList();
-                documentsByCategory[category.PropertyCategoryId] = documents;
-                previewViewModels.Add(new CategoryPreviewViewModel(category, documentsByCategory, documentCount));
-            }
-
-            var viewModel = new CategoryViewModel(categories, img, property, previewViewModels);
             return PartialView("_CategoryCanvas", viewModel);
         }
 
-        //test id being used in call function
         [HttpGet]
         public async Task<IActionResult> CategoryFormPartial(int id)
         {
@@ -113,6 +123,7 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_AddCategoryForm", categoryFormViewModel);
         }
 
+        
         [HttpPost]
         public async Task<IActionResult> AddCategory(int id, string name)
         {
@@ -124,6 +135,11 @@ namespace BuildingManagementTool.Controllers
                     success = false,
                     message = "Could not find matching property"
                 });
+            }
+            var authorizationResult = await CheckAuthorizationByPropertyId(id);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
             }
             if (name != null) 
             { 
@@ -171,6 +187,7 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_CategoryDeleteConfirmation", category);
         }
 
+        
         [HttpPost]
         public async Task<IActionResult> UpdateColor(int id, string color)
         {
@@ -179,13 +196,16 @@ namespace BuildingManagementTool.Controllers
             {
                 return NotFound();
             }
-
+            var authorizationResult = await CheckAuthorizationByPropertyId(propertyCategory.Property.PropertyId);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
             propertyCategory.Color = color;
             await _propertyCategoryRepository.UpdatePropertyCategory(propertyCategory);
 
             return Ok();
         }
-
 
         public async Task<IActionResult> EditCategoryFormPartial(int id, int currentCategoryId)
         {
@@ -199,7 +219,6 @@ namespace BuildingManagementTool.Controllers
                     message = "The selected property could not be found"
                 });
             }
-
             var currentCategory = await _propertyCategoryRepository.GetById(currentCategoryId);
             if (currentCategory == null)
             {
