@@ -75,7 +75,7 @@ namespace BuildingManagementTool.Controllers
                 var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(userproperty.PropertyId);
                 var containerName = "userid-" + managerId;
                 var prefix = $"{userproperty.Property.PropertyName}/images/".Trim();
-                var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+                var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix, userproperty.Role.Name);
 
                 if (blobs != null && blobs.Any())
                 {

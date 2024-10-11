@@ -93,6 +93,7 @@ namespace BuildingManagementTool.Tests
                 new UserProperty { UserPropertyId = 2, PropertyId = 2, UserId = userId }
             };
             _mockUserPropertyRepository.Setup(u => u.GetByUserId(It.IsAny<string>())).ReturnsAsync(propertyList);
+            _mockPropertyImageRepository.Setup(pi => pi.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
 
             var result = await _userPropertyController.Index();
             var viewResult = result as ViewResult;
@@ -180,6 +181,7 @@ namespace BuildingManagementTool.Tests
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockRoleManager.Setup(r => r.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(role);
+            _mockPropertyImageRepository.Setup(pi => pi.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
             var propertyList = new List<UserProperty>
             {
                 new UserProperty { UserPropertyId = 1, PropertyId = 1, UserId = userId },
@@ -295,7 +297,7 @@ namespace BuildingManagementTool.Tests
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
             _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(dbImages);
-            _mockBlobService.Setup(x => x.GetBlobUrisByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(blobList);
+            _mockBlobService.Setup(x => x.GetBlobUrisByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(blobList);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _userPropertyController.ManagePropertyFormPartial(id);
@@ -346,15 +348,16 @@ namespace BuildingManagementTool.Tests
             _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
             _mockPropertyRepository.Setup(x => x.UpdateProperty(It.IsAny<Models.Property>())).Returns(Task.CompletedTask);
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
-            _mockBlobService.Setup(x => x.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
+            _mockBlobService.Setup(x => x.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
             _mockDocumentRepository.Setup(x => x.UpdateByList(It.IsAny<List<Document>>())).Returns(Task.CompletedTask);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
+            _mockPropertyImageRepository.Setup(pi => pi.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, null);
 
             _mockPropertyRepository.Verify(x => x.UpdateProperty(It.IsAny<Models.Property>()));
             _mockDocumentRepository.Verify(x => x.GetByPropertyId(It.IsAny<int>()), Times.Once);
-            _mockBlobService.Verify(x => x.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(x => x.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _mockDocumentRepository.Verify(x => x.UpdateByList(It.IsAny<List<Document>>()), Times.Once);
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
@@ -393,6 +396,9 @@ namespace BuildingManagementTool.Tests
             
             var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
             var userId = Guid.NewGuid().ToString();
+            var roleId = Guid.NewGuid().ToString();
+            var role = new IdentityRole { Id = roleId, Name = "Manager" };
+            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, UserId = userId, Role = role };
             var email = "example@example.com";
             var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
             var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
@@ -413,16 +419,17 @@ namespace BuildingManagementTool.Tests
                 fileMock1.Object
             };
 
-            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name", Images = files };
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "Test Property", Images = files };
 
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
             _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
-            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
-            _mockBlobService.Setup(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>())).ReturnsAsync((bool)true);
+            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
+            _mockBlobService.Setup(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>(), It.IsAny<string>())).ReturnsAsync((bool)true);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
+            _mockUserPropertyRepository.Setup(u => u.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, null);
             Assert.IsInstanceOf<JsonResult>(result);
@@ -444,22 +451,22 @@ namespace BuildingManagementTool.Tests
 
             var files = new List<IFormFile>();
 
-            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name", Images = files };
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "Test Property", Images = files };
 
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
             _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
-            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
-            _mockBlobService.Setup(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>())).ReturnsAsync((bool)true);
+            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
+            _mockBlobService.Setup(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>(), It.IsAny<string>())).ReturnsAsync((bool)true);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, null);
 
             _mockPropertyImageRepository.Verify(x => x.GetByPropertyId(It.IsAny<int>()), Times.Never);
-            _mockBlobService.Verify(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            _mockBlobService.Verify(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Never);
+            _mockBlobService.Verify(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockBlobService.Verify(x => x.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>(), It.IsAny<string>()), Times.Never);
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
             dynamic value = jsonResult.Value.ToString();
@@ -478,7 +485,7 @@ namespace BuildingManagementTool.Tests
             var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
             var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
 
-            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name" };
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "Test Property" };
 
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
@@ -510,7 +517,7 @@ namespace BuildingManagementTool.Tests
             var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
             var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
 
-            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name" };
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "Test Property" };
 
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
@@ -546,7 +553,7 @@ namespace BuildingManagementTool.Tests
             var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
             var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
 
-            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name" };
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "Test Property" };
 
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
@@ -554,13 +561,13 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
             _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(imageList);
             _mockPropertyImageRepository.Setup(x => x.DeletePropertyImage(It.IsAny<PropertyImage>())).Returns(Task.CompletedTask);
-            _mockBlobService.Setup(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            _mockBlobService.Setup(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, fileToRemove);
 
             _mockPropertyImageRepository.Verify(x => x.DeletePropertyImage(It.IsAny<PropertyImage>()), Times.Once);
-            _mockBlobService.Verify(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
             dynamic value = jsonResult.Value.ToString();
@@ -583,7 +590,7 @@ namespace BuildingManagementTool.Tests
             var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
             var document = new List<Document> { new Document { DocumentId = 1, FileName = "Document 1", BlobName = "Test Property/Category/Document 1.docx" } };
 
-            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "New Name" };
+            ManagePropertyFormViewModel viewModel = new ManagePropertyFormViewModel { PropertyName = "Test Property" };
 
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
@@ -591,12 +598,12 @@ namespace BuildingManagementTool.Tests
             _mockDocumentRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(document);
             _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(imageList);
             _mockPropertyImageRepository.Setup(x => x.DeletePropertyImage(It.IsAny<PropertyImage>())).Returns(Task.CompletedTask);
-            _mockBlobService.Setup(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            _mockBlobService.Setup(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _userPropertyController.ManagePropertyFormSubmit(id, viewModel, null, fileToRemove);
             _mockPropertyImageRepository.Verify(x => x.DeletePropertyImage(It.IsAny<PropertyImage>()), Times.Never);
-            _mockBlobService.Verify(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockBlobService.Verify(x => x.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
             dynamic value = jsonResult.Value.ToString();
@@ -670,7 +677,7 @@ namespace BuildingManagementTool.Tests
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockPropertyRepository.Setup(x => x.GetById(It.IsAny<int>())).ReturnsAsync(property);
             _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(dbImages);
-            _mockBlobService.Setup(x => x.GetBlobUrisByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(blobList);
+            _mockBlobService.Setup(x => x.GetBlobUrisByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(blobList);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var addViewerViewModel = new AddViewerViewModel
@@ -739,24 +746,23 @@ namespace BuildingManagementTool.Tests
         [Test]
         public async Task SearchPropertyByName_UserNotNull_Sucess()
         {
-           
             var user = new ApplicationUser { Id = "user123" };
             var propertyId1 = 1; 
             var propertyId2 = 2; 
 
             var userProperties = new List<UserProperty>
-    {
-        new UserProperty
-        {
-            PropertyId = propertyId1,
-            Property = new BuildingManagementTool.Models.Property { PropertyName = "Test Property One" } 
-        },
-        new UserProperty
-        {
-            PropertyId = propertyId2,
-            Property = new BuildingManagementTool.Models.Property { PropertyName = "Another Property" }
-        }
-    };
+            {
+                new UserProperty
+                {
+                    PropertyId = propertyId1,
+                    Property = new BuildingManagementTool.Models.Property { PropertyName = "Test Property One" } 
+                },
+                new UserProperty
+                {
+                    PropertyId = propertyId2,
+                    Property = new BuildingManagementTool.Models.Property { PropertyName = "Another Property" }
+                }
+            };
 
             _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
@@ -765,12 +771,12 @@ namespace BuildingManagementTool.Tests
                 .ReturnsAsync(userProperties);
 
         
-            _mockBlobService.Setup(x => x.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(x => x.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync("https://examplebloburl.com/image.jpg");
 
+            _mockPropertyImageRepository.Setup(pi => pi.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
+
             var result = await _userPropertyController.SearchPropertyByName("Test");
-
-
            
             var viewResult = result as PartialViewResult; 
             Assert.IsNotNull(viewResult); 
@@ -815,48 +821,43 @@ namespace BuildingManagementTool.Tests
         [Test]
         public async Task SearchPropertyByName_PropertiesFound_Success()
         {
-          
             var user = new ApplicationUser { Id = "user123" };
             _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
-            var propertyId1 = 1;
-            var propertyId2 = 2;
+            var roleId = Guid.NewGuid().ToString();
+            var role = new IdentityRole { Id = roleId, Name = "Manager" };
 
             var userProperties = new List<UserProperty>
-    {
-        new UserProperty
-        {
-            PropertyId = propertyId1,
-            Property = new BuildingManagementTool.Models.Property { PropertyName = "Test Property One" } 
-        },
-        new UserProperty
-        {
-            PropertyId = propertyId2,
-            Property = new BuildingManagementTool.Models.Property { PropertyName = "Another Property" } 
-        }
-    };
+            {
+                new UserProperty
+                {
+                    PropertyId = 1,
+                    Property = new BuildingManagementTool.Models.Property { PropertyName = "Test Property One" },
+                    Role = role
+                },
+                new UserProperty
+                {
+                    PropertyId = 2,
+                    Property = new BuildingManagementTool.Models.Property { PropertyName = "Another Property" },
+                    Role = role
+                }
+            };
 
             _mockUserPropertyRepository.Setup(x => x.GetByUserId(user.Id))
                 .ReturnsAsync(userProperties);
 
             var propertyImages = new List<PropertyImage>
-    {
-        new PropertyImage { BlobName = "image1.png", IsDisplay = true },
-        new PropertyImage { BlobName = "image2.png", IsDisplay = true }
-    };
+            {
+                new PropertyImage { BlobName = "image1.png", IsDisplay = true, PropertyId = 1 },
+                new PropertyImage { BlobName = "image2.png", IsDisplay = true, PropertyId = 2 }
+            };
 
-            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(propertyId1))
+            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>()))
                 .ReturnsAsync(propertyImages); 
 
-            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(propertyId2))
-                .ReturnsAsync(new List<PropertyImage>());
-
-            _mockBlobService.Setup(x => x.GetBlobUrlAsync($"userid-{user.Id}", "image1.png"))
+            _mockBlobService.Setup(x => x.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync("http://example.com/image1.png");
-
-            _mockBlobService.Setup(x => x.GetBlobUrlAsync($"userid-{user.Id}", "image2.png"))
-                .ReturnsAsync("http://example.com/image2.png");
 
           
             var result = await _userPropertyController.SearchPropertyByName("Test");
@@ -871,7 +872,6 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(model);
             Assert.IsNotEmpty(model); 
 
-        
             Assert.AreEqual(1, model.Count); 
             Assert.AreEqual("Test Property One", model[0].UserProperty.Property.PropertyName); 
             Assert.AreEqual("http://example.com/image1.png", model[0].ImageUrl); 

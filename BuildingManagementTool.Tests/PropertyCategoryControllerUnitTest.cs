@@ -82,6 +82,7 @@ namespace BuildingManagementTool.Tests
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockUserPropertyRepository.Setup(x => x.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
             _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(list.Where(p => p.PropertyId == id));
+            _mockPropertyImageRepository.Setup(pi => pi.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
 
             var result = await _propertyCategoryController.Index(id);
             var viewResult = (ViewResult) result;
@@ -131,6 +132,7 @@ namespace BuildingManagementTool.Tests
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockUserPropertyRepository.Setup(x => x.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
             _mockPropertyCategoryRepository.Setup(pc => pc.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(list.Where(p => p.PropertyId == id));
+            _mockPropertyImageRepository.Setup(pi => pi.GetByPropertyId(It.IsAny<int>())).ReturnsAsync(new List<PropertyImage>());
 
             var result = await _propertyCategoryController.UpdateCategoryCanvas(id);
             var viewResult = result as PartialViewResult;

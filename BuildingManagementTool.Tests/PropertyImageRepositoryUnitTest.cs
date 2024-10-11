@@ -246,6 +246,27 @@ namespace BuildingManagementTool.Tests
             await _propertyImageRepository.RemoveDisplayImage(id));
         }
 
+        [Test]
+        public async Task UpdateByList_ValidList_ReturnList()
+        {
+            var id = 1;
+            var imageList = new List<PropertyImage>
+            {
+                new PropertyImage {Id = 1, FileName = "image1.jpg", BlobName = "user/property/images/image1.jpg", PropertyId = 1},
+                new PropertyImage {Id = 2, FileName = "image2.jpg", BlobName = "user/property/images/image2.jpg", PropertyId = 1 },
+                new PropertyImage {Id = 3, FileName = "image1.jpg", BlobName = "user/property/images/image1.jpg", PropertyId = 2}
+            };
+            await _dbContext.PropertyImages.AddRangeAsync(imageList);
+            await _dbContext.SaveChangesAsync();
+
+            imageList[0].BlobName = "user/newproperty/images/image1.jpg";
+
+            await _propertyImageRepository.UpdateByList(imageList);
+            var updated = await _dbContext.PropertyImages.FindAsync(1);
+            Assert.IsNotNull(updated);
+            Assert.That(updated.BlobName, Is.EqualTo("user/newproperty/images/image1.jpg"));
+        }
+
         [TearDown]
         public async Task TearDown()
         {

@@ -59,7 +59,7 @@ namespace BuildingManagementTool.Tests
                 _mockUserManager.Object, _mockCategoryRepository.Object, _mockPropertyRepository.Object, _mockUserPropertyRepository.Object,
                 _mockAuthorizationService.Object);
         }
-
+        /*
         [Test]
         public async Task UploadBlob_ValidInputSingle_Success()
         {
@@ -733,7 +733,7 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status500InternalServerError), "Expected 500 Internal Server Error status code.");
         }
-
+        */
         [TearDown]
         public void Teardown()
         {

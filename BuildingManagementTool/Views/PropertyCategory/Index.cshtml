@@ -257,15 +257,15 @@ else
         $(document).off("click", ".deleteCategoryModalBtn").on('click', '.deleteCategoryModalBtn', function (event) {
             event.stopPropagation();
             console.log("deleteConf clicked")
-            var categoryId = $(this).data("id");
+            const categoryId = $(this).data("id");
             $("#categoryModalContainer").load("/PropertyCategory/DeleteConfirmationPartial?id=" + categoryId, function () {
                 $("#categoryModalContainer").modal("show");
             });
         })
 
-        $(document).on("click", ".deleteCategoryConfirmBtn", function (event) {
+        $(document).off("click", ".deleteCategoryConfirmBtn").on("click", ".deleteCategoryConfirmBtn", function (event) {
             console.log("Delete clicked")
-            var categoryId = $(this).data('id');
+            const categoryId = $(this).data('id');
             $.ajax({
                 url: '/Blob/DeletePropertyCategory',
                 type: 'POST',
@@ -280,7 +280,6 @@ else
                                 // Replace the document list with the updated content
                                 $('#categoryModalContainer').modal('hide');
                                 $('#categoryContainer').html(result);
-                                
                             },
                             error: function () {
                                 alert('An error occurred while deleting the category');
