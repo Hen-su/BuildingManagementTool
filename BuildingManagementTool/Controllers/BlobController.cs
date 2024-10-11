@@ -38,6 +38,14 @@ namespace BuildingManagementTool.Controllers
             _authorizationService = authorizationService;
         }
 
+        private async Task<string> GetRoleName(int propertyId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var userProperty = await _userPropertyRepository.GetByPropertyIdAndUserId(propertyId, user.Id);
+            var role = userProperty.Role.Name;
+            return role;
+        }
+
         private async Task<AuthorizationResult> CheckAuthorizationByPropertyId(int id)
         {
             // Create a requirement instance with the actual property ID
@@ -63,6 +71,7 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
+            var role = "Manager";
             //Check submitted file list isn't empty
             if (files == null || files.Count == 0)
             {
@@ -88,10 +97,10 @@ namespace BuildingManagementTool.Controllers
                     blobName = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}/{file.FileName}".Trim();
                 }
 
-                bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
+                bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName, role);
                 if (blobExists)
                 {
-                    return Conflict(new
+                    return StatusCode(StatusCodes.Status409Conflict, new
                     {
                         success = false,
                         message = $"A blob with the same name already exists. {blobName}"
@@ -101,7 +110,7 @@ namespace BuildingManagementTool.Controllers
                 using (var stream = file.OpenReadStream())
                 {
                     BlobHttpHeaders blobHttpHeaders = new BlobHttpHeaders { ContentType = file.ContentType };
-                    bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream, blobHttpHeaders);
+                    bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream, blobHttpHeaders, role);
                     //Check if upload was successful
                     if (!isUploaded)
                     {
@@ -163,7 +172,7 @@ namespace BuildingManagementTool.Controllers
                 //Remove blob if metadata was not added
                 catch
                 {
-                    await _blobService.DeleteBlobAsync(containerName, blobName);
+                    await _blobService.DeleteBlobAsync(containerName, blobName, role);
 
                     return StatusCode(StatusCodes.Status500InternalServerError, new
                     {
@@ -195,8 +204,9 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
+            var role = "Manager";
             //Delete from blob storage
-            bool isDeleted = await _blobService.DeleteBlobAsync(containerName, document.BlobName);
+            bool isDeleted = await _blobService.DeleteBlobAsync(containerName, document.BlobName, role);
             //Check if succcessful
             if (!isDeleted)
             {
@@ -245,10 +255,12 @@ namespace BuildingManagementTool.Controllers
                 });
             }
             var propertyId = document.PropertyCategory.PropertyId;
-            var userId = await _userPropertyRepository.GetManagerUserIdByPropertyId(propertyId);
-            var containerName = "userid-" + userId;
+            var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(propertyId);
+            var containerName = "userid-" + managerId;
+
+           var role = await GetRoleName(propertyId);
             //Download blob
-            var stream = await _blobService.DownloadBlobAsync(containerName, document.BlobName);
+            var stream = await _blobService.DownloadBlobAsync(containerName, document.BlobName, role);
             if (stream == null)
             {
                 return StatusCode(StatusCodes.Status404NotFound, new
@@ -286,11 +298,12 @@ namespace BuildingManagementTool.Controllers
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
             var propertyId = document.PropertyCategory.PropertyId;
-            var userId = await _userPropertyRepository.GetManagerUserIdByPropertyId(propertyId);
-            var containerName = "userid-" + userId;
+            var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(propertyId);
+            var role = await GetRoleName(propertyId);
+            var containerName = "userid-" + managerId;
             var blobName = document.BlobName;
             //Get URL of blob by name and container
-            var blobUrl = await _blobService.GetBlobUrlAsync(containerName, blobName);
+            var blobUrl = await _blobService.GetBlobUrlAsync(containerName, blobName, role);
             if (blobUrl == null)
             {
                 var problemDetails = new ProblemDetails
@@ -343,6 +356,7 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
+            var role = "Manager";
             var documents = _documentRepository.AllDocuments.Where(d => d.PropertyCategoryId == propertyCategory.PropertyCategoryId).ToList();
             if (documents.Any())
             {
@@ -364,7 +378,7 @@ namespace BuildingManagementTool.Controllers
             {
                 prefix = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim();
             }
-            var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
+            var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix, role);
             if (!deleteSuccess)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new
@@ -389,10 +403,10 @@ namespace BuildingManagementTool.Controllers
                 });
             }
             var propertyId = document.PropertyCategory.PropertyId;
-            var userId = await _userPropertyRepository.GetManagerUserIdByPropertyId(propertyId);
-            var containerName = "userid-" + userId;
-
-            var blobUrl = await _blobService.GetBlobUrlAsync(containerName, document.BlobName);
+            var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(propertyId);
+            var containerName = "userid-" + managerId;
+            var role = await GetRoleName(propertyId);
+            var blobUrl = await _blobService.GetBlobUrlAsync(containerName, document.BlobName, role);
             if (string.IsNullOrEmpty(blobUrl))
             {
                 return StatusCode(StatusCodes.Status404NotFound, new
@@ -426,6 +440,7 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
+            var role = await GetRoleName(propertyCategory.PropertyId);
             if (newName != null) 
             {
                 var categories = await _categoryRepository.Categories();
@@ -475,7 +490,7 @@ namespace BuildingManagementTool.Controllers
                     var fileName = document.BlobName.Substring(document.BlobName.LastIndexOf('/'));
                     document.BlobName = newDirectory + fileName;
                     await _documentRepository.UpdateDocumentAsync(document);
-                    await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory);
+                    await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory, role);
                 }
                 return Json(new { success = true });
             }
@@ -503,11 +518,12 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
+            var role = "Manager";
             await _propertyRepository.DeleteProperty(property);
             var user = await _userManager.GetUserAsync(User);
             var containerName = "userid-" + user.Id;
             string prefix = $"{property.PropertyName}".Trim();
-            var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix);
+            var deleteSuccess = await _blobService.DeleteByPrefix(containerName, prefix, role);
             if (!deleteSuccess)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new

@@ -51,7 +51,7 @@ namespace BuildingManagementTool.Models
             return _dbContext.PropertyImages.FirstOrDefault(pi => pi.PropertyId == id);
         }
 
-        public async Task<IEnumerable<PropertyImage>> GetByPropertyId(int id)
+        public async Task<List<PropertyImage>> GetByPropertyId(int id)
         {
             if (id == null || id == 0)
             {
@@ -112,6 +112,12 @@ namespace BuildingManagementTool.Models
                 image.IsDisplay = false;
             }
             _dbContext.UpdateRange(propertyImageList);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateByList(List<PropertyImage> propertyImages)
+        {
+            _dbContext.PropertyImages.UpdateRange(propertyImages);
             await _dbContext.SaveChangesAsync();
         }
     }

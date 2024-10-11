@@ -1,4 +1,5 @@
-﻿@model string
+﻿@using System.Text.Json
+@model string
 
 <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content" style="background-color: #696969;">
@@ -35,7 +36,6 @@
     function renderPDF(pdfUrl) {
         const canvas = document.getElementById('pdfCanvas');
         const context = canvas.getContext('2d');
-
         //Get document from URL and Render the first page
         pdfjsDist.getDocument(pdfUrl).promise.then(pdf => {
             pdfDoc = pdf;
@@ -89,8 +89,7 @@
         }
     
     $(document).ready(function () {
-        
-        const pdfUrl = '@Model';
+        const pdfUrl = @Html.Raw(JsonSerializer.Serialize(Model));
         console.log(pdfUrl);
         renderPDF(pdfUrl);
         var nextBtn = document.getElementById('nextPageBtn');

@@ -74,7 +74,7 @@ namespace BuildingManagementTool.Controllers
                 if (displayImage != null)
                 {
                     var containerName = "userid-" + managerId;
-                    var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName);
+                    var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName, property.Role.Name);
                     viewmodelList.Add(new PropertyViewModel(property, url.ToString()));
                 }
                 else
@@ -182,9 +182,10 @@ namespace BuildingManagementTool.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
                 var containerName = "userid-" + user.Id;
+                var role = "Manager";
 
                 var prefix = $"{property.PropertyName}/images/".Trim();
-                var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+                var blobs = await _blobService.GetBlobUrisByPrefix(containerName, prefix, role);
 
                 if (blobs != null && blobs.Any())
                 {
@@ -225,7 +226,7 @@ namespace BuildingManagementTool.Controllers
             {
                 return null;
             }
-
+            var user = await _userManager.GetUserAsync(User);
             var imageList = await GetImageList(property);
             var userPropertyList = await _userPropertyRepository.GetByPropertyId(property.PropertyId);
             var emailList = new Dictionary<int, string>();
@@ -233,8 +234,8 @@ namespace BuildingManagementTool.Controllers
             {
                 foreach (var item in userPropertyList)
                 {
-                    var user = await _userManager.FindByIdAsync(item.UserId);
-                    var email = await _userManager.GetEmailAsync(user);
+                    var propertyUser = await _userManager.FindByIdAsync(item.UserId);
+                    var email = await _userManager.GetEmailAsync(propertyUser);
                     if (email != User.Identity.Name)
                     {
                         emailList.Add(item.UserPropertyId, email);
@@ -281,9 +282,12 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
+            var role = "Manager";
+            var user = await _userManager.GetUserAsync(User);
             if (!ModelState.IsValid)
             {
                 var property = await _propertyRepository.GetById(id);
+                var userproperty = await _userPropertyRepository.GetByPropertyIdAndUserId(property.PropertyId, user.Id);
                 var imageList = await GetImageList(property);
                 formViewModel.CurrentProperty = property;
                 formViewModel.ImageUrls = imageList;
@@ -291,7 +295,7 @@ namespace BuildingManagementTool.Controllers
             }
 
             var currentProperty = await _propertyRepository.GetById(id);
-            var user = await _userManager.GetUserAsync(User);
+            var currentuserProperty = await _userPropertyRepository.GetByPropertyIdAndUserId(currentProperty.PropertyId, user.Id);
             var containerName = "userid-" + user.Id;
             //Replace copy and replace blobs
             if (currentProperty.PropertyName != formViewModel.PropertyName)
@@ -309,9 +313,20 @@ namespace BuildingManagementTool.Controllers
                     {
                         var categoryFileName = document.BlobName.Substring(document.BlobName.IndexOf('/'));
                         document.BlobName = newDirectory + categoryFileName;
-                        await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory);
+                        await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory, role);
                     }
                     await _documentRepository.UpdateByList(documents);
+                }
+                var images = await _propertyImageRepository.GetByPropertyId(currentProperty.PropertyId);
+                if (images.Any())
+                {
+                    foreach (var image in images)
+                    {
+                        var categoryFileName = image.BlobName.Substring(image.BlobName.IndexOf('/'));
+                        image.BlobName = newDirectory + categoryFileName;
+                        await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory, role);
+                    }
+                    await _propertyImageRepository.UpdateByList(images);
                 }
             }
 
@@ -330,7 +345,7 @@ namespace BuildingManagementTool.Controllers
                         });
                     }
                     var blobName = $"{currentProperty.PropertyName}/images/{image.FileName}".Trim();
-                    bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName);
+                    bool blobExists = await _blobService.BlobExistsAsync(containerName, blobName, currentuserProperty.Role.Name);
                     if (blobExists)
                     {
                         return Conflict(new
@@ -343,7 +358,7 @@ namespace BuildingManagementTool.Controllers
                     using (var stream = image.OpenReadStream())
                     {
                         BlobHttpHeaders blobHttpHeaders = new BlobHttpHeaders { ContentType = image.ContentType };
-                        bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream, blobHttpHeaders);
+                        bool isUploaded = await _blobService.UploadBlobAsync(containerName, blobName, stream, blobHttpHeaders, currentuserProperty.Role.Name);
                         //Check if upload not successful
                         if (!isUploaded)
                         {
@@ -384,7 +399,7 @@ namespace BuildingManagementTool.Controllers
                 {
                     if (filesToRemove.Contains(image.FileName))
                     {
-                        await _blobService.DeleteBlobAsync(containerName ,image.BlobName);
+                        await _blobService.DeleteBlobAsync(containerName ,image.BlobName, role);
                         await _propertyImageRepository.DeletePropertyImage(image);
                         break;
                     }
@@ -474,7 +489,7 @@ namespace BuildingManagementTool.Controllers
                     if (displayImage != null)
                     {
                         var containerName = "userid-" + managerId;
-                        var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName);
+                        var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName, property.Role.Name);
                         viewmodelList.Add(new PropertyViewModel(property, url.ToString()));
                     }
                     else
@@ -485,8 +500,5 @@ namespace BuildingManagementTool.Controllers
             }
             return PartialView("_PropertyContainer", viewmodelList);
         }
-
-
-
     }
 }
