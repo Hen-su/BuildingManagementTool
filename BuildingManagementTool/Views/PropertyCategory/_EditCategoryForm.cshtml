@@ -41,36 +41,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    $(document).ready(function () {
-
-        if ($.validator) {
-            console.log("jQuery Validation plugin loaded.");
-        } else {
-            console.error("jQuery Validation plugin not loaded.");
-        }
-        $.validator.addMethod("regex", function (value, element, regexpr) {
-            return regexpr.test(value);
-        }, "Invalid format.");
-
-
-        $("#categoryForm").validate({
-            rules: {
-                categoryName: {
-                    required: true,
-                    regex: /^[a-zA-Z0-9 _-]+$/,
-                    maxlength: 50
-                }
-            },
-            messages: {
-                categoryName: {
-                    required: "Please enter a category name.",
-                    regex: "Category name can only include letters, numbers, spaces, hyphens, and underscores.",
-                    maxlength: "Property name cannot be longer than 50 characters."
-                }
-            },
-            errorClass: "error"
-        });
-    })
-</script>

@@ -162,25 +162,34 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
-            return PartialView("_AddNoteForm", document); 
+            var viewModel = new AddNoteViewModel { Document = document };
+            viewModel.Note = document.Note;
+            return PartialView("_AddNoteForm", viewModel); 
         }
 
         
         [HttpPost]
-        public async Task<IActionResult> AddNoteToDocument(int documentId, string note)
+        public async Task<IActionResult> AddNoteToDocument(int documentId, AddNoteViewModel viewModel)
         {
             var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
             if (document == null)
             {
                 return NotFound(new { success = false, message = "Document not found." });
             }
+            
             var authorizationResult = await CheckAuthorizationByPropertyId(document.PropertyCategory.PropertyId);
             if (!authorizationResult.Succeeded)
             {
                 return Forbid();
             }
+            
+            if (!ModelState.IsValid) 
+            {
+                viewModel.Document = document;  
+                return PartialView("_AddNoteForm", viewModel);
+            }
             // Adding the note to the document
-            document.Note = note;
+            document.Note = viewModel.Note.Trim();
 
             // Updating the document in the repository
             await _documentRepository.UpdateDocumentAsync(document);
@@ -332,12 +341,13 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
-            return PartialView("_DocumentRenameForm", document);
+            var viewModel = new RenameDocumentViewModel { Document = document, FileName = document.FileName };
+            return PartialView("_DocumentRenameForm", viewModel);
         }
 
         
         [HttpPost]
-        public async Task<IActionResult> DocumentFileNameRename(int documentId, string filename)
+        public async Task<IActionResult> DocumentFileNameRename(int documentId, RenameDocumentViewModel viewModel)
         {
             var document = _documentRepository.AllDocuments.FirstOrDefault(d => d.DocumentId == documentId);
             if (document == null)
@@ -355,7 +365,13 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
-            document.FileName = filename;
+
+            if (!ModelState.IsValid)
+            {
+                viewModel.Document = document;
+                return PartialView("_DocumentRenameForm", viewModel);
+            }
+            document.FileName = viewModel.FileName;
             await _documentRepository.UpdateDocumentAsync(document);
 
             return Json(new { success = true, message = "Document renamed successfully!" });

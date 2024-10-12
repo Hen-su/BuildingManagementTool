@@ -3,6 +3,7 @@ using Azure.Storage.Blobs.Models;
 using BuildingManagementTool.Models;
 using BuildingManagementTool.Services;
 using BuildingManagementTool.Services.Authorization;
+using BuildingManagementTool.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -423,83 +424,6 @@ namespace BuildingManagementTool.Controllers
             });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> RenamePropertyCategory(int id, string newName)
-        {
-            var propertyCategory = await _propertyCategoryRepository.GetById(id);
-            if (propertyCategory == null)
-            {
-                return StatusCode(StatusCodes.Status404NotFound, new
-                {
-                    success = false,     
-                    message = "Could not find matching category"
-                });
-            }
-            var authorizationResult = await CheckAuthorizationByPropertyId(propertyCategory.PropertyId);
-            if (!authorizationResult.Succeeded)
-            {
-                return Forbid();
-            }
-            var role = await GetRoleName(propertyCategory.PropertyId);
-            if (newName != null) 
-            {
-                var categories = await _categoryRepository.Categories();
-                var existingCategory = categories.FirstOrDefault(c => c.CategoryName == newName);
-
-                if (propertyCategory.CategoryId != null)
-                {
-                    if (propertyCategory.Category.CategoryName == newName)
-                    {
-                        return Json(new { success = true });
-                    }
-                }
-
-                if (propertyCategory.CustomCategory == newName)
-                {
-                    return Json(new { success = true });
-                }
-
-                if (existingCategory != null)
-                {
-                    propertyCategory.CategoryId = existingCategory.CategoryId;
-                    propertyCategory.CustomCategory = null;  
-                }
-                else
-                {
-                    propertyCategory.CategoryId = null;
-                    propertyCategory.CustomCategory = newName;
-                }
-                await _propertyCategoryRepository.UpdatePropertyCategory(propertyCategory);
-                string newDirectory;
-                if (propertyCategory.CategoryId != null)
-                {
-                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}".Trim();
-                }
-                else
-                {
-                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim();
-                }
-
-                var user = await _userManager.GetUserAsync(User);
-                var containerName = "userid-" + user.Id; 
-                
-                var documents = await _documentRepository.GetByPropertyCategoryId(propertyCategory.PropertyCategoryId);
-                foreach (var document in documents) 
-                {
-                    string oldDirectory = document.BlobName.Substring(0, document.BlobName.LastIndexOf('/'));
-                    var fileName = document.BlobName.Substring(document.BlobName.LastIndexOf('/'));
-                    document.BlobName = newDirectory + fileName;
-                    await _documentRepository.UpdateDocumentAsync(document);
-                    await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory, role);
-                }
-                return Json(new { success = true });
-            }
-            return StatusCode(StatusCodes.Status400BadRequest, new
-            {
-                success = false,
-                message = "Category name cannot be empty"
-            });
-        }
 
         [HttpPost]
         public async Task<IActionResult> DeleteProperty(int id)

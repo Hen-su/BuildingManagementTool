@@ -49,8 +49,8 @@
 
 
         $("#uploadModalBtn").click(function () {
-            var propertyCategoryId = @Model.CurrentCategory.PropertyCategoryId;
-            var url = "/Document/UploadFormPartial/" + encodeURIComponent(propertyCategoryId);
+            const propertyCategoryId = @Model.CurrentCategory.PropertyCategoryId;
+            const url = "/Document/UploadFormPartial/" + encodeURIComponent(propertyCategoryId);
             $("#modalContainer").load(url, function () {
                 $("#modalContainer").modal("show");
             });
@@ -144,40 +144,21 @@
                 }
             });
         })
-        // Note submission
 
-        $('#noteInput').on('input', function () {
-            var note = $(this).val();
-
-            // Check the note length
-            if (note.length > 50) {
-                $('#noteError').text('Note must be only 50 characters long.').show();
-                $('#submitNoteBtn').prop('disabled', true);
-            } else {
-                $('#noteError').hide();
-                $('#submitNoteBtn').prop('disabled', false);
-            }
-        });
-
-        $(document).on("click", "#submitNoteBtn", function () {
-            var note = $("#noteInput").val();
-            var documentId = $(this).data("id");
-
-            // Final validation before submitting
-            if (note.length > 50) {
-                $('#noteError').text('Note must be only 50 characters long!').show();
-                return; // Prevent form submission
-            }
-
+        $(document).off("click", "#submitNoteBtn").on("click", "#submitNoteBtn", function () {
+            const note = $("#noteInput").val();
+            const documentId = $(this).data("id");
+            const noteForm = $("#addNoteForm");
+            const formData = new FormData(noteForm[0]);
+            formData.append('documentId', documentId);
             $('#submitNoteBtn').prop('disabled', true).text('Saving...');
 
             $.ajax({
                 url: '/Document/AddNoteToDocument',
                 type: 'POST',
-                data: {
-                    documentId: documentId,
-                    note: note
-                },
+                data: formData,
+                contentType: false,
+                processData: false,
                 success: function (response) {
                     if (response.success) {
                         $('#modalContainer').modal('hide');
@@ -186,7 +167,7 @@
                         loadDocumentNotesForCategory(@Model.CurrentCategory.PropertyCategoryId);
 
                     } else {
-                        displayErrorMessage(response);
+                        $('#modalContainer').html(response);
                     }
                     $('#submitNoteBtn').prop('disabled', false).text('Create Note');
                 },
@@ -272,16 +253,16 @@
     });
 
     $(document).on("click", "#renameDocumentBtn", function () {
-        var documentId = $(this).data("id");
-        var filename = $("#fileName").val();
-
+        const documentId = $(this).data("id");
+        const renameForm = $("#renameDocumentForm");
+        const formData = new FormData(renameForm[0]);
+        formData.append('documentId', documentId);
         $.ajax({
             url: '/Document/DocumentFileNameRename',
             type: 'POST', 
-            data: {
-                documentId: documentId, 
-                filename: filename
-            },
+            data: formData,
+            contentType: false,
+            processData: false,
             success: function (response) {
                 if (response.success) {
                     $.ajax({
@@ -302,7 +283,7 @@
                         }
                     });
                 } else {
-                    displayErrorMessage(response);
+                    $('#modalContainer').html(response);
                 }
                 $('#renameDocumentBtn').prop('disabled', false).text('Rename');
             },

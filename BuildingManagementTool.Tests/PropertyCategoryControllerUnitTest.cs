@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Dynamic;
 using System.Linq;
 using System.Security.Claims;
@@ -214,10 +215,11 @@ namespace BuildingManagementTool.Tests
                 new Category{ CategoryId = 3, CategoryName = "Test3" }
             };
             string categoryName = "NewCategory";
+            var viewModel = new CategoryFormViewModel { CategoryName = categoryName };
             _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
-            var result = await _propertyCategoryController.AddCategory(1, categoryName);
+            var result = await _propertyCategoryController.AddCategory(1, viewModel);
             _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Once);
 
             Assert.IsInstanceOf<JsonResult>(result);
@@ -240,9 +242,10 @@ namespace BuildingManagementTool.Tests
                 new Category{ CategoryId = 3, CategoryName = "Test3" }
             };
             string categoryName = "NewCategory";
+            var viewModel = new CategoryFormViewModel { CategoryName = categoryName };
             _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
 
-            var result = await _propertyCategoryController.AddCategory(1, categoryName);
+            var result = await _propertyCategoryController.AddCategory(1, viewModel);
             _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
 
             var objectResult = result as ObjectResult;
@@ -293,10 +296,11 @@ namespace BuildingManagementTool.Tests
                 new Category{ CategoryId = 3, CategoryName = "Test3" }
             };
             string categoryName = "NewCategory";
+            var viewModel = new CategoryFormViewModel { CategoryName = categoryName };
             _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
-            var result = await _propertyCategoryController.AddCategory(1, categoryName);
+            var result = await _propertyCategoryController.AddCategory(1, viewModel);
             _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Once);
 
             Assert.IsInstanceOf<JsonResult>(result);
@@ -319,9 +323,10 @@ namespace BuildingManagementTool.Tests
                 new Category{ CategoryId = 3, CategoryName = "Test3" }
             };
             string categoryName = "NewCategory";
+            var viewModel = new CategoryFormViewModel { CategoryName = categoryName };
             _mockCategoryRepository.Setup(c => c.Categories()).ReturnsAsync(list);
 
-            var result = await _propertyCategoryController.AddCategory(1, categoryName);
+            var result = await _propertyCategoryController.AddCategory(1, viewModel);
             _mockPropertyCategoryRepository.Verify(repo => repo.AddPropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
 
             var objectResult = result as ObjectResult;
@@ -369,7 +374,66 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
         }
-        
+
+        [Test]
+        public async Task RenameCategoryPropertyCategory_ValidId_ReturnSuccess()
+        {
+            var propertyCategoryId = 1;
+            var newCategory = "newCategory";
+            var property = new Models.Property { PropertyId = 1, PropertyName = "Test Property" };
+            var category = new Category { CategoryId = 1, CategoryName = "Test Category" };
+            var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1, Property = property, Category = category };
+            
+            var user = new ApplicationUser { Id = Guid.NewGuid().ToString() };
+            var role = new IdentityRole { Name = "Manager" };
+            var userproperty = new UserProperty { UserId = Guid.NewGuid().ToString(), Role = role };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+            _mockUserPropertyRepository.Setup(up => up.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
+            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
+            .ReturnsAsync(propertyCategory);
+            _mockPropertyCategoryRepository.Setup(repo => repo.UpdatePropertyCategory(It.IsAny<PropertyCategory>())).Returns(Task.CompletedTask);
+
+            var documentList = new List<Document>
+            {
+                new Document { DocumentId = 1, FileName = "text.txt", BlobName = "property/category/text.txt", PropertyCategoryId = 1 },
+                new Document { DocumentId = 2, FileName = "text2.txt", BlobName = "property/category/text2.txt", PropertyCategoryId = 1}
+            };
+
+            var viewModel = new CategoryFormViewModel { CategoryName = "New Category" };
+            _mockDocumentRepository.Setup(d => d.GetByPropertyCategoryId(It.IsAny<int>())).ReturnsAsync(documentList);
+
+            _mockDocumentRepository.Setup(d => d.UpdateDocumentAsync(It.IsAny<Document>())).Returns(Task.CompletedTask);
+
+            _mockBlobService.Setup(b => b.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
+            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
+
+            var result = await _propertyCategoryController.RenamePropertyCategory(propertyCategoryId, viewModel);
+            Assert.IsInstanceOf<JsonResult>(result);
+            var jsonResult = (JsonResult)result;
+            dynamic value = jsonResult.Value.ToString();
+            Assert.That(value.Equals("{ success = True }"));
+        }
+
+        [Test]
+        public async Task RenameCategoryPropertyCategory_NullId_ReturnError()
+        {
+            var propertyCategoryId = 1;
+            PropertyCategory propertyCategory = null;
+            var viewModel = new CategoryFormViewModel { CategoryName = "New Category" };
+
+            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
+            .ReturnsAsync(propertyCategory);
+
+            var result = await _propertyCategoryController.RenamePropertyCategory(propertyCategoryId, viewModel);
+            _mockPropertyCategoryRepository.Verify(d => d.UpdatePropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
+            _mockDocumentRepository.Verify(d => d.UpdateDocumentAsync(It.IsAny<Document>()), Times.Never);
+            _mockBlobService.Verify(b => b.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
+            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
+        }
+
         [TearDown]
         public void Teardown()
         {

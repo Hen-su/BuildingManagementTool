@@ -101,27 +101,18 @@ namespace BuildingManagementTool.Controllers
             return PartialView("_PropertyForm", viewModel);
         }
 
-        public async Task<IActionResult> AddProperty(string name)
+        public async Task<IActionResult> AddProperty(PropertyFormViewModel viewmodel)
         {
-            if (name == null)
+            if (!ModelState.IsValid)
             {
-                return StatusCode(StatusCodes.Status400BadRequest, new
-                {
-                    success = false,
-                    message = "The property name cannot be null"
-                });
+                return PartialView("_PropertyForm", viewmodel);
             }
             var user = await _userManager.GetUserAsync(User);
-            
-            if (user == null)
-            {
-                return BadRequest("A problem occurred while retrieving your data");
-            }
             var userId = user.Id;
 
             var newProperty = new Property
             {
-                PropertyName = name
+                PropertyName = viewmodel.PropertyName.Trim()
             };
 
             await _propertyRepository.AddProperty(newProperty);
@@ -137,6 +128,7 @@ namespace BuildingManagementTool.Controllers
 
             await _userPropertyRepository.AddUserProperty(newUserProperty);
             await _propertyRepository.AddDefaultCategories(newProperty);
+            await _blobService.CreateBlobContainer("userid-"+userId);
             return Json(new { success = true });
         }
 

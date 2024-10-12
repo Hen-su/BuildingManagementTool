@@ -88,6 +88,12 @@ namespace BuildingManagementTool.Services
             return sasToken;
         }
 
+        public async Task CreateBlobContainer(string containerName)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            await containerClient.CreateIfNotExistsAsync();
+        }
+
         public async Task<bool> BlobExistsAsync(string containerName, string blobName, string role)
         {
             string sasToken = await GetContainerSasTokenFromSession(containerName, role);

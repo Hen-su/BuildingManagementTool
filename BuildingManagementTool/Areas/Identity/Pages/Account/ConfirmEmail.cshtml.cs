@@ -52,7 +52,6 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
 
             //Link UserProperty if invitation exists
             await _invitationService.LinkUserToPropertyOnRegisterConfirm(user.Email);
-
             return Page();
         }
     }

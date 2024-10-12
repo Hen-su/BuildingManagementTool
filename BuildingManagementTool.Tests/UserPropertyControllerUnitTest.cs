@@ -133,17 +133,18 @@ namespace BuildingManagementTool.Tests
             var email = "example@example.com";
             var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
             var role = new IdentityRole() { Id = roleId, NormalizedName = "Manager" };
-
+            var name = "Example Property";
+            var viewModel = new PropertyFormViewModel { PropertyName = name };
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _mockRoleManager.Setup(r => r.FindByNameAsync(It.IsAny<string>())).ReturnsAsync(role);
-            var name = "Example Property";
+            
 
             _mockPropertyRepository.Setup(p => p.AddProperty(It.IsAny<Models.Property>())).Returns(Task.CompletedTask);
             _mockUserPropertyRepository.Setup(u => u.AddUserProperty(It.IsAny<UserProperty>())).Returns(Task.CompletedTask);
             _mockPropertyRepository.Setup(p => p.AddDefaultCategories(It.IsAny<Models.Property>())).Returns(Task.CompletedTask);
 
-            var result = await _userPropertyController.AddProperty(name);
+            var result = await _userPropertyController.AddProperty(viewModel);
             
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
@@ -158,11 +159,12 @@ namespace BuildingManagementTool.Tests
             var email = "example@example.com";
             var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
             string name = null;
+            var viewModel = new PropertyFormViewModel { PropertyName = name };
 
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-            var result = await _userPropertyController.AddProperty(name);
+            var result = await _userPropertyController.AddProperty(viewModel);
 
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult);

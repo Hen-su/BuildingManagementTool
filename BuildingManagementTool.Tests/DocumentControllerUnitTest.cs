@@ -242,7 +242,6 @@ namespace BuildingManagementTool.Tests
 
             Assert.IsNotNull(result);
             Assert.AreEqual("_AddNoteForm", result.ViewName);
-            Assert.AreEqual(document, result.Model);
         }
 
         [Test]
@@ -266,11 +265,12 @@ namespace BuildingManagementTool.Tests
             int id = 1;
             PropertyCategory propertyCategory = new PropertyCategory { PropertyId = 1 };
             Document document = new Document { DocumentId = 1, PropertyCategory = propertyCategory };
+            var viewModel = new AddNoteViewModel { Note = "testnote" };
             _mockDocumentRepository.Setup(d => d.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
             _mockDocumentRepository.Setup(d => d.UpdateDocumentAsync(It.IsAny<Document>())).Returns(Task.CompletedTask);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
-            var result = await _documentController.AddNoteToDocument(1, "testnote");
+            var result = await _documentController.AddNoteToDocument(1, viewModel);
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOf<JsonResult>(result);
@@ -285,7 +285,8 @@ namespace BuildingManagementTool.Tests
         public async Task AddNoteToDocument_DocumentNotExists_Fail()
         {
             int id = 1;
-            var result = await _documentController.AddNoteToDocument(1, "testnote") as NotFoundObjectResult;
+            var viewModel = new AddNoteViewModel { Note = "testnote" };
+            var result = await _documentController.AddNoteToDocument(1, viewModel) as NotFoundObjectResult;
 
             Assert.IsNotNull(result);
             var objectResult = result as ObjectResult;
@@ -549,7 +550,6 @@ namespace BuildingManagementTool.Tests
 
             Assert.IsNotNull(result);
             Assert.AreEqual("_DocumentRenameForm", result.ViewName);
-            Assert.AreEqual(document, result.Model);
         }
 
 
@@ -559,12 +559,13 @@ namespace BuildingManagementTool.Tests
         {
             var documentId = 1;
             var filename = "newname.txt";
+            var viewModel = new RenameDocumentViewModel { FileName = filename };
 
             // Mock an empty collection
             _mockDocumentRepository.Setup(d => d.AllDocuments)
                 .Returns(new List<Document>().AsQueryable());
 
-            var result = await _documentController.DocumentFileNameRename(documentId, filename);
+            var result = await _documentController.DocumentFileNameRename(documentId, viewModel);
 
             Assert.NotNull(result);  
             var objectResult = result as ObjectResult; 
@@ -582,12 +583,13 @@ namespace BuildingManagementTool.Tests
             var newFilename = "newname.txt";
             PropertyCategory propertyCategory = new PropertyCategory { PropertyId = 1 };
             var document = new Document { DocumentId = documentId, FileName = oldFilename, PropertyCategory = propertyCategory };
+            var viewModel = new RenameDocumentViewModel { FileName = newFilename };
 
             _mockDocumentRepository.Setup(d => d.AllDocuments)
                 .Returns(new List<Document> { document }.AsQueryable());
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
-            var result = await _documentController.DocumentFileNameRename(documentId, newFilename) as JsonResult;
+            var result = await _documentController.DocumentFileNameRename(documentId, viewModel) as JsonResult;
 
             Assert.IsNotNull(result); 
             Assert.AreEqual(true, result.Value.GetType().GetProperty("success").GetValue(result.Value, null));  

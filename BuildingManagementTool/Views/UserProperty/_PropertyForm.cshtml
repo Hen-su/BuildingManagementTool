@@ -33,37 +33,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    $(document).ready(function () {
-
-        if ($.validator) {
-            console.log("jQuery Validation plugin loaded.");
-        } else {
-            console.error("jQuery Validation plugin not loaded.");
-        }
-        $.validator.addMethod("regex", function (value, element, regexpr) {
-            return regexpr.test(value);
-        }, "Invalid format.");
-
-
-        $("#propertyForm").validate({
-            rules: {
-                propertyName: {
-                    required: true,
-                    regex: /^[a-zA-Z0-9 _-]+$/,
-                    maxlength: 100
-                }
-            },
-            messages: {
-                propertyName: {
-                    required: "Please enter a property name.",
-                    regex: "Property name can only include letters, numbers, spaces, hyphens, and underscores.",
-                    maxlength: "Property name cannot be longer than 100 characters."
-                }
-            },
-            errorClass: "error"
-        });
-    })
-    
-</script>
