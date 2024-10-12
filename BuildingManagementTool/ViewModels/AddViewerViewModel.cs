@@ -8,5 +8,6 @@ namespace BuildingManagementTool.ViewModels
         [EmailAddress(ErrorMessage = "Please enter a valid email")]
         [StringLength(100, ErrorMessage = "Email cannot exceed 100 characters")]
         public string Email { get; set; }
+        public AddViewerViewModel() { }
     }
 }

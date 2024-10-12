@@ -77,7 +77,7 @@ namespace BuildingManagementTool.Models
             {
                 throw new ArgumentNullException("Property id cannot be null.");
             }
-            var userproperty = await _dbContext.UserProperties.FirstOrDefaultAsync(p => p.Role.Name == "Manager");
+            var userproperty = await _dbContext.UserProperties.FirstOrDefaultAsync(p => p.PropertyId == id && p.Role.Name == "Manager");
             return userproperty.UserId;
         }
     }

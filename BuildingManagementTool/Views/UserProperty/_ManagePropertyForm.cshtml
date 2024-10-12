@@ -52,8 +52,7 @@
             <form id="propertyForm" method="post" enctype="multipart/form-data">
                 <div class="form-group d-flex flex-column">
                     <label asp-for="PropertyName">Property Name/Address</label>
-                    <input asp-for="PropertyName" id="propertyName" name="PropertyName" class="form-control" type="text" placeholder="Enter Property Name or Address" value="@Model.PropertyName"></input>
-                    <span asp-validation-for="PropertyName" class="text-danger"></span>
+                    <input asp-for="PropertyName" name="PropertyName" class="form-control" type="text" placeholder="Enter Property Name or Address" value="@Model.PropertyName"></input>
                 </div>
                 <div class="row mt-4">
                     <h4 class="col-lg-12">Upload Images</h4>
@@ -100,14 +99,12 @@
                         <label asp-for="AddViewerViewModel.Email"></label>
                         <div class="row">
                             <div class="col-lg-6">
-                                <input asp-for=AddViewerViewModel.Email name="Email" id="viewerEmail" class="form-control" type="email" placeholder="Enter a recipient's email" required></input>
+                                <input asp-for="AddViewerViewModel.Email" id="viewerEmail" class="form-control" type="email" placeholder="Enter a recipient's email" required></input>
                             </div>
                             <div class="col-lg-3">
                                 <button id="sendInviteBtn" form="viewerForm" type="button" class="btn btn-primary" data-id="@Model.CurrentProperty.PropertyId">Send Invite</button>
                             </div>  
                         </div>
-                        
-                        <span asp-validation-for="AddViewerViewModel.Email" class="text-danger"></span>
                         
                     </div>
                     <div class="col-lg-8 mt-2">
@@ -238,9 +235,6 @@
 
         $(document).off('click', '#savePropertyBtn').on('click', '#savePropertyBtn', function (event) {
             console.log("Save clicked")
-            const propertyInput = $("#propertyName")
-            const propertyName = propertyInput.val();
-            console.log()
             const propertyForm = $("#propertyForm")
             const propertyId = $(this).data('id');
             const selectedItem = $('.selected-item');

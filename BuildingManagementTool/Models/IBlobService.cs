@@ -13,5 +13,6 @@ namespace BuildingManagementTool.Models
         Task<bool> DeleteByPrefix(string containerName, string prefix, string role);
         Task RenameBlobDirectory(string containerName, string oldDirectory, string newDirectory, string role);
         Task<Dictionary<int, List<string>>> GetBlobUrisByPrefix(string containerName, string prefix, string role);
+        Task CreateBlobContainer(string containerName);
     }
 }

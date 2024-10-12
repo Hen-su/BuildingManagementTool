@@ -16,7 +16,7 @@ namespace BuildingManagementTool.Models
         {
             get
             {
-                return _buildingManagementToolDbContext.Documents;
+                return _buildingManagementToolDbContext.Documents.Include(d => d.PropertyCategory);
             }
         }
 

@@ -48,6 +48,14 @@ namespace BuildingManagementTool.Controllers
             _authorizationService = authorizationService;
         }
 
+        private async Task<string> GetRoleName(int propertyId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var userProperty = await _userPropertyRepository.GetByPropertyIdAndUserId(propertyId, user.Id);
+            var role = userProperty.Role.Name;
+            return role;
+        }
+
         private async Task<AuthorizationResult> CheckAuthorizationByPropertyId(int id)
         {
             // Create a requirement instance with the actual property ID
@@ -130,9 +138,6 @@ namespace BuildingManagementTool.Controllers
             return View(viewModel);
         }
 
-
-
-
         [HttpGet]
         public async Task<IActionResult> UpdateCategoryCanvas(int id)
         {
@@ -167,8 +172,16 @@ namespace BuildingManagementTool.Controllers
 
         
         [HttpPost]
-        public async Task<IActionResult> AddCategory(int id, string name)
+        public async Task<IActionResult> AddCategory(int id, CategoryFormViewModel viewModel)
         {
+            var categories = await _categoryRepository.Categories();
+            if (!ModelState.IsValid) 
+            {
+                viewModel.Categories = categories;
+                viewModel.CurrentPropertyId = id;
+                viewModel.CurrentCategory = null;
+                return PartialView("_AddCategoryForm", viewModel);
+            }
             var currentProperty = await _propertyRepository.GetById(id);
             if (currentProperty == null)
             {
@@ -183,36 +196,27 @@ namespace BuildingManagementTool.Controllers
             {
                 return Forbid();
             }
-            if (name != null) 
-            { 
-                var categories = await _categoryRepository.Categories();
-                var existing = categories.FirstOrDefault(c => c.CategoryName == name);
-                if (existing != null)
-                {
-                    var newCategory = new PropertyCategory
-                    {
-                        PropertyId = id,
-                        CategoryId = existing.CategoryId
-                    };
-                    await _propertyCategoryRepository.AddPropertyCategory(newCategory);
-                    return Json(new { success = true });
-                }
-                else
-                {
-                    var newCategory = new PropertyCategory
-                    {
-                        PropertyId = id,
-                        CustomCategory = name
-                    };
-                    await _propertyCategoryRepository.AddPropertyCategory(newCategory);
-                    return Json(new { success = true });
-                }
-            }
-            return StatusCode(StatusCodes.Status500InternalServerError, new
+            var existing = categories.FirstOrDefault(c => c.CategoryName == viewModel.CategoryName.Trim());
+            if (existing != null)
             {
-                success = false,
-                message = "An error occurred when adding new category. Please try again"
-            });
+                var newCategory = new PropertyCategory
+                {
+                    PropertyId = id,
+                    CategoryId = existing.CategoryId
+                };
+                await _propertyCategoryRepository.AddPropertyCategory(newCategory);
+                return Json(new { success = true });
+            }
+            else
+            {
+                var newCategory = new PropertyCategory
+                {
+                    PropertyId = id,
+                    CustomCategory = viewModel.CategoryName.Trim()
+                };
+                await _propertyCategoryRepository.AddPropertyCategory(newCategory);
+                return Json(new { success = true });
+            }
         }
 
         public async Task<IActionResult> DeleteConfirmationPartial(int id)
@@ -273,6 +277,91 @@ namespace BuildingManagementTool.Controllers
             var categories = await _categoryRepository.Categories();
             var categoryFormViewModel = new CategoryFormViewModel(categories, id, currentCategory);
             return PartialView("_EditCategoryForm", categoryFormViewModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RenamePropertyCategory(int id, CategoryFormViewModel viewModel)
+        {
+            var propertyCategory = await _propertyCategoryRepository.GetById(id);
+            if (propertyCategory == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new
+                {
+                    success = false,
+                    message = "Could not find matching category"
+                });
+            }
+            var authorizationResult = await CheckAuthorizationByPropertyId(propertyCategory.PropertyId);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+            var categories = await _categoryRepository.Categories();
+            if (!ModelState.IsValid)
+            {
+                viewModel.CurrentPropertyId = propertyCategory.PropertyId;
+                viewModel.CurrentCategory = propertyCategory;
+                viewModel.Categories = categories;
+                return PartialView("_EditCategoryForm", viewModel);
+            }
+            var role = await GetRoleName(propertyCategory.PropertyId);
+            if (viewModel.CategoryName != null)
+            {
+                var existingCategory = categories.FirstOrDefault(c => c.CategoryName == viewModel.CategoryName);
+
+                if (propertyCategory.CategoryId != null)
+                {
+                    if (propertyCategory.Category.CategoryName == viewModel.CategoryName)
+                    {
+                        return Json(new { success = true });
+                    }
+                }
+
+                if (propertyCategory.CustomCategory == viewModel.CategoryName)
+                {
+                    return Json(new { success = true });
+                }
+
+                if (existingCategory != null)
+                {
+                    propertyCategory.CategoryId = existingCategory.CategoryId;
+                    propertyCategory.CustomCategory = null;
+                }
+                else
+                {
+                    propertyCategory.CategoryId = null;
+                    propertyCategory.CustomCategory = viewModel.CategoryName;
+                }
+                await _propertyCategoryRepository.UpdatePropertyCategory(propertyCategory);
+                string newDirectory;
+                if (propertyCategory.CategoryId != null)
+                {
+                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.Category.CategoryName}".Trim();
+                }
+                else
+                {
+                    newDirectory = $"{propertyCategory.Property.PropertyName}/{propertyCategory.CustomCategory}".Trim();
+                }
+
+                var user = await _userManager.GetUserAsync(User);
+                var containerName = "userid-" + user.Id;
+
+                var documents = await _documentRepository.GetByPropertyCategoryId(propertyCategory.PropertyCategoryId);
+                foreach (var document in documents)
+                {
+                    string oldDirectory = document.BlobName.Substring(0, document.BlobName.LastIndexOf('/'));
+                    var fileName = document.BlobName.Substring(document.BlobName.LastIndexOf('/'));
+                    document.BlobName = newDirectory + fileName;
+                    await _documentRepository.UpdateDocumentAsync(document);
+                    await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory, role);
+                }
+                return Json(new { success = true });
+            }
+            return StatusCode(StatusCodes.Status400BadRequest, new
+            {
+                success = false,
+                message = "Category name cannot be empty"
+            });
         }
     }
 }

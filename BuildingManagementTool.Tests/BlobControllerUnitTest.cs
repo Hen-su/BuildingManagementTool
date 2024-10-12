@@ -59,7 +59,7 @@ namespace BuildingManagementTool.Tests
                 _mockUserManager.Object, _mockCategoryRepository.Object, _mockPropertyRepository.Object, _mockUserPropertyRepository.Object,
                 _mockAuthorizationService.Object);
         }
-        /*
+        
         [Test]
         public async Task UploadBlob_ValidInputSingle_Success()
         {
@@ -80,9 +80,9 @@ namespace BuildingManagementTool.Tests
 
             _mockPropertyCategoryRepository.Setup(pc => pc.GetById(It.IsAny<int>())).ReturnsAsync(propertyCategory);
 
-            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
+            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
 
-            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()))
+            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
 
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
@@ -92,7 +92,7 @@ namespace BuildingManagementTool.Tests
 
             var result = await _blobController.UploadBlob(mockFiles, propertyCategoryId) as JsonResult;
 
-            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Once);
+            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>(), It.IsAny<string>()), Times.Once);
             Assert.That(result.Value.ToString().Equals("{ success = True }"));
         }
     
@@ -117,9 +117,9 @@ namespace BuildingManagementTool.Tests
 
             _mockPropertyCategoryRepository.Setup(pc => pc.GetById(It.IsAny<int>())).ReturnsAsync(propertyCategory);
 
-            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
+            _mockBlobService.Setup(x => x.BlobExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((bool)false);
 
-            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()))
+            _mockBlobService.Setup(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
@@ -128,7 +128,7 @@ namespace BuildingManagementTool.Tests
 
             var result = await _blobController.UploadBlob(mockFiles, propertyCategoryId) as JsonResult;
 
-            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Exactly(2));
+            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>(), It.IsAny<string>()), Times.Exactly(2));
             Assert.That(result.Value.ToString().Equals("{ success = True }"));
         }
         
@@ -145,7 +145,7 @@ namespace BuildingManagementTool.Tests
 
             var result = await _blobController.UploadBlob(mockFiles, propertyCategoryId);
 
-            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>()), Times.Exactly(0));
+            _mockBlobService.Verify(s => s.UploadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<BlobHttpHeaders>(), It.IsAny<string>()), Times.Exactly(0));
             Assert.IsInstanceOf<BadRequestObjectResult>(result);
         }
 
@@ -166,13 +166,13 @@ namespace BuildingManagementTool.Tests
             var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-            _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _blobController.DeleteBlob(document.DocumentId) as JsonResult;
 
-            _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             Assert.That(result.Value.ToString().Equals("{ success = True }"));
         }
         
@@ -186,12 +186,12 @@ namespace BuildingManagementTool.Tests
             var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-            _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(false);
 
             var result = await _blobController.DeleteBlob(document.DocumentId);
 
-            _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
@@ -213,13 +213,13 @@ namespace BuildingManagementTool.Tests
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
             _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
-            _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(false);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _blobController.DeleteBlob(document.DocumentId);
 
-            _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(s => s.DeleteBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status500InternalServerError), "Expected 500 Internal Server Error status code.");
@@ -240,15 +240,18 @@ namespace BuildingManagementTool.Tests
 
             var blobUrl = "https://devstoreaccount1/test/category/test.pdf";
 
-            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
+            var user = new ApplicationUser { Id = Guid.NewGuid().ToString() };
+            var role = new IdentityRole { Name = "Manager" };
+            var userproperty = new UserProperty { UserId = Guid.NewGuid().ToString(), Role = role };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(up => up.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
 
             _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
-            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(blobUrl);
 
             var result = await _blobController.RenderFile(documentId) as PartialViewResult;
-            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             Assert.That(result.ViewName.Equals("_PDFViewer"));
             Assert.That(result.Model.Equals(blobUrl));
         }
@@ -268,16 +271,19 @@ namespace BuildingManagementTool.Tests
 
             var blobUrl = "https://devstoreaccount1/test/category/test.mp4";
 
-            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
+            var user = new ApplicationUser { Id = Guid.NewGuid().ToString() };
+            var role = new IdentityRole { Name = "Manager" };
+            var userproperty = new UserProperty { UserId = Guid.NewGuid().ToString(), Role = role };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(up => up.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
 
             _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
-            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(blobUrl);
 
             var result = await _blobController.RenderFile(documentId) as PartialViewResult;
 
-            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             Assert.That(result.ViewName.Equals("_VideoPlayer"));
             Assert.That(result.Model.Equals(blobUrl));
         }
@@ -297,16 +303,19 @@ namespace BuildingManagementTool.Tests
 
             var blobUrl = "https://devstoreaccount1/test/category/test.jpg";
 
-            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
+            var user = new ApplicationUser { Id = Guid.NewGuid().ToString() };
+            var role = new IdentityRole { Name = "Manager" };
+            var userproperty = new UserProperty { UserId = Guid.NewGuid().ToString(), Role = role };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(up => up.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
 
             _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
-            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(blobUrl);
 
             var result = await _blobController.RenderFile(documentId) as PartialViewResult;
 
-            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             Assert.That(result.ViewName.Equals("_ImageViewer"));
             Assert.That(result.Model.Equals(blobUrl));
         }
@@ -321,11 +330,11 @@ namespace BuildingManagementTool.Tests
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
             _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
-            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync((string) null);
 
             var result = await _blobController.RenderFile(documentId);
-            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
@@ -344,15 +353,18 @@ namespace BuildingManagementTool.Tests
                 PropertyCategory = propertyCategory
             };
 
-            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
+            var user = new ApplicationUser { Id = Guid.NewGuid().ToString() };
+            var role = new IdentityRole { Name = "Manager" };
+            var userproperty = new UserProperty { UserId = Guid.NewGuid().ToString(), Role = role };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(up => up.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
 
             _mockDocumentRepository.Setup(s => s.GetById(1)).ReturnsAsync(document);
-            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync((string)null);
 
             var result = await _blobController.RenderFile(documentId);
-            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(s => s.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
@@ -388,10 +400,7 @@ namespace BuildingManagementTool.Tests
             var documentId = 1;
             var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1 };
             var managerId = Guid.NewGuid().ToString();
-            var roleId = Guid.NewGuid().ToString();
-            var role = new IdentityRole() { Id = roleId, Name = "Manager" };
             var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
-            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, Property = property, UserId = managerId, RoleId = role.Id, Role = role };
             var document = new Document
             {
                 DocumentId = documentId,
@@ -402,12 +411,18 @@ namespace BuildingManagementTool.Tests
             };
             var ms = new MemoryStream();
 
+            var user = new ApplicationUser { Id = Guid.NewGuid().ToString() };
+            var role = new IdentityRole { Name = "Manager" };
+            var userproperty = new UserProperty { UserId = user.Id, Role = role };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(up => up.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
+
             _mockDocumentRepository.Setup(repo => repo.GetById(documentId))
             .ReturnsAsync(document);
 
             _mockUserPropertyRepository.Setup(u => u.GetManagerUserIdByPropertyId(It.IsAny<int>())).ReturnsAsync(managerId);
 
-            _mockBlobService.Setup(service => service.DownloadBlobAsync("test1", document.BlobName))
+            _mockBlobService.Setup(service => service.DownloadBlobAsync("test1", document.BlobName, "role"))
                 .ReturnsAsync((Stream)null);
 
             var result = await _blobController.Download(documentId);
@@ -424,10 +439,8 @@ namespace BuildingManagementTool.Tests
             var documentId = 1;
             var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1 };
             var managerId = Guid.NewGuid().ToString();
-            var roleId = Guid.NewGuid().ToString();
-            var role = new IdentityRole() { Id = roleId, Name = "Manager" };
             var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
-            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, Property = property, UserId = managerId, RoleId = role.Id, Role = role };
+            
             var document = new Document
             {
                 DocumentId = documentId,
@@ -438,12 +451,18 @@ namespace BuildingManagementTool.Tests
             };
             var ms = new MemoryStream();
 
+            var user = new ApplicationUser { Id = Guid.NewGuid().ToString() };
+            var role = new IdentityRole { Name = "Manager" };
+            var userproperty = new UserProperty { UserId = Guid.NewGuid().ToString(), Role = role };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(up => up.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
+
             _mockDocumentRepository.Setup(repo => repo.GetById(documentId))
             .ReturnsAsync(document);
 
             _mockUserPropertyRepository.Setup(u => u.GetManagerUserIdByPropertyId(It.IsAny<int>())).ReturnsAsync(managerId);
 
-            _mockBlobService.Setup(service => service.DownloadBlobAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _mockBlobService.Setup(service => service.DownloadBlobAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(ms);
 
             var result = await _blobController.Download(documentId) as FileStreamResult;
@@ -465,11 +484,11 @@ namespace BuildingManagementTool.Tests
 
             var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _blobController.DeletePropertyCategory(propertyCategoryId);
-            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
             dynamic value = jsonResult.Value.ToString();
@@ -489,12 +508,12 @@ namespace BuildingManagementTool.Tests
 
             var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
+            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _blobController.DeletePropertyCategory(propertyCategoryId);
 
-            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status500InternalServerError), "Expected 500 Internal Server Error status code.");
@@ -519,83 +538,6 @@ namespace BuildingManagementTool.Tests
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
         }
-  
-        [Test]
-        public async Task RenameCategoryPropertyCategory_ValidId_ReturnSuccess()
-        {
-            var propertyCategoryId = 1;
-            var newCategory = "newCategory";
-            var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
-            var category = new Category { CategoryId = 1, CategoryName = "Test Category" };
-            var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1, Property = property, Category = category };
-
-            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
-            .ReturnsAsync(propertyCategory);
-
-            var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
-            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-
-            _mockPropertyCategoryRepository.Setup(repo => repo.UpdatePropertyCategory(It.IsAny<PropertyCategory>())).Returns(Task.CompletedTask);
-
-            var documentList = new List<Document>
-            { 
-                new Document { DocumentId = 1, FileName = "text.txt", BlobName = "property/category/text.txt", PropertyCategoryId = 1 },
-                new Document { DocumentId = 2, FileName = "text2.txt", BlobName = "property/category/text2.txt", PropertyCategoryId = 1}
-            };
-
-            _mockDocumentRepository.Setup(d => d.GetByPropertyCategoryId(It.IsAny<int>())).ReturnsAsync(documentList);
-
-            _mockDocumentRepository.Setup(d => d.UpdateDocumentAsync(It.IsAny<Document>())).Returns(Task.CompletedTask);
-
-            _mockBlobService.Setup(b => b.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
-            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
-
-            var result = await _blobController.RenamePropertyCategory(propertyCategoryId, newCategory);
-            Assert.IsInstanceOf<JsonResult>(result);
-            var jsonResult = (JsonResult)result;
-            dynamic value = jsonResult.Value.ToString();
-            Assert.That(value.Equals("{ success = True }"));
-        }
-
-        [Test]
-        public async Task RenameCategoryPropertyCategory_NullId_ReturnError()
-        {
-            var propertyCategoryId = 1;
-            PropertyCategory propertyCategory = null;
-            var newCategory = "newCategory";
-            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
-            .ReturnsAsync(propertyCategory);
-
-            var result = await _blobController.RenamePropertyCategory(propertyCategoryId, newCategory);
-            _mockPropertyCategoryRepository.Verify(d => d.UpdatePropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
-            _mockDocumentRepository.Verify(d => d.UpdateDocumentAsync(It.IsAny<Document>()), Times.Never);
-            _mockBlobService.Verify(b => b.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            var objectResult = result as ObjectResult;
-            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
-            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status404NotFound), "Expected 404 Not Found status code.");
-        }
-
-
-        [Test]
-        public async Task RenameCategoryPropertyCategory_NullName_ReturnError()
-        {
-            var propertyCategoryId = 1;
-            string newCategory = null;
-            var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
-            var category = new Category { CategoryId = 1, CategoryName = "Test Category" };
-            var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1, CategoryId = 1, Property = property, Category = category };
-            _mockPropertyCategoryRepository.Setup(repo => repo.GetById(propertyCategoryId))
-            .ReturnsAsync(propertyCategory);
-            _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
-
-            var result = await _blobController.RenamePropertyCategory(propertyCategoryId, newCategory);
-            _mockPropertyCategoryRepository.Verify(d => d.UpdatePropertyCategory(It.IsAny<PropertyCategory>()), Times.Never);
-            _mockDocumentRepository.Verify(d => d.UpdateDocumentAsync(It.IsAny<Document>()), Times.Never);
-            _mockBlobService.Verify(b => b.RenameBlobDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            var objectResult = result as ObjectResult;
-            Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
-            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status400BadRequest), "Expected 400 Bad Request status code.");
-        }
 
         [Test]
         public async Task DeleteProperty_DeleteSuccess_ReturnSuccess()
@@ -608,11 +550,11 @@ namespace BuildingManagementTool.Tests
 
             var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _blobController.DeleteProperty(propertyId);
-            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             Assert.IsInstanceOf<JsonResult>(result);
             var jsonResult = (JsonResult)result;
             dynamic value = jsonResult.Value.ToString();
@@ -629,10 +571,10 @@ namespace BuildingManagementTool.Tests
 
             var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
 
             var result = await _blobController.DeleteProperty(propertyId);
-            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
 
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
@@ -645,10 +587,8 @@ namespace BuildingManagementTool.Tests
             var documentId = 1;
             var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1 };
             var managerId = Guid.NewGuid().ToString();
-            var roleId = Guid.NewGuid().ToString();
-            var role = new IdentityRole() { Id = roleId, Name = "Manager" };
             var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
-            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, Property = property, UserId = managerId, RoleId = role.Id, Role = role };
+            
             var document = new Document
             {
                 DocumentId = documentId,
@@ -659,12 +599,18 @@ namespace BuildingManagementTool.Tests
             };
             var blobUrl = "https://devstoreaccount1/test/category/test.pdf";
 
+            var user = new ApplicationUser { Id = Guid.NewGuid().ToString() };
+            var role = new IdentityRole { Name = "Manager" };
+            var userproperty = new UserProperty { UserId = Guid.NewGuid().ToString(), Role = role };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(up => up.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
+
             _mockDocumentRepository.Setup(repo => repo.GetById(documentId))
                 .ReturnsAsync(document);
 
             _mockUserPropertyRepository.Setup(u => u.GetManagerUserIdByPropertyId(It.IsAny<int>())).ReturnsAsync(managerId);
 
-            _mockBlobService.Setup(service => service.GetBlobUrlAsync(It.IsAny<string>(), document.BlobName))
+            _mockBlobService.Setup(service => service.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(blobUrl);
 
             var result = await _blobController.GetDocumentShareUrl(documentId) as OkObjectResult;
@@ -684,10 +630,8 @@ namespace BuildingManagementTool.Tests
             var documentId = 1;
             var propertyCategory = new PropertyCategory { PropertyCategoryId = 1, PropertyId = 1 };
             var managerId = Guid.NewGuid().ToString();
-            var roleId = Guid.NewGuid().ToString();
-            var role = new IdentityRole() { Id = roleId, Name = "Manager" };
             var property = new Property { PropertyId = 1, PropertyName = "Test Property" };
-            var userproperty = new UserProperty { UserPropertyId = 1, PropertyId = 1, Property = property, UserId = managerId, RoleId = role.Id, Role = role };
+            
             var document = new Document
             {
                 DocumentId = documentId,
@@ -697,12 +641,18 @@ namespace BuildingManagementTool.Tests
                 PropertyCategory = propertyCategory
             };
 
+            var user = new ApplicationUser { Id = Guid.NewGuid().ToString() };
+            var role = new IdentityRole { Name = "Manager" };
+            var userproperty = new UserProperty { UserId = Guid.NewGuid().ToString(), Role = role };
+            _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockUserPropertyRepository.Setup(up => up.GetByPropertyIdAndUserId(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(userproperty);
+
             _mockDocumentRepository.Setup(repo => repo.GetById(documentId))
                 .ReturnsAsync(document);
 
             _mockUserPropertyRepository.Setup(u => u.GetManagerUserIdByPropertyId(It.IsAny<int>())).ReturnsAsync(managerId);
 
-            _mockBlobService.Setup(service => service.GetBlobUrlAsync("test1", document.BlobName))
+            _mockBlobService.Setup(service => service.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync((string)null);
 
             var result = await _blobController.GetDocumentShareUrl(documentId);
@@ -724,16 +674,16 @@ namespace BuildingManagementTool.Tests
 
             var user = new ApplicationUser { Id = "4b5a1f27-df5d-4b8e-85a3-3fabc47d5e9a" };
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
+            _mockBlobService.Setup(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
             _mockAuthorizationService.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), null, It.IsAny<IEnumerable<IAuthorizationRequirement>>())).ReturnsAsync(AuthorizationResult.Success);
 
             var result = await _blobController.DeleteProperty(propertyId);
-            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockBlobService.Verify(b => b.DeleteByPrefix(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             var objectResult = result as ObjectResult;
             Assert.IsNotNull(objectResult, "Result should be of type ObjectResult.");
             Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status500InternalServerError), "Expected 500 Internal Server Error status code.");
         }
-        */
+        
         [TearDown]
         public void Teardown()
         {
