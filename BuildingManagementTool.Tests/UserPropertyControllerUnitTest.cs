@@ -16,6 +16,7 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pag
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -818,7 +819,61 @@ namespace BuildingManagementTool.Tests
             Assert.IsEmpty(model); 
         }
 
+        [Test]
+        public async Task SearchPropertyByName_NullKeyword_ReturnAll()
+        {
+            var keyword = (string) null;
+            var user = new ApplicationUser { Id = "user123" };
+            var roleId = Guid.NewGuid().ToString();
+            var role = new IdentityRole { Id = roleId, Name = "Manager" };
+            var userProperties = new List<UserProperty>
+            {
+                new UserProperty
+                {
+                    PropertyId = 1,
+                    Property = new BuildingManagementTool.Models.Property { PropertyName = "Test Property One" },
+                    Role = role
+                },
+                new UserProperty
+                {
+                    PropertyId = 2,
+                    Property = new BuildingManagementTool.Models.Property { PropertyName = "Another Property" },
+                    Role = role
+                }
+            };
 
+            var propertyImages = new List<PropertyImage>
+            {
+                new PropertyImage { BlobName = "image1.png", IsDisplay = true, PropertyId = 1 },
+                new PropertyImage { BlobName = "image2.png", IsDisplay = true, PropertyId = 2 }
+            };
+
+            
+
+            _mockBlobService.Setup(x => x.GetBlobUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync("http://example.com/image1.png");
+
+            _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            _mockUserPropertyRepository.Setup(x => x.GetByUserId(user.Id))
+                .ReturnsAsync(userProperties);
+            
+            _mockPropertyImageRepository.Setup(x => x.GetByPropertyId(It.IsAny<int>()))
+                .ReturnsAsync(propertyImages);
+
+            var result = await _userPropertyController.SearchPropertyByName(keyword);
+
+
+            Assert.That(result, Is.InstanceOf<PartialViewResult>());
+
+            var viewResult = result as PartialViewResult;
+            Assert.IsNotNull(viewResult);
+            var model = viewResult.Model as List<PropertyViewModel>;
+
+            Assert.IsNotNull(model);
+            Assert.AreEqual(2, model.Count);
+        }
 
         [Test]
         public async Task SearchPropertyByName_PropertiesFound_Success()

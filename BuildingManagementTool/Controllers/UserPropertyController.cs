@@ -468,14 +468,33 @@ namespace BuildingManagementTool.Controllers
             var propertyList = await _userPropertyRepository.GetByUserId(userId);
 
             var viewmodelList = new List<PropertyViewModel>();
-            var filterKeyword = keyword.ToLower();
-
-            foreach (var property in propertyList)
+            
+            if (!string.IsNullOrEmpty(keyword))
             {
-                var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(property.PropertyId);
-                
-                if (property.Property.PropertyName.ToLower().Contains(filterKeyword))
+                var filterKeyword = keyword.ToLower();
+                var matchList = propertyList.Where(p => p.Property.PropertyName.ToLower() == filterKeyword);
+                foreach (var property in matchList)
                 {
+                    var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(property.PropertyId);
+                    var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
+                    var displayImage = propertyImages.FirstOrDefault(img => img.IsDisplay);
+                    if (displayImage != null)
+                    {
+                        var containerName = "userid-" + managerId;
+                        var url = await _blobService.GetBlobUrlAsync(containerName, displayImage.BlobName, property.Role.Name);
+                        viewmodelList.Add(new PropertyViewModel(property, url.ToString()));
+                    }
+                    else
+                    {
+                        viewmodelList.Add(new PropertyViewModel(property, null));
+                    }
+                }
+            }
+            else
+            {
+                foreach (var property in propertyList)
+                {
+                    var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(property.PropertyId);
                     var propertyImages = await _propertyImageRepository.GetByPropertyId(property.PropertyId);
                     var displayImage = propertyImages.FirstOrDefault(img => img.IsDisplay);
                     if (displayImage != null)
