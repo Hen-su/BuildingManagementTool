@@ -7,8 +7,16 @@
 @if (SignInManager.IsSignedIn(User))
 {
     var currentUser = UserManager.GetUserAsync(User).Result;
+
+        <li class="nav-item mt-2">
+            <label class="theme-switch">
+                <input type="checkbox" id="themeToggle">
+                <span class="slider round"></span>
+                <span>Dark Theme</span>
+            </label>
+        </li>
     <li class="nav-item">
-        <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @currentUser.FirstName!</a>
+        <a id="manage" class="nav-link text-dark m-0" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @currentUser.FirstName!</a>
     </li>
     <li class="nav-item">
         <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">

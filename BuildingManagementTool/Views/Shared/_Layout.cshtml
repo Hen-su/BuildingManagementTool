@@ -9,57 +9,151 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validate/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+
+    <link id="themeStylesheet" rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/BuildingManagementTool.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css" /> 
     <style>
 
-        .navbar{
-            position:fixed;
+        body {
+            background-image: url('https://cdn.wallpapersafari.com/88/53/Mt4ZNK.jpg'); /* Light theme background */
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+        }
+
+            body.dark-theme {
+                background-image: url('https://wallpapercave.com/wp/wp3357397.jpg'); /* Dark theme background */
+            }
+
+
+
+        nav{
+            opacity:0.6;
+        }
+        .navbar {
+            position: fixed;
             top: 0;
             left: 0;
-            width:100%;
-             z-index:100;
+            width: 100%;
+            z-index: 100;
         }
 
-        #logo{
-            width:60px;
-            height:60px;
+        #logo {
+            width: 60px;
+            height: 60px;
+
         }
 
-        footer{
-            margin-top:5%;
+        .nav-item a {
+            transition: background 0.5s, font-weight 0.5s, border-radius 0.5s;
+        }
+
+
+        .nav-item a:hover{
+            background: #2196F3;
+            font-weight: bold;
+            border-radius:10px;
+           
+        }
+
+        footer {
+            margin-top: 5%;
             z-index: 10;
         }
-        footer h2, p {
-        text-align:center;
+
+            footer h2,
+            p {
+                text-align: center;
+            }
+
+            footer a {
+                margin: 0 10px;
+            }
+
+       
+        .theme-switch {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-right: 15px; 
         }
-        footer a {
-            margin: 0 10px;
+
+           
+            .theme-switch input {
+                display: none;
+            }
+
+      
+        .slider {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background-color: #ccc;
+            border-radius: 34px;
+            transition: 0.4s;
+        }
+
+            .slider::before {
+                position: absolute;
+                content: "";
+                height: 20px;
+                width: 20px;
+                left: 2px;
+                bottom: 2px;
+                background-color: white;
+                border-radius: 50%;
+                transition: 0.4s;
+            }
+
+        
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+           
+            input:checked + .slider::before {
+                transform: translateX(26px);
+            }
+
+       
+        .slider.round {
+            border-radius: 34px;
+        }
+
+            .slider.round::before {
+                border-radius: 50%;
+            }
+
+       
+        .theme-switch span {
+            margin-left: 10px;
+            font-size: 16px;
+            color: #333;
         }
     </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    
-                    <img id="logo" src="https://icons.veryicon.com/png/o/file-type/doctype/folder-314.png" alt="BMT logo"/>
-
-                    BuildingManagementCanvas</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                    <img id="logo" src="https://icons.veryicon.com/png/o/file-type/doctype/folder-314.png" alt="BMT logo" />
+                    BuildingManagementCanvas
+                </a>
+              
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
+                      
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="UserProperty" asp-action="Index">Properties</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">About</a>
                         </li>
+                       
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
@@ -75,12 +169,46 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            <h2>Bulding Management Canvas</h2>
-            <p> AHA &copy; 2024 - BuildingManagementTool </p>
+            <h2>Building Management Canvas</h2>
+            <p>AHA &copy; 2024 - BuildingManagementTool</p>
         </div>
     </footer>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- theme Switching -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeStylesheet = document.getElementById('themeStylesheet');
+            const body = document.body;  // Get the body element
+
+            // Check if a theme is saved in localStorage
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                themeStylesheet.href = savedTheme;
+                themeToggle.checked = savedTheme.includes('darkTheme');
+                if (themeToggle.checked) {
+                    body.classList.add('dark-theme');  // Apply dark theme
+                }
+            }
+
+            // Toggle switch change
+            themeToggle.addEventListener('change', function () {
+                if (this.checked) {
+                    themeStylesheet.href = '/css/darkTheme.css';  // Switch to darkTheme stylesheet
+                    localStorage.setItem('theme', '/css/darkTheme.css');
+                    body.classList.add('dark-theme');  // Apply dark theme background change
+                } else {
+                    themeStylesheet.href = '/css/site.css';  // Switch to light theme stylesheet
+                    localStorage.setItem('theme', '/css/site.css');
+                    body.classList.remove('dark-theme');  // Remove dark theme background 
+                }
+            });
+        });
+    </script>
+
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>
