@@ -17,6 +17,7 @@
         position: relative;
         overflow: visible;
         flex: 1 1 23%;
+        color:black;
     }
 
     .sideBoxContainer:last-of-type {
@@ -36,9 +37,9 @@
         border-left: 5px solid skyblue;
         border-right: 5px solid skyblue;
     }
-      
+
     .sideBox:first-child{
-    border-bottom: 5px solid skyblue;
+        border-bottom: 5px solid skyblue;
     }
 
     .categoryBox:hover, .sideBox:hover {
@@ -69,18 +70,18 @@
         border-top: 5px solid skyblue;
     }
 
-    .canvasRow:last-of-type {
-        border-bottom: 5px solid skyblue;
-    }
+        .canvasRow:last-of-type {
+            border-bottom: 5px solid skyblue;
+        }
 
     @@media print {
         body * {
-            visibility: hidden; 
+            visibility: hidden;
         }
 
         #categoryContainer, #categoryContainer * {
-            visibility: visible; 
-            page-break-inside: avoid; 
+            visibility: visible;
+            page-break-inside: avoid;
         }
 
         #categoryContainer {
@@ -88,8 +89,8 @@
             top: 0;
             left: 0;
             width: 100%;
-            transform: scale(0.8); 
-            transform-origin: top left; 
+            transform: scale(0.8);
+            transform-origin: top left;
             padding: 0;
         }
         @@page {
@@ -120,8 +121,29 @@
         text-decoration: none;
     }
 
+    #btnPrintCanvas {
+        position: fixed;
+        bottom: 15rem;
+        right: 15rem;
+        width: 60px;
+        height: 60px;
+        color: white;
+        background-color: #00a9bf;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        font-size: 24px;
+        text-decoration: none;
+    }
+
     #addCategoryModalBtn:hover {
         background-color: #0056b3;
+    }
+
+    #btnPrintCanvas:hover {
+        background-color: #00717f;
     }
 
 </style>
@@ -130,7 +152,7 @@
 @if (User.IsInRole("Manager"))
 {
     <h2 class="mt-5 mb-5">You're in Manage Mode!</h2>
-    <a id="btnPrintCanvas" class="btn btn-info mb-3">Print Canvas</a>
+    <a id="btnPrintCanvas"> <i class="fas fa-print"></i></a>
     <a id="addCategoryModalBtn">
         <i class="fas fa-plus"></i>
     </a>
@@ -150,10 +172,10 @@ else
 
 
 <script>
-        const printBtn = document.getElementById("btnPrintCanvas");
-        printBtn.addEventListener('click', function () {
-            print();
-        });
+    const printBtn = document.getElementById("btnPrintCanvas");
+    printBtn.addEventListener('click', function () {
+        print();
+    });
 
     $(document).ready(function () {
         $('#categoryModalContainer').on('hidden.bs.modal', function () {
@@ -224,7 +246,7 @@ else
             console.log($(".categoryName").val());
             console.log($(".categoryName").length);
             var categoryForm = $("#categoryForm");
-            if (categoryForm.valid()) { 
+            if (categoryForm.valid()) {
                 $.ajax({
                     url: '/Blob/RenamePropertyCategory',
                     type: 'POST',
@@ -281,7 +303,7 @@ else
                                 // Replace the document list with the updated content
                                 $('#categoryModalContainer').modal('hide');
                                 $('#categoryContainer').html(result);
-                                
+
                             },
                             error: function () {
                                 alert('An error occurred while deleting the category');
@@ -312,23 +334,23 @@ else
         }
 
         $(document).on('input', '.colorPicker', function (event) {
-        var color = $(this).val();
-        $(this).closest('.categoryBox, .sideBox').css('background-color', color);
+            var color = $(this).val();
+            $(this).closest('.categoryBox, .sideBox').css('background-color', color);
 
-        // Send the color change to the server
-        var categoryId = $(this).closest('.categoryBox, .sideBox').data('id');
-        $.ajax({
-            url: '/PropertyCategory/UpdateColor',
-            type: 'POST',
-            data: { id: categoryId, color: color },
-            success: function () {
-                console.log('Color updated successfully');
-            },
-            error: function (xhr, status, error) {
-                console.error("Error updating color: " + error);
-            }
+            // Send the color change to the server
+            var categoryId = $(this).closest('.categoryBox, .sideBox').data('id');
+            $.ajax({
+                url: '/PropertyCategory/UpdateColor',
+                type: 'POST',
+                data: { id: categoryId, color: color },
+                success: function () {
+                    console.log('Color updated successfully');
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error updating color: " + error);
+                }
+            });
         });
-    });
     })
 
 </script>

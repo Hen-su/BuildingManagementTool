@@ -7,31 +7,135 @@
         padding: 0;
         margin: 0;
         overflow-x: hidden;
+        background: #0f2537;
+        color:white;
     }
 
 
 
-    h1,h2,h3{
-        font-weight:600;
+    h1, h2, h3 {
+        font-weight: 600;
     }
+
+    body{
+        background-image: none !important;
+    }
+
+
     .hero-section {
-        margin: 15% 10%;
+        width: 100vw;
+        margin: 0 calc(-50vw + 50%);
+        padding: 0;
+        text-align: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+        height: 100vh; /* Set the height to cover the full viewport height */
+    }
+
+ 
+
+
+        .hero-section img {
+            width: 100vw;
+            padding: 0;
+            margin: 0;
+            display: block; 
+        }
+
+        .hero-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); 
+            z-index: 1; 
+        }
+
+    .banner-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 6rem;
+        z-index: 2; 
+    }
+
+    #btn-register {
+        position: absolute;
+        top: 80%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+   
+        z-index: 2;
+    }
+
+
+
+
+    .howitworks-section {
+        width: 100vw;
+        margin: 0 calc(-50vw + 50%);
+        padding: 6rem 0;
+        text-align: center;
+        color: black;
+        background: white;
+        border: 0;
+        margin-top: 100vh; /* Push this section below the hero section */
+    }
+
+        .howitworks-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10rem;
+        }
+
+    .image-container {
+        display: flex;
+        justify-content: center;
+        gap: 15rem;
+    }
+
+    .image-box {
         text-align: center;
     }
-    .hero-section img {
-        margin-top: 20px;
-        max-width: 100%;
-        height: auto;
+
+        .image-box img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .image-box p {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+
+
+
+
+
+    .video-container {
+        margin: 10% 15%;
+        text-align: center;
     }
+
+      
 
     #typed-element {
         font-weight: bold;
-        font-style:italic;
+        font-style: italic;
     }
 
     .about-section {
-        width: 100vw; 
-        margin: 0 calc(-50vw + 50%); 
+        width: 100vw;
+        margin: 0 calc(-50vw + 50%);
         padding: 6rem 0;
         text-align: center;
         color: white;
@@ -39,67 +143,290 @@
         border: 0;
     }
 
-    .about-section p{
-        font-size:2rem;
+        .about-section p {
+            font-size: 2rem;
+        }
+
+    .item-section {
+        margin: 10%;
+        text-align: center;
     }
 
-    .feature-section {
-        margin: 10%;
-        text-align:center;
-    }
-  
-        .feature-section img {
+        .item-section img {
             margin-top: 20px;
             max-width: 100%;
             height: auto;
-
-
         }
+
+
+
+  
+
+        #feature-section h1 {
+            color: white;
+        }
+
+    .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        margin: clamp(0.9375rem, 0.6375rem + 1.5vi, 1.8rem) 0;
+    }
+
+    .feature {
+        margin: clamp(0.9375rem, 0.6375rem + 1.5vi, 1.8rem);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #feature-section img {
+        width: 400px;
+        height: 600px;
+        border-radius: 10px;
+        display: block;
+        transition: transform 0.5s; 
+    }
+
+    .layer {
+        width: 100%;
+        height: 0%;
+        background: linear-gradient(rgba(0, 0, 0, 0.6), #00717F);
+        border-radius: 10px;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 0, 40px;
+        text-align: center;
+        transition: height 0.5s;
+    }
+
+        .layer h3 {
+            margin: 20px;
+        }
+
+        .layer p {
+            font-size: clamp(0.5rem, 0.3478rem + 0.7609vi, 0.9375rem);
+            margin: clamp(0.9375rem, 0.6375rem + 1.5vi, 1.8rem);
+            text-align: center;
+        }
+
+        .layer a {
+            margin-top: 20px;
+            text-decoration: none;
+            background: #fff;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 60px;
+        }
+
+    .feature:hover img {
+        transform: scale(1.1); 
+    }
+
+    .feature:hover .layer {
+        height: 100%;
+    }
+
+  .image-flex-container {
+    display: flex;
+    justify-content: space-between; 
+    flex-wrap: wrap;
+    gap: 1rem; 
+}
+
+.image-wrapper {
+    width: 48%; 
+    text-align: center; 
+}
+
+.img-flex {
+    width: 100%; 
+    height: auto; 
+    object-fit: cover; 
+    border-radius: 10px; 
+}
+
+.image-wrapper p {
+    font-size: 1.2rem; 
+    margin-bottom: 10px; 
+}
+
+@@media (max-width: 768px) {
+    .image-wrapper {
+        width: 100%; 
+    }
+}
+
+
+   
+
 </style>
+
+
 <section class="hero-section">
-    <div class="container">
-        <h1 class="display-4 ">
-            <span>Store and Manage Your Housing Documents</span>
-            <span id="typed-element"></span>
-        </h1>
-        <video width="75%" class="mb-5" controls>
-            <source src="~/videos/Sprint 2 demo.mov" type="video/mp4">
-            
-            Your browser does not support HTML video.
-        </video>
-    </div>
-    <button id="btn-register" class="btn btn-primary mt-6" type="button" onclick="window.location.href='@Url.Page("/Account/Register", new { area = "Identity" })'">
+    <img id="bannerImg" src="~/imgs/bannerImg.jpg" alt="Banner Image" />
+
+    <h1 class="display-4 banner-text">
+        <span>Store and Manage Your Housing Documents</span>
+        <span id="typed-element"></span>
+    </h1>
+    <button id="btn-register" class="btn btn-info btn-lg mt-6" type="button" onclick="window.location.href='@Url.Page("/Account/Register", new { area = "Identity" })'">
         Get Started >
     </button>
 </section>
+
+
+<section class="howitworks-section">
+    <h1>How It Works</h1>
+    <div class="image-container">
+        <div class="image-box">
+            <img src="~/imgs/howItWorksImg1.png" alt="Step 1" />
+            <p>Categorise Documents... Add Notes... <br> An Optimised Approach!</p>
+        </div>
+        <div class="image-box">
+            <img src="~/imgs/howItWorksImg2.png" alt="Step 2" />
+            <p>Share Seamlessly With Your Team.</p>
+        </div>
+        <div class="image-box">
+            <img src="~/imgs/howItWorksImg3.png" alt="Step 3" />
+            <p>Secure Your Documents From Today.</p>
+        </div>
+    </div>
+</section>
+
+
+
+
 <section class="about-section">
     <h1 class="mb-5">What is BMT?</h1>
     <p>
         Building Management Canvas is designed for property managers and homeowners to enable them to manage all relevant housing documents in a centralized location.
     </p>
+
+
+
+        <div class="video-container">
+
+
+
+            <h1 class="display-4 ">
+                <span>Level Up The Document Game!</span>
+                <span id="typed-element"></span>
+            </h1>
+            <video width="100%" class="mb-5 mt-5" controls>
+                <source src="~/videos/Sprint 2 demo.mov" type="video/mp4">
+
+                Your browser does not support HTML video.
+            </video>
+        </div>
+
 </section>
 
 
-<section class="feature-section">
-    <div class="container mt-5 ">
-        <h1 class="display-4 mb-5">Separate Documents By Category</h1>
-        <img src="~/imgs/canvas.png" alt="Canvas Image" class="mb-5" />
-    </div>
-    <div class="container mt-5">
-        <h1>Handy Document Access</h1>
-        <img src="~/imgs/documents.png" alt="Canvas Image" />
+<section id="feature-section">
+    <div class="feature-container mt-5">
+        <h1 class="display-4 mb-5 mt-5">Get Started With BMT</h1>
+        <div class="feature-list mt-5">
+            <div class="feature">
+                <img src="https://thumbs.dreamstime.com/b/frustrated-upset-angry-businessman-works-paperwork-reports-documents-laptop-home-office-young-business-man-desk-looking-312098627.jpg" alt="feature-img1" />
+                <div class="layer">
+                    <h3>Organise Your Documents</h3>
+                    <p>
+                        Categorise Documents based on properties and categories to make them organised.
+                    </p>
+                    <a href="#feature-1">
+                        <i class="fa-solid fa-arrow-down"
+                           style="color: #00717F"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="feature">
+                <img src="~/imgs/featureImg2.jpg"
+                     alt="feature-img2" />
+                <div class="layer">
+                    <h3>Add Notes To Your Documents</h3>
+                    <p>
+                        Take Notes under you documents to be aware about the important dates...events..tasks..meetings.
+                    </p>
+                    <a href="#feature-2">
+                        <i class="fa-solid fa-arrow-down"
+                           style="color: #00717F"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="feature">
+                <img src="https://img.freepik.com/premium-photo/real-estate-agent-sales-manager-team-analysis-pricing-rental-lease-contract-sale-purchase-agreement-concerning-mortgage-loan-offer-house-insurance_265022-84916.jpg"
+                     alt="feature-img3" />
+                <div class="layer">
+                    <h3>Manage Documents Smoothly</h3>
+                    <p>
+                        Upload..View..Manage..Share your documents in an optimised and secure way. All in one place!
+                    </p>
+                    <a href="#feature-3">
+                        <i class="fa-solid fa-arrow-down"
+                           style="color: #00717F"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
 
     </div>
-      <div class="container mt-5 mb-5">
-        <h1>Easily Manage Your Document</h1>
-        <img src="~/imgs/preview.png" alt="Canvas Image" />
-   
+</section>
 
 
-    </div>     <button id="btn-register" class="btn btn-primary mt-6" type="button" onclick="window.location.href='@Url.Page("/Account/Register", new { area = "Identity" })'">
-        Get Started >
-    </button>
-    </section>
+
+<section class="item-section">
+        <div id="feature-1" class="container mt-5 mb-5">
+            <h1 class="display-4 mb-5 mt-5">Organise Your Documents</h1>
+
+            <div class="d-flex row image-flex-container">
+                <div class="image-wrapper">
+                    <h3>Properties</h3>
+                    <img src="~/imgs/properties.png" alt="Properties Image" class="img-flex mb-5" />
+                </div>
+                <div class="image-wrapper">
+                    <h3>Categories</h3>
+                    <img src="~/imgs/canvas.png" alt="Canvas Image" class="img-flex mb-5" />
+                </div>
+            </div>
+
+
+        </div>
+
+        <div id="feature-2" class="container mt-5 mb-5">
+            <h1 class="display-4 mb-5 mt-5">Add Notes To Your Documents</h1>
+            <img src="~/imgs/notes.png" alt="notes Image" class="mb-5" />
+
+        </div>
+ 
+
+        <div id="feature-3" class="container mt-5 mb-5 ">
+            <h1 class="display-4 mb-5 mt-5">Manage Documents Smoothly</h1>
+
+            <div class="d-flex row image-flex-container mt-5">
+                <div class="image-wrapper">
+                    <h3>One Document</h3>
+                    <img src="~/imgs/documents.png" alt="documents Image" class="img-flex mb-5" />
+                </div>
+                <div class="image-wrapper">
+                    <h3>Multiple Features...One Place!</h3>
+                    <img src="~/imgs/preview.png" alt="preview Image" class="img-flex mb-5" />
+                </div>
+            </div>
+
+
+        </div>
+  
+</section>
 
 
 
@@ -110,7 +437,7 @@
         typeSpeed: 50,
         backSpeed: 25,
         onComplete: (self) => {
-            self.stop(); 
+            self.stop();
         }
     });
 </script>

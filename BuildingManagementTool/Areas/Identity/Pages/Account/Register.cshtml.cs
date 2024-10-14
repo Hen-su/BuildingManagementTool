@@ -33,7 +33,7 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
-        private readonly RazorViewToStringRenderer _viewToStringRenderer;
+        private readonly IRazorViewToStringRenderer _viewToStringRenderer;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
@@ -41,7 +41,7 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            RazorViewToStringRenderer razorViewToString)
+            IRazorViewToStringRenderer razorViewToString)
         {
             _userManager = userManager;
             _userStore = userStore;
