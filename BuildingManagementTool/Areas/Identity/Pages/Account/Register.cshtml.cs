@@ -78,6 +78,7 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
         public class InputModel
         {
             [Required]
+            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 1)]
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
@@ -102,9 +103,6 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
 
-            [Required]
-            [Display(Name = "Role")]
-            public string Role { get; set; }
         }
 
 
@@ -142,12 +140,6 @@ namespace BuildingManagementTool.Areas.Identity.Pages.Account
                         pageHandler: null,
                         values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
                         protocol: Request.Scheme);
-
-                    // Assign the user to the selected role
-                    if (!await _userManager.IsInRoleAsync(user, Input.Role))
-                    {
-                        await _userManager.AddToRoleAsync(user, Input.Role);
-                    }
 
                     var model = new EmailViewModel { Username = user.FirstName, EmailLink = callbackUrl };
                     var viewPath = "Shared/EmailTemplates/ConfirmEmail";

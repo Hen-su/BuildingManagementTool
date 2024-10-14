@@ -17,10 +17,17 @@ namespace BuildingManagementTool.ViewModels
         [RegularExpression(@"^[a-zA-Z0-9 _-]+$", ErrorMessage = "Only upper and lowercase alphanumeric characters, hyphens, underscores and spaces are allowed.")]
         public string PropertyName { get; set; }
         public List<IFormFile>? Images { get; set; }
-        public ManagePropertyFormViewModel(List<Dictionary<int, List<string>>> images, Property property) 
+        [BindNever]
+        [ValidateNever]
+        public Dictionary<int, string> ViewerEmails { get; set; } = new Dictionary<int, string>();
+        [ValidateNever]
+        public AddViewerViewModel AddViewerViewModel { get; set; }
+        public ManagePropertyFormViewModel(List<Dictionary<int, List<string>>> images, Property property, string propertyName, Dictionary<int, string> emails) 
         {
             ImageUrls = images;
             CurrentProperty = property;
+            PropertyName = propertyName;
+            ViewerEmails = emails;
         }
         public ManagePropertyFormViewModel() { }
     }

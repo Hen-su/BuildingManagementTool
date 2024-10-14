@@ -53,7 +53,7 @@
 <h1 class="text-center mb-4">Welcome @currentUser.FirstName!</h1>
 <form id="searchForm" class="d-flex align-items-center mb-4">
     <input id="searchPropertyInput" class="form-control mr-sm-2" type="search" placeholder="Search Properties (Ex. Property Address)" aria-label="Search">
-    <button id="searchPropertyBtn" class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
+    <button id="searchPropertyBtn" class="btn btn-outline-primary my-2 my-sm-0" type="button">Search</button>
 </form>
 
 <div id="propertyContainer" class="container row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 justify-content-between">
@@ -92,51 +92,50 @@
             });
         });
 
-        $(document).on('click', '.deletePropertyModalBtn', function (event) {
+        $(document).off('click', '.deletePropertyModalBtn').on('click', '.deletePropertyModalBtn', function (event) {
             event.stopPropagation();
             console.log("deleteConf clicked")
-            var propertyId = $(this).data("id");
+            const propertyId = $(this).data("id");
             $("#propertyModalContainer").load("/UserProperty/DeleteConfirmationPartial?id=" + propertyId, function () {
                 $("#propertyModalContainer").modal("show");
             });
         })
 
-        $(document).on('click', '#addPropertyBtn', function (event) {
+        $(document).off('click', '#addPropertyBtn').on('click', '#addPropertyBtn', function (event) {
             console.log("Add clicked")
-            var propertyName = $("#propertyName").val();
-            console.log()
-            var propertyForm = $("#propertyForm")
-            if (propertyForm.valid()) {
-                $.ajax({
-                    url: '/UserProperty/AddProperty',
-                    type: 'POST',
-                    data: { name: propertyName },
-                    success: function (response) {
-                        if (response.success) {
-                            $.ajax({
-                                url: '/UserProperty/UpdatePropertyContainer',
-                                type: 'GET',
-                                success: function (result) {
-                                    $('#propertyModalContainer').modal('hide');
-                                    $('#propertyContainer').html(result);
-                                },
-                                error: function () {
-                                    displayErrorMessage(response);
-                                }
-                            });
-                        } else {
-                            displayErrorMessage(response);
-                        }
-                    },
-                    error: function (xhr) {
-                        displayErrorMessage(xhr);
+            const propertyForm = $("#propertyForm");
+            const formData = new FormData(propertyForm[0]);
+            $.ajax({
+                url: '/UserProperty/AddProperty',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    if (response.success) {
+                        $.ajax({
+                            url: '/UserProperty/UpdatePropertyContainer',
+                            type: 'GET',
+                            success: function (result) {
+                                $('#propertyModalContainer').modal('hide');
+                                $('#propertyContainer').html(result);
+                            },
+                            error: function () {
+                                displayErrorMessage(response);
+                            }
+                        });
+                    } else {
+                        console.log('return validation')
+                        $('#propertyModalContainer').html(response);
                     }
-                });
-            }
-            return
+                },
+                error: function (xhr) {
+                    displayErrorMessage(xhr);
+                }
+            });
         })
 
-        $(document).on('click', '#deletePropertyConfirmBtn', function (event) {
+        $(document).off('click', '#deletePropertyConfirmBtn').on('click', '#deletePropertyConfirmBtn', function (event) {
             console.log("Delete clicked")
             var propertyId = $("#deletePropertyConfirmBtn").data('id');
             $.ajax({
@@ -189,11 +188,6 @@
     })
 
 
-
-
-
-
-
     $(document).on('click', '#searchPropertyBtn', function (event) {
         event.preventDefault(); 
         console.log("Search clicked");
@@ -206,7 +200,6 @@
             data: { keyword: keyword },
             success: function (result) {
                 console.log('Results for searched property');
-                
                 $('#propertyContainer').html(result);
             },
             error: function (xhr, status, error) {

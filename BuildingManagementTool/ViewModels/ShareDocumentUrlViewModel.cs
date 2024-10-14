@@ -1,4 +1,7 @@
-﻿namespace BuildingManagementTool.ViewModels
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.ComponentModel.DataAnnotations;
+
+namespace BuildingManagementTool.ViewModels
 {
     public class ShareDocumentUrlViewModel
     {

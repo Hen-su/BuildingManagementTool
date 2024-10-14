@@ -160,6 +160,42 @@ namespace BuildingManagementTool.Migrations
                     b.ToTable("Documents");
                 });
 
+            modelBuilder.Entity("BuildingManagementTool.Models.Invitation", b =>
+                {
+                    b.Property<int>("InvitationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvitationId"));
+
+                    b.Property<DateTime?>("AcceptedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InvitedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("InvitationId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("Invitations");
+                });
+
             modelBuilder.Entity("BuildingManagementTool.Models.Property", b =>
                 {
                     b.Property<int>("PropertyId")
@@ -246,6 +282,10 @@ namespace BuildingManagementTool.Migrations
 
                     b.Property<int>("PropertyId")
                         .HasColumnType("int");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -404,6 +444,17 @@ namespace BuildingManagementTool.Migrations
                         .IsRequired();
 
                     b.Navigation("PropertyCategory");
+                });
+
+            modelBuilder.Entity("BuildingManagementTool.Models.Invitation", b =>
+                {
+                    b.HasOne("BuildingManagementTool.Models.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("BuildingManagementTool.Models.PropertyCategory", b =>

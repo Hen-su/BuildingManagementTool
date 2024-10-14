@@ -1,5 +1,4 @@
-﻿
-@model Document
+﻿@model AddNoteViewModel
 
 <div id="addNoteModal" class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered" role="document">
     <div class="modal-content px-4">
@@ -11,24 +10,21 @@
         <div class="modal-body">
             <form id="addNoteForm" method="post" enctype="multipart/form-data">
                 <div class="row justify-content-between">
-
-
-                    @if (!string.IsNullOrEmpty(Model.Note))
+                    @if (!string.IsNullOrEmpty(Model.Document.Note))
                     {
                         <div id="noteWarning" class="alert alert-warning">
                             <strong>Warning:</strong> This document already has a note. Submitting a new note will override the existing one.
                         </div>
 
-                        <label for="noteInput">Existing Note:</label>
-                        <textarea id="noteInput" class="form-control">@Model.Note</textarea>
-
+                        <label asp-for="Note" for="noteInput">Existing Note:</label>
+                        <textarea asp-for="Note" id="noteInput" class="form-control"></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
                     }
-
                     else
                     {
-                          <h4> Add Note to @Model.FileName </h4>
-                    <input id="noteInput" class="form-control" autocomplete="Add your note here" />
-
+                        <h4> Add Note to @Model.Document.FileName </h4>
+                        <input asp-for="Note" id="noteInput" class="form-control" type="text" placeholder="Add your note here" />
+                        <span asp-validation-for="Note" class="text-danger"></span>
                     }
                     <div id="noteError" class="text-danger" style="display:none;"></div>
                 </div>
@@ -38,8 +34,8 @@
         <div class="modal-footer">
             <div class="row justify-content-end">
                 <div class="col-auto">
-                    <button type="button" class="btn btn-secondary btn-md rounded" data-bs-dismiss="modal">Close</button>
-                    <button id="submitNoteBtn" data-id="@Model.DocumentId" class="btn btn-primary btn-md rounded">Create Note</button>
+                    <button type="button" class="btn-secondary btn-md rounded" data-bs-dismiss="modal">Close</button>
+                    <button id="submitNoteBtn" data-id="@Model.Document.DocumentId" class="btn btn-primary btn-md rounded">Create Note</button>
                 </div>
                 
             </div>

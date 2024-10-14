@@ -112,12 +112,6 @@
                 <input asp-for="Input.LastName" class="form-control" autocomplete="username" aria-required="true" />
                 <span asp-validation-for="Input.LastName" class="text-danger"></span>
 
-                <h4>Role</h4>
-                <select asp-for="Input.Role" aria-required="true" class=" form-control" asp-items="@(new SelectList(new[] { "Viewer", "Manager" })) ">
-                    <option value="">Select a role</option>
-                </select>
-                <span asp-validation-for="Input.Role" class="text-danger"></span>
-
                 <h4>Password</h4>
                 <input asp-for="Input.Password" class="form-control" autocomplete="family-name" aria-required="true" />
                 <span asp-validation-for="Input.Password" class="text-danger"></span>

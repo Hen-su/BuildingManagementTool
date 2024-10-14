@@ -67,7 +67,7 @@
                 <div class="col-lg-11">
                     <h5 class="card-title">@Model.UserProperty.Property.PropertyName</h5>
                 </div>
-                @if (User.IsInRole("Manager"))
+                @if (Model.UserProperty.Role.Name == "Manager")
                 {
                     <partial name="_PropertyDropdownMenu" model="@Model.UserProperty"></partial>
                 }

@@ -1,22 +1,22 @@
-﻿@model IEnumerable<BuildingManagementTool.Models.Document>
-
-  
-
+﻿@model DocumentNotesViewModel
 
 <div class="document-notes-list d-flex flex-wrap justify-content-start">
-    @if (Model.Any(document => !string.IsNullOrEmpty(document.Note)))
+    @if (Model.Documents.Any(document => !string.IsNullOrEmpty(document.Note)))
     {
-        @foreach (var document in Model)
+        @foreach (var document in Model.Documents)
         {
             @if (!string.IsNullOrEmpty(document.Note))
             {
                 <div class="note-container card p-3 mb-3 mx-2 shadow-sm"
                      style="background:rgb(255, 225, 73); width: 18rem; min-height: 300px; border-radius: 10px;
-     @if (document.IsActiveNote)
-     {
-         @:border-style: solid; border-color: green; border-width: 5px;
-     }" data-id="@document.DocumentId">
-                    <button data-id="@document.DocumentId" class="deleteNoteBtn col btn btn-close" type="button"></button>
+                 @if (document.IsActiveNote)
+                 {
+                     @:border-style: solid; border-color: green; border-width: 5px;
+                 }" data-id="@document.DocumentId">
+                    @if(Model.Role == "Manager")
+                    {
+                        <button data-id="@document.DocumentId" class="deleteNoteBtn col btn btn-close" type="button"></button>
+                    }
                     <div class="card-body d-flex flex-column justify-content-between">
                         <!-- Document Name -->
                         <div class="mb-1">
@@ -31,15 +31,17 @@
                                 @document.Note
                             </p>
                         </div>
-
-                        <!-- Active Note Checkbox-->
-                        <div class="d-flex align-items-center justify-content-center mb-3">
+                        @if(Model.Role == "Manager")
+                        {
+                            <!-- Active Note Checkbox-->
+                            <div class="d-flex align-items-center justify-content-center mb-3">
                             <input type="checkbox" class="active-note-checkbox" data-id="@document.DocumentId" style="transform: scale(2);"
                             @if (document.IsActiveNote)
                             {
                                 <text>checked</text>
                             } />
-                        </div>
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -50,9 +52,6 @@
         <p>No notes available!</p>
     }
 </div>
-
-
-
 
 <script>
     $(document).ready(function () {
@@ -79,42 +78,45 @@
             });
         });
 
-        $(".active-note-checkbox").on("change", function () {
-            var selected = $(".active-note-checkbox:checked").length;
+        var role = '@Model.Role';
+        if (role == "Manager"){
+            $(".active-note-checkbox").on("change", function () {
+                var selected = $(".active-note-checkbox:checked").length;
 
-            if ($(this).is(":checked")) {
-                $(this).closest(".note-container").css({
-                    "border-style": "solid",
-                    "border-color": "green",
-                    "border-width": "5px"
-                });
-            } else {
-                // Remove the border if unchecked
-                $(this).closest(".note-container").css({
-                    "border": "none"
-                });
-            }
+                if ($(this).is(":checked")) {
+                    $(this).closest(".note-container").css({
+                        "border-style": "solid",
+                        "border-color": "green",
+                        "border-width": "5px"
+                    });
+                } else {
+                    // Remove the border if unchecked
+                    $(this).closest(".note-container").css({
+                        "border": "none"
+                    });
+                }
 
-            if (selected > maxActiveNotes) {
-                $(this).prop("checked", false);
-                $(this).closest(".note-container").css({
-                    "border": "none"
-                });
-                $.get("/Document/ActiveNotesWarning", function (response) {
-                    $("#modalContainer").html(response);
-                    $("#modalContainer").modal("show");
-                });
-            } else {
-                var documentId = $(this).data("id");
-                var isActive = $(this).is(":checked");
+                if (selected > maxActiveNotes) {
+                    $(this).prop("checked", false);
+                    $(this).closest(".note-container").css({
+                        "border": "none"
+                    });
+                    $.get("/Document/ActiveNotesWarning", function (response) {
+                        $("#modalContainer").html(response);
+                        $("#modalContainer").modal("show");
+                    });
+                } else {
+                    var documentId = $(this).data("id");
+                    var isActive = $(this).is(":checked");
 
-                $.post("/Document/SetActiveNote", { documentId: documentId, isActive: isActive }, function (response) {
-                    if (!response.success) {
-                        alert(response.message);
-                    }
-                });
-            }
-        });
+                    $.post("/Document/SetActiveNote", { documentId: documentId, isActive: isActive }, function (response) {
+                        if (!response.success) {
+                            alert(response.message);
+                        }
+                    });
+                }
+            });
+        }
     });
 
 </script>
