@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -24,11 +27,9 @@
             background-attachment: fixed;
         }
 
-            body.dark-theme {
-                background-image: url('https://wallpapercave.com/wp/wp3357397.jpg'); /* Dark theme background */
-            }
-
-
+        body.dark-theme {
+            background-image: url('https://wallpapercave.com/wp/wp3357397.jpg'); /* Dark theme background */
+        }
 
         nav{
             opacity:0.6;
@@ -62,16 +63,19 @@
         footer {
             margin-top: 5%;
             z-index: 10;
+            background-color: #f0f0f0;
+            opacity: 0.6;
         }
 
-            footer h2,
-            p {
-                text-align: center;
-            }
+        footer h2,
+        p {
+            text-align: center;
+            margin-top: 10px;
+        }
 
-            footer a {
-                margin: 0 10px;
-            }
+        footer a {
+            margin: 0 10px;
+        }
 
        
         .theme-switch {
@@ -82,9 +86,9 @@
         }
 
            
-            .theme-switch input {
-                display: none;
-            }
+        .theme-switch input {
+            display: none;
+        }
 
       
         .slider {
@@ -143,7 +147,6 @@
                     <img id="logo" src="https://icons.veryicon.com/png/o/file-type/doctype/folder-314.png" alt="BMT logo" />
                     BuildingManagementCanvas
                 </a>
-              
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                       
@@ -161,16 +164,16 @@
         </nav>
     </header>
 
-    <div class="container" style="margin: 5% auto">
+    <div class="container" style="margin: 5% auto;">
         <main role="main" class="pb-5">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="border-top bg-white footer">
         <div class="container">
-            <h2>Building Management Canvas</h2>
-            <p>AHA &copy; 2024 - BuildingManagementTool</p>
+            <h2 class="text-dark">Building Management Canvas</h2>
+            <p class="text-dark">AHA &copy; 2024 - BuildingManagementTool</p>
         </div>
     </footer>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

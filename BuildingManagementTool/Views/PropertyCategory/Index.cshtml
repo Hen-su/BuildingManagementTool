@@ -152,9 +152,6 @@
 @if (Model.Role == "Manager")
 {
     <h2 class="mt-5 mb-5">You're in Manage Mode!</h2>
-    <a id="btnPrintCanvas"> 
-      <i class="fas fa-print"></i>
-    </a>
     <a id="addCategoryModalBtn">
         <i class="fas fa-plus"></i>
     </a>
@@ -163,7 +160,9 @@ else
 {
     <h2 class="mt-5 mb-5">You're in View Mode!</h2>
 }
-<a id="btnPrintCanvas" class="btn btn-info mb-3">Print Canvas</a>
+<a id="btnPrintCanvas"> 
+      <i class="fas fa-print"></i>
+    </a>
 <h2 class="text-center mb-4">@Model.Property.PropertyName</h2>
 
 <div id="categoryContainer">
@@ -335,22 +334,23 @@ else
         }
 
         $(document).on('input', '.colorPicker', function (event) {
-        const color = $(this).val();
-        $(this).closest('.categoryBox, .sideBox').css('background-color', color);
+            const color = $(this).val();
+            $(this).closest('.categoryBox, .sideBox').css('background-color', color);
 
-        // Send the color change to the server
-        const categoryId = $(this).closest('.categoryBox, .sideBox').data('id');
-        $.ajax({
-            url: '/PropertyCategory/UpdateColor',
-            type: 'POST',
-            data: { id: categoryId, color: color },
-            success: function () {
-                console.log('Color updated successfully');
-            },
-            error: function (xhr, status, error) {
-                console.error("Error updating color: " + error);
-            }
-        });
+            // Send the color change to the server
+            const categoryId = $(this).closest('.categoryBox, .sideBox').data('id');
+            $.ajax({
+                url: '/PropertyCategory/UpdateColor',
+                type: 'POST',
+                data: { id: categoryId, color: color },
+                success: function () {
+                    console.log('Color updated successfully');
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error updating color: " + error);
+                }
+            });
+        })
     })
 
 </script>
