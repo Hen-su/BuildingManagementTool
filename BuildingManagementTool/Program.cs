@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Twitter;
 using BuildingManagementTool.Services.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("BuildingManagementToolDbContextConnection") ?? throw new InvalidOperationException("Connection string 'BuildingManagementToolDbContextConnection' not found.");
@@ -63,26 +64,31 @@ builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 // Add external authentication providers
 builder.Services.AddAuthentication()
-   .AddGoogle(options =>
-   {
-       IConfigurationSection googleAuthNSection =
-       config.GetSection("Authentication:Google");
-       options.ClientId = googleAuthNSection["ClientId"];
-       options.ClientSecret = googleAuthNSection["ClientSecret"];
-   })
-   .AddFacebook(options =>
-   {
-       IConfigurationSection FBAuthNSection =
-       config.GetSection("Authentication:FB");
-       options.ClientId = FBAuthNSection["ClientId"];
-       options.ClientSecret = FBAuthNSection["ClientSecret"];
-   })
-   .AddTwitter(twitterOptions =>
-   {
-       twitterOptions.ConsumerKey = config["Authentication:Twitter:ConsumerAPIKey"];
-       twitterOptions.ConsumerSecret = config["Authentication:Twitter:ConsumerSecret"];
-       twitterOptions.RetrieveUserDetails = true;
-   });
+.AddGoogle(options =>
+{
+    IConfigurationSection googleAuthNSection =
+    config.GetSection("Authentication:Google");
+    options.ClientId = googleAuthNSection["ClientId"];
+    options.ClientSecret = googleAuthNSection["ClientSecret"];
+    options.Events.OnRedirectToAuthorizationEndpoint = context =>
+    {
+        context.Response.Redirect(context.RedirectUri + "&prompt=consent");
+        return Task.CompletedTask;
+    };
+})
+.AddFacebook(options =>
+{
+    IConfigurationSection FBAuthNSection =
+    config.GetSection("Authentication:FB");
+    options.ClientId = FBAuthNSection["ClientId"];
+    options.ClientSecret = FBAuthNSection["ClientSecret"];
+})
+.AddTwitter(twitterOptions =>
+{
+    twitterOptions.ConsumerKey = config["Authentication:Twitter:ConsumerAPIKey"];
+    twitterOptions.ConsumerSecret = config["Authentication:Twitter:ConsumerSecret"];
+    twitterOptions.RetrieveUserDetails = true;
+});
 // Add custom role authorization
 builder.Services.AddAuthorization(options =>
 {
