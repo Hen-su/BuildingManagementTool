@@ -1,4 +1,4 @@
-﻿@model Document
+﻿@model ShareDocumentFormViewModel
 
 <div id="shareDocumentUrl" class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered" role="document">
     <div class="modal-content px-4">
@@ -10,13 +10,11 @@
         <div class="modal-body">
             <form id="shareDocumentUrlForm">
                 <div class="row justify-content-between">
-                    <div id="documentShareUrlMessage">Fetching URL for @Model.FileName...</div>
+                    <div id="documentShareUrlMessage">Fetching URL for @Model.Document.FileName...</div>
 
                     <div class="row align-items-center mb-3">
                         <div class="col-10 p-1">
-                            <a id="documentShareUrlLink" href="#" target="_blank" class="form-control text-truncate" title="Document URL">
-                               
-                            </a>
+                            <input asp-for="Url" id="documentShareUrlLink" class="form-control text-truncate" title="Document URL" readonly />
                         </div>
                         <div class="col-auto">
                             <button type="button" id="copyUrlBtn" class="btn btn-primary">
@@ -29,19 +27,15 @@
 
                     <div class="row align-items-center mb-3 mt-2">
                         <div class="col-10 p-1">
-                          
-                            <input id="shareEmail" class="form-control mx-2"/>
+                            <input asp-for="Email" id="shareEmail" class="form-control mx-2"/>
                         </div>
                         <div class="col-auto">
                             <button type="button" id="sendEmailBtn" class="btn btn-primary">
                                 <i class="bi bi-clipboard"></i> Share
                             </button>
                         </div>
+                        <span asp-validation-for="Email" class="text-danger"></span>
                     </div>
-
-
-
-              
                     <div id="urlCopiedAlert" class="alert alert-success" role="alert" style="display:none;">
                         URL Copied!
                     </div>
@@ -65,17 +59,15 @@
 
 <script>
     $(document).ready(function () {
-        var documentId = "@Model.DocumentId"; 
+        const documentId = "@Model.Document.DocumentId"; 
 
-        
         $.ajax({
             url: "/Blob/GetDocumentShareUrl?id=" + encodeURIComponent(documentId),
             type: "GET",
             success: function (response) {
                 if (response.success) {
-                   
-                    $("#documentShareUrlMessage").text("Document URL for @Model.FileName:");
-                    $("#documentShareUrlLink").text(response.url).attr("href", response.url);
+                    $("#documentShareUrlMessage").text("Document URL for @Model.Document.FileName:");
+                    $("#documentShareUrlLink").val(response.url);
                 } else {
                     $("#documentShareUrlMessage").text("Error: Unable to fetch the document URL.");
                 }
@@ -87,9 +79,7 @@
 
      
         $("#copyUrlBtn").click(function () {
-            var url = $("#documentShareUrlLink").text(); 
-
-        
+            const url = $("#documentShareUrlLink").text(); 
             navigator.clipboard.writeText(url).then(function () {
                
                 $("#urlCopiedAlert").show().delay(2000).fadeOut();
@@ -98,32 +88,23 @@
             });
         });
 
-
-
-
-
         $("#sendEmailBtn").click(function () {
-            var email = $("#shareEmail").val();
-            var documentId = "@Model.DocumentId";
-            var url = $("#documentShareUrlLink").text();
-
-            console.log(email, documentId,url);
-
+            const documentId = "@Model.Document.DocumentId";
+            const shareForm = $("#shareDocumentUrlForm");
+            const formData = new FormData(shareForm[0]);
+            formData.append("documentId", documentId)
             $.ajax({
                 url: "/Document/ShareDocumentUrl",
                 type: "POST",
-                data: {
-                    documentId: documentId,
-                    email: email,
-                    url: url
-
-                },
+                data: formData,
+                contentType: false,
+                processData: false,
                 success: function (response) {
                     if (response.success) {
-                      
                         $("#urlSentAlert").show().delay(2000).fadeOut();
                     } else {
-                        alert("Error: " + response.message);
+                        console.log("return validation")
+                        $("#modalContainer").html(response);
                     }
                 },
                 error: function () {
@@ -131,12 +112,5 @@
                 }
             });
         });
-
-
-
-
-
-
-
     });
 </script>

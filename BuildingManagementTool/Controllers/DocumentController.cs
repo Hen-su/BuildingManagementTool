@@ -391,15 +391,14 @@ namespace BuildingManagementTool.Controllers
                 };
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
-
-            return PartialView("_GetDocumentShareUrl", document);
+            var viewModel = new ShareDocumentFormViewModel { Document = document };
+            return PartialView("_GetDocumentShareUrl", viewModel);
         }
 
         [HttpPost]
-        public async Task<IActionResult> ShareDocumentUrl(int documentId, string email, string url)
+        public async Task<IActionResult> ShareDocumentUrl(int documentId, ShareDocumentFormViewModel viewModel)
         {
             var document = await _documentRepository.GetById(documentId);
-
             if (document == null)
             {
                 var problemDetails = new ProblemDetails
@@ -411,17 +410,23 @@ namespace BuildingManagementTool.Controllers
                 return StatusCode(StatusCodes.Status404NotFound, problemDetails);
             }
 
+            if (!ModelState.IsValid)
+            {
+                viewModel.Document = document;
+                return PartialView("_GetDocumentShareUrl", viewModel);
+            }
+
             var model = new ShareDocumentUrlViewModel
             {
                 FileName = document.FileName,
-                Url = url
+                Url = viewModel.Url
             };
 
             var emailContent = await _viewToStringRenderer.RenderViewToStringAsync("Shared/EmailTemplates/ShareDocumentUrlEmail", model, HttpContext);
 
             try
             {
-                await _emailSender.SendEmailAsync(email, "Document Share Link", emailContent);
+                await _emailSender.SendEmailAsync(viewModel.Email, "Document Share Link", emailContent);
             }
             catch (Exception ex)
             {

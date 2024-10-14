@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using System.Security.Policy;
 
 
 
@@ -622,6 +624,7 @@ namespace BuildingManagementTool.Tests
         {
             int id = 1;
             Document document = new Document { DocumentId = 1 };
+            var viewModel = new ShareDocumentFormViewModel { Document = document };
 
             _mockDocumentRepository.Setup(d => d.AllDocuments).Returns(new List<Document> { document }.AsQueryable());
 
@@ -629,8 +632,6 @@ namespace BuildingManagementTool.Tests
 
             Assert.IsNotNull(result);
             Assert.AreEqual("_GetDocumentShareUrl", result.ViewName);
-            Assert.AreEqual(document, result.Model);
-        
         }
 
         [Test]
@@ -639,11 +640,12 @@ namespace BuildingManagementTool.Tests
             var documentId = 1;
             var email = "test@example.com";
             var url = "https://devstoreaccount1/test/category/test.pdf";
+            var viewModel = new ShareDocumentFormViewModel { Email = email, Url = url };
 
             _mockDocumentRepository.Setup(d => d.AllDocuments)
                 .Returns(new List<Document>().AsQueryable());
 
-            var result = await _documentController.ShareDocumentUrl(documentId, email, url);
+            var result = await _documentController.ShareDocumentUrl(documentId, viewModel);
 
             Assert.NotNull(result);
             var objectResult = result as ObjectResult;
@@ -659,6 +661,7 @@ namespace BuildingManagementTool.Tests
             var url = "https://devstoreaccount1/test/category/test.pdf";
 
             var document = new Document { DocumentId = documentId, FileName = "test.pdf" };
+            var viewModel = new ShareDocumentFormViewModel { Email = email, Url = url, Document = document };
 
             _mockDocumentRepository.Setup(d => d.GetById(documentId))
                 .ReturnsAsync(document);
@@ -669,7 +672,7 @@ namespace BuildingManagementTool.Tests
             _mockEmailSender.Setup(e => e.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()))
                 .ThrowsAsync(new Exception("SMTP error"));
 
-            var result = await _documentController.ShareDocumentUrl(documentId, email, url);
+            var result = await _documentController.ShareDocumentUrl(documentId, viewModel);
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOf<JsonResult>(result);
@@ -686,6 +689,8 @@ namespace BuildingManagementTool.Tests
             var url = "https://devstoreaccount1/test/category/test.pdf";
 
             var document = new Document { DocumentId = documentId, FileName = "TestDocument.pdf" };
+            var viewModel = new ShareDocumentFormViewModel { Email = email, Url = url, Document = document };
+
             _mockDocumentRepository.Setup(d => d.GetById(documentId)).ReturnsAsync(document);
 
             _renderer.Setup(v => v.RenderViewToStringAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<HttpContext>()))
@@ -694,7 +699,7 @@ namespace BuildingManagementTool.Tests
             _mockEmailSender.Setup(e => e.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
-            var result = await _documentController.ShareDocumentUrl(documentId, email, url);
+            var result = await _documentController.ShareDocumentUrl(documentId, viewModel);
 
             Assert.IsNotNull(result);
             Assert.IsInstanceOf<JsonResult>(result);
