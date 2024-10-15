@@ -74,7 +74,7 @@
                                     if (kvp.Value != null && kvp.Value.Count > 0 && !string.IsNullOrEmpty(kvp.Value[0]))
                                     {
                                         var isSelected = kvp.Value.Count > 2 && kvp.Value[2] == "True" ? "selected-item" : "";
-                                        <div class="mt-0 col gallery-item d-flex justify-content-center align-items-center @isSelected" data-file="@kvp.Value[0]">
+                                        <div class="mt-0 mx-2 col gallery-item d-flex justify-content-center align-items-center @isSelected" data-file="@kvp.Value[0]">
                                             <button type="button" class="remove-img-btn fas fa-xmark"></button>
                                             <img class="img-fluid" src="@kvp.Value[1]" />
                                         </div>
@@ -249,7 +249,10 @@
             var formData = new FormData(propertyForm[0])
             formData.append('id', propertyId);
             formData.append('selectedFileName', selectedItemName);
-            formData.append('filesToRemove', filesToRemove);
+            // Append each file to remove separately
+            filesToRemove.forEach(function (file) {
+                formData.append('filesToRemove', file);  // Append each item in the filesToRemove array
+            });
             $.ajax({
                 url: '/UserProperty/ManagePropertyFormSubmit',
                 type: 'POST',
