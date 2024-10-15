@@ -42,16 +42,28 @@
             z-index: 100;
         }
 
+        .navbar-brand{
+            font-size: 2rem;
+
+        }
+
         #logo {
             width: 60px;
             height: 60px;
 
         }
 
+
+        .nav-item, .nav-link{
+            font-weight:bolder;
+        }
+
+
         .nav-item a {
             transition: background 0.5s, font-weight 0.5s, border-radius 0.5s;
         }
 
+       
 
         .nav-item a:hover{
             background: #2196F3;
@@ -137,13 +149,13 @@
             font-size: 16px;
             color: #333;
         }
-    </style>
+    </style> 
 </head>
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                <a class="navbar-brand fw-bolder" asp-area="" asp-controller="Home" asp-action="Index">
                     <img id="logo" src="https://icons.veryicon.com/png/o/file-type/doctype/folder-314.png" alt="BMT logo" />
                     BuildingManagementCanvas
                 </a>
