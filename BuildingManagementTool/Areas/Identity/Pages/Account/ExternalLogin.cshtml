@@ -4,37 +4,110 @@
     ViewData["Title"] = "Register";
 }
 
-<h1>@ViewData["Title"]</h1>
-<h2 id="external-login-title">Associate your @Model.ProviderDisplayName account.</h2>
-<hr />
+<style>
+    /*--------Sign In---------*/
+    #external-login {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
 
-<p id="external-login-description" class="text-info">
-    You've successfully authenticated with <strong>@Model.ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
-</p>
+        #external-login h1, h3 {
+            margin: 25px 0;
+        }
 
-<div class="row">
-    <div class="col-md-4">
-        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email."/>
-                <label asp-for="Input.Email" class="form-label"></label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
+    .external-login-container {
+        width: 100%;
+        max-width: 480px;
+        padding: 20px;
+    }
+
+        .external-login-container h1, h2 {
+            text-align: center;
+        }
+
+    .external-login-form {
+        padding: 30px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        width: 100%;
+    }
+
+        .external-login-form h1 {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .external-login-form p {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .external-login-form input {
+            width: 100%;
+            outline: none;
+            padding: 12px;
+            margin: 8px 0;
+            font-size: 14px;
+            border-radius: 6px;
+            color: #333;
+        }
+
+    #btn-register {
+        width: 100%;
+        background: #000;
+        color: #fff;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 12px;
+        margin: 25px 0;
+        transition: background 0.3s;
+    }
+
+        #btn-register:hover {
+            background: #333;
+        }
+</style>
+
+<section id="external-login">
+    <div class="external-login-container mt-5">
+        <h1 class="text-light">Building Management Canvas</h1>
+        <div class="external-login-form">
+            <h2>@ViewData["Title"]</h2>
+            <h2 id="external-login-title">Associate your @Model.ProviderDisplayName account.</h2>
+            <hr />
+
+            <p id="external-login-description" class="text-info">
+                You've successfully authenticated with <strong>@Model.ProviderDisplayName</strong>.
+                Please enter an email address for this site below and click the Register button to finish
+                logging in.
+            </p>
+
+            <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-warning" role="alert"></div>
+
+                <h4>Email</h4>
+                <input asp-for="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
+                <span asp-validation-for="Input.Email" class="text-warning"></span>
 
                 <h4>First Name</h4>
                 <input asp-for="Input.FirstName" class="form-control" autocomplete="given-name" aria-required="true" />
-                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+                <span asp-validation-for="Input.FirstName" class="text-warning"></span>
 
                 <h4>Last Name</h4>
                 <input asp-for="Input.LastName" class="form-control" autocomplete="username" aria-required="true" />
-                <span asp-validation-for="Input.LastName" class="text-danger"></span>
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
+                <span asp-validation-for="Input.LastName" class="text-warning"></span>
+
+                <button type="submit" id="btn-register" class="w-100 btn btn-lg">Register</button>
+            </form>
+        </div>
     </div>
-</div>
+</section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
