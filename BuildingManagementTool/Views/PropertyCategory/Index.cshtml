@@ -151,19 +151,19 @@
 
 @if (Model.Role == "Manager")
 {
-    <h2 class="mt-5 mb-5">You're in Manage Mode!</h2>
+    <h2 class="mt-5 mb-5 text-light">You're in Manage Mode!</h2>
     <a id="addCategoryModalBtn">
         <i class="fas fa-plus"></i>
     </a>
 }
 else
 {
-    <h2 class="mt-5 mb-5">You're in View Mode!</h2>
+    <h2 class="mt-5 mb-5 text-light">You're in View Mode!</h2>
 }
 <a id="btnPrintCanvas"> 
       <i class="fas fa-print"></i>
     </a>
-<h2 class="text-center mb-4">@Model.Property.PropertyName</h2>
+<h2 class="text-center mb-4 text-light">@Model.Property.PropertyName</h2>
 
 <div id="categoryContainer">
     <partial name="_CategoryCanvas" model="Model" />
