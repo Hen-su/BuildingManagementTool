@@ -222,7 +222,7 @@ else
                         $.ajax({
                             url: '/PropertyCategory/UpdateCategoryCanvas',
                             type: 'GET',
-                            data: { id, propertyId },
+                            data: { id: propertyId },
                             success: function (result) {
                                 $('#categoryModalContainer').modal('hide');
                                 $('#categoryContainer').html(result);
