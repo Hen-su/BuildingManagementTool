@@ -544,7 +544,7 @@ namespace BuildingManagementTool.Tests
         public async Task ManagePropertyFormSubmit_RemoveImage_ReturnSuccess()
         {
             int id = 1;
-            string[] fileToRemove = ["image1.jpg"];
+            List<string> fileToRemove = ["image1.jpg"];
             List<PropertyImage> imageList = new List<PropertyImage> 
             { 
                 new PropertyImage { Id = 1, FileName = "image1.jpg", BlobName = "Test Property/images/image1.jpg", IsDisplay = false, PropertyId = 1 },
@@ -581,7 +581,7 @@ namespace BuildingManagementTool.Tests
         public async Task ManagePropertyFormSubmit_RemoveImageNull_NoFilesRemovedReturnSuccess()
         {
             int id = 1;
-            string[] fileToRemove = [];
+            List<string> fileToRemove = [];
             List<PropertyImage> imageList = new List<PropertyImage>
             {
                 new PropertyImage { Id = 1, FileName = "image1.jpg", BlobName = "Test Property/images/image1.jpg", IsDisplay = false, PropertyId = 1 },
