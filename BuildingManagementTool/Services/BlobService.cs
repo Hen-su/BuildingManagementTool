@@ -14,78 +14,16 @@ namespace BuildingManagementTool.Services
     public class BlobService : IBlobService
     {
         private readonly BlobServiceClient _blobServiceClient;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ISASTokenHandler _sasTokenHandler;
         private readonly IConfiguration _configuration;
-        public BlobService(BlobServiceClient blobServiceClient, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+        private readonly IBlobClientFactory _blobClientFactory;
+
+        public BlobService(BlobServiceClient blobServiceClient, ISASTokenHandler sasTokenHandler, IConfiguration configuration, IBlobClientFactory blobClientFactory)
         {
             _blobServiceClient = blobServiceClient;
-            _httpContextAccessor = httpContextAccessor;
+            _sasTokenHandler = sasTokenHandler;
             _configuration = configuration;
-        }
-
-        public async Task<string> GenerateAndStoreContainerSasToken(string containerName, string role)
-        {
-            // Get a reference to the container
-            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-            // Ensure the container exists
-            if (!await containerClient.ExistsAsync())
-            {
-                throw new Exception($"Container '{containerName}' does not exist.");
-            }
-
-            // Create a SAS token for the container
-            BlobSasBuilder sasBuilder = new BlobSasBuilder
-            {
-                BlobContainerName = containerName,
-                Resource = "c", // 'c' stands for container-level
-                ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
-            };
-
-            // Assign permissions (e.g., Read, Write, List, Delete)
-            if(role == "Manager")
-            {
-                sasBuilder.SetPermissions(BlobContainerSasPermissions.All);
-            }
-            else
-            {
-                sasBuilder.SetPermissions(BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List);
-            }
-            // Get the Storage Key to sign the SAS token)
-            var accountName = _configuration["AzureStorage:AccountName"];
-            var accountKey = _configuration["AzureStorage:AccountKey"];
-            StorageSharedKeyCredential sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
-
-            // Generate the SAS token using the StorageSharedKeyCredential
-            var sasToken = sasBuilder.ToSasQueryParameters(sharedKeyCredential);
-
-            // Store the SAS token in session using the container name as the key
-            _httpContextAccessor.HttpContext.Session.SetString($"containerSasToken_{containerName}", sasToken.ToString());
-
-            return sasToken.ToString();
-        }
-
-        // Method to retrieve a container-level SAS token from the session
-        public async Task<string> GetContainerSasTokenFromSession(string containerName, string role)
-        {
-            var session = _httpContextAccessor.HttpContext.Session;
-            var sasToken = session.GetString($"containerSasToken_{containerName}");
-            if( sasToken == null )
-            {
-                sasToken = await GenerateAndStoreContainerSasToken(containerName, role);
-            }
-            var sasTokenParams = System.Web.HttpUtility.ParseQueryString(new Uri($"https://example.com?{sasToken}").Query);
-
-            if (DateTimeOffset.TryParse(sasTokenParams["se"], out var expiryTime)) // "se" is the expiration time parameter
-            {
-                if (expiryTime < DateTimeOffset.UtcNow)
-                {
-                    // The token has expired
-                    sasToken = await GenerateAndStoreContainerSasToken(containerName, role);
-                    return sasToken;
-                }
-            }
-            return sasToken;
+            _blobClientFactory = blobClientFactory;
         }
 
         public async Task CreateBlobContainer(string containerName)
@@ -96,14 +34,14 @@ namespace BuildingManagementTool.Services
 
         public async Task<bool> BlobExistsAsync(string containerName, string blobName, string role)
         {
-            string sasToken = await GetContainerSasTokenFromSession(containerName, role);
+            string sasToken = await _sasTokenHandler.GetContainerSasTokenFromSession(containerName, role);
 
             if (string.IsNullOrEmpty(sasToken))
             {
                 throw new InvalidOperationException($"SAS token for container '{containerName}' is missing or invalid.");
             }
             var blobUri = new Uri($"http://127.0.0.1:10000/{_configuration["AzureStorage:AccountName"]}/{containerName}/{blobName}?{sasToken}");
-            var blobClient = new BlobClient(blobUri);
+            var blobClient = _blobClientFactory.CreateBlobClient(blobUri);
             return await blobClient.ExistsAsync();
         }
 
@@ -115,7 +53,7 @@ namespace BuildingManagementTool.Services
             }
             try
             {
-                string sasToken = await GetContainerSasTokenFromSession(containerName, role);
+                string sasToken = await _sasTokenHandler.GetContainerSasTokenFromSession(containerName, role);
 
                 if (string.IsNullOrEmpty(sasToken))
                 {
@@ -125,7 +63,7 @@ namespace BuildingManagementTool.Services
                 await containerClient.CreateIfNotExistsAsync();
 
                 var blobUri = new Uri($"http://127.0.0.1:10000/{_configuration["AzureStorage:AccountName"]}/{containerName}/{blobName}?{sasToken}");
-                var blobClient = new BlobClient(blobUri);
+                var blobClient = _blobClientFactory.CreateBlobClient(blobUri);
                 await blobClient.UploadAsync(data, headers);
                 return true;
             }
@@ -138,13 +76,13 @@ namespace BuildingManagementTool.Services
         {
             try
             {
-                string sasToken = await GetContainerSasTokenFromSession(containerName, role);
+                string sasToken = await _sasTokenHandler.GetContainerSasTokenFromSession(containerName, role);
                 if (string.IsNullOrEmpty(sasToken))
                 {
                     throw new InvalidOperationException($"SAS token for container '{containerName}' is missing or invalid.");
                 }
                 var blobUri = new Uri($"http://127.0.0.1:10000/{_configuration["AzureStorage:AccountName"]}/{containerName}/{blobName}?{sasToken}");
-                var blobClient = new BlobClient(blobUri);
+                var blobClient = _blobClientFactory.CreateBlobClient(blobUri);
                 return await blobClient.DeleteIfExistsAsync();
             }
             catch
@@ -157,7 +95,7 @@ namespace BuildingManagementTool.Services
         {
             try 
             {
-                string sasToken = await GetContainerSasTokenFromSession(containerName, role);
+                string sasToken = await _sasTokenHandler.GetContainerSasTokenFromSession(containerName, role);
                 if (string.IsNullOrEmpty(sasToken))
                 {
                     throw new InvalidOperationException($"SAS token for container '{containerName}' is missing or invalid.");
@@ -182,7 +120,7 @@ namespace BuildingManagementTool.Services
 
         public async Task<string> GetBlobUrlAsync(string containerName, string blobName, string role)
         {
-            string sasToken = await GetContainerSasTokenFromSession(containerName, role);
+            string sasToken = await _sasTokenHandler.GetContainerSasTokenFromSession(containerName, role);
             if (string.IsNullOrEmpty(sasToken))
             {
                 throw new InvalidOperationException($"SAS token for container '{containerName}' is missing or invalid.");
@@ -203,14 +141,14 @@ namespace BuildingManagementTool.Services
         {
             try
             {
-                string sasToken = await GetContainerSasTokenFromSession(containerName, role);
+                string sasToken = await _sasTokenHandler.GetContainerSasTokenFromSession(containerName, role);
                 if (string.IsNullOrEmpty(sasToken))
                 {
                     throw new InvalidOperationException($"SAS token for container '{containerName}' is missing or invalid.");
                 }
 
                 var blobUri = new Uri($"http://127.0.0.1:10000/{_configuration["AzureStorage:AccountName"]}/{containerName}/{blobName}?{sasToken}");
-                var blobClient = new BlobClient(blobUri);
+                var blobClient = _blobClientFactory.CreateBlobClient(blobUri);
 
                 if (!await blobClient.ExistsAsync())
                 {
@@ -232,7 +170,7 @@ namespace BuildingManagementTool.Services
         {
             try
             {
-                string sasToken = await GetContainerSasTokenFromSession(containerName, role);
+                string sasToken = await _sasTokenHandler.GetContainerSasTokenFromSession(containerName, role);
                 if (string.IsNullOrEmpty(sasToken))
                 {
                     throw new InvalidOperationException($"SAS token for container '{containerName}' is missing or invalid.");
@@ -241,7 +179,7 @@ namespace BuildingManagementTool.Services
                 await foreach (BlobItem blobItem in containerClient.GetBlobsAsync(prefix: prefix))
                 {
                     var blobUri = new Uri($"http://127.0.0.1:10000/{_configuration["AzureStorage:AccountName"]}/{containerName}/{blobItem.Name}?{sasToken}");
-                    BlobClient blobClient = new BlobClient(blobUri);
+                    BlobClient blobClient = _blobClientFactory.CreateBlobClient(blobUri);
                     await blobClient.DeleteIfExistsAsync();
                 }
                 return true;
@@ -254,7 +192,7 @@ namespace BuildingManagementTool.Services
 
         public async Task RenameBlobDirectory(string containerName, string oldDirectory, string newDirectory, string role)
         {
-            string sasToken = await GetContainerSasTokenFromSession(containerName, role);
+            string sasToken = await _sasTokenHandler.GetContainerSasTokenFromSession(containerName, role);
             if (string.IsNullOrEmpty(sasToken))
             {
                 throw new InvalidOperationException($"SAS token for container '{containerName}' is missing or invalid.");
@@ -266,10 +204,10 @@ namespace BuildingManagementTool.Services
                 string newBlobName = oldBlobName.Replace(oldDirectory, newDirectory);
 
                 var oldBlobUri = new Uri($"http://127.0.0.1:10000/{_configuration["AzureStorage:AccountName"]}/{containerName}/{oldBlobName}");
-                BlobClient oldBlobClient = new BlobClient(oldBlobUri, new AzureSasCredential(sasToken));
+                BlobClient oldBlobClient = _blobClientFactory.CreateBlobClientWithSAS(oldBlobUri, sasToken);
 
                 var newBlobUri = new Uri($"http://127.0.0.1:10000/{_configuration["AzureStorage:AccountName"]}/{containerName}/{newBlobName}");
-                BlobClient newBlobClient = new BlobClient(newBlobUri, new AzureSasCredential(sasToken));
+                BlobClient newBlobClient = _blobClientFactory.CreateBlobClientWithSAS(newBlobUri, sasToken);
                 await newBlobClient.StartCopyFromUriAsync(oldBlobClient.Uri);
 
                 BlobProperties properties = await newBlobClient.GetPropertiesAsync();
@@ -282,7 +220,7 @@ namespace BuildingManagementTool.Services
 
         public async Task<Dictionary<int, List<string>>> GetBlobUrisByPrefix(string containerName, string prefix, string role)
         {
-            string sasToken = await GetContainerSasTokenFromSession(containerName, role);
+            string sasToken = await _sasTokenHandler.GetContainerSasTokenFromSession(containerName, role);
             if (string.IsNullOrEmpty(sasToken))
             {
                 throw new InvalidOperationException($"SAS token for container '{containerName}' is missing or invalid.");

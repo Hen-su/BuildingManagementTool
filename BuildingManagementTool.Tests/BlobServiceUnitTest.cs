@@ -28,6 +28,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions.Interfaces;
 
 namespace BuildingManagementTool.Tests
 {
@@ -36,8 +37,9 @@ namespace BuildingManagementTool.Tests
         private Mock<BlobServiceClient> _mockBlobServiceClient;
         private Mock<BlobContainerClient> _mockBlobContainerClient;
         private Mock<BlobClient> _mockBlobClient;
-        private Mock<HttpContextAccessor> _mockHttpContextAccessor;
+        private Mock<ISASTokenHandler> _mockSasTokenHandler;
         private Mock<Microsoft.Extensions.Configuration.IConfiguration> _mockConfiguration;
+        private Mock<IBlobClientFactory> _mockBlobClientFactory;
         private BlobService _blobService;
 
         [SetUp]
@@ -45,21 +47,22 @@ namespace BuildingManagementTool.Tests
         {
             _mockBlobServiceClient = new Mock<BlobServiceClient>();
             _mockBlobContainerClient = new Mock<BlobContainerClient>();
-            _mockHttpContextAccessor = new Mock<HttpContextAccessor>();
+            _mockSasTokenHandler = new Mock<ISASTokenHandler>();
             _mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
-            _mockBlobClient = new Mock<BlobClient>();
+            _mockBlobClientFactory = new Mock<IBlobClientFactory>();
 
+            _mockBlobClient = new Mock<BlobClient>();
+            _mockConfiguration.Setup(_ => _["AzureStorage:AccountName"]).Returns("devstoreaccount1");
+            _mockBlobContainerClient
+                .Setup(x => x.GetBlobClient(It.IsAny<string>()))
+                .Returns(_mockBlobClient.Object);
             _mockBlobServiceClient
                 .Setup(x => x.GetBlobContainerClient(It.IsAny<string>()))
                 .Returns(_mockBlobContainerClient.Object);
 
-            _mockBlobContainerClient
-                .Setup(x => x.GetBlobClient(It.IsAny<string>()))
-                .Returns(_mockBlobClient.Object);
-
-            _blobService = new BlobService(_mockBlobServiceClient.Object, _mockHttpContextAccessor.Object, _mockConfiguration.Object);
+            _blobService = new BlobService(_mockBlobServiceClient.Object, _mockSasTokenHandler.Object, _mockConfiguration.Object, _mockBlobClientFactory.Object);
         }
-        /*
+
         [Test]
         public async Task UploadBlobAsync_FileExists_Success()
         {
@@ -67,6 +70,7 @@ namespace BuildingManagementTool.Tests
             var blobName = "category/test.txt";
             var data = new byte[] { 1, 2, 3, 4, 5 };
             var content = new MemoryStream(data);
+            var role = "Manager";
             BlobHttpHeaders headers = new BlobHttpHeaders
             {
                 ContentType = "text/plain"
@@ -84,6 +88,11 @@ namespace BuildingManagementTool.Tests
 
             var mockResponse = Response.FromValue(mockBlobContentInfo, null);
 
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
+
+            _mockBlobClientFactory.Setup(b => b.CreateBlobClient(It.IsAny<Uri>())).Returns(_mockBlobClient.Object);
+
             _mockBlobClient.Setup(x => x.UploadAsync(
                 It.IsAny<Stream>(),
                 It.Is<BlobHttpHeaders>(h => h.ContentType == "text/plain"),
@@ -92,10 +101,10 @@ namespace BuildingManagementTool.Tests
                 It.IsAny<IProgress<long>>(),
                 It.IsAny<AccessTier?>(),
                 It.IsAny<StorageTransferOptions>(),
-                It.IsAny<CancellationToken>()))
-                .ReturnsAsync(mockResponse);
+                It.IsAny<CancellationToken>())).ReturnsAsync(mockResponse);
 
-            var response = await _blobService.UploadBlobAsync(containerName, blobName, content, headers);
+
+            var result = await _blobService.UploadBlobAsync(containerName, blobName, content, headers, role);
 
             _mockBlobClient.Verify(x => x.UploadAsync(
                 It.IsAny<Stream>(),
@@ -108,7 +117,7 @@ namespace BuildingManagementTool.Tests
                 It.IsAny<CancellationToken>()),
                 Times.Once());
 
-            Assert.True(response);
+            Assert.True(result);
         }
 
         [Test]
@@ -118,6 +127,7 @@ namespace BuildingManagementTool.Tests
             var blobName = "category/test.txt";
             Stream content = null;
             BlobHttpHeaders headers = null;
+            var role = "Manager";
 
             var mockBlobContentInfo = BlobsModelFactory.BlobContentInfo(
                 eTag: new ETag(""),
@@ -142,7 +152,7 @@ namespace BuildingManagementTool.Tests
                 .ReturnsAsync(mockResponse);
 
             var ex = Assert.ThrowsAsync<ArgumentNullException>(async () =>
-                await _blobService.UploadBlobAsync(containerName, blobName, content, headers));
+                await _blobService.UploadBlobAsync(containerName, blobName, content, headers, role));
 
             _mockBlobClient.Verify(x => x.UploadAsync(
                 It.IsAny<Stream>(),
@@ -163,12 +173,18 @@ namespace BuildingManagementTool.Tests
             var containerName = "test";
             var blobName = "property/category/test.txt";
             var mockResponse = new Mock<Response<bool>>();
+            var role = "Manager";
             mockResponse.Setup(m => m.Value).Returns(true);
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
+
+            _mockBlobClientFactory.Setup(b => b.CreateBlobClient(It.IsAny<Uri>())).Returns(_mockBlobClient.Object);
 
             _mockBlobClient.Setup(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(mockResponse.Object);
 
-            var response = await _blobService.DeleteBlobAsync(containerName, blobName);
+            var response = await _blobService.DeleteBlobAsync(containerName, blobName, role);
 
             _mockBlobClient.Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Once);
             Assert.True(response);
@@ -180,12 +196,18 @@ namespace BuildingManagementTool.Tests
             var containerName = "test";
             var blobName = "property/category/test.txt";
             var mockResponse = new Mock<Response<bool>>();
+            var role = "Manager";
             mockResponse.Setup(m => m.Value).Returns(false);
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
+
+            _mockBlobClientFactory.Setup(b => b.CreateBlobClient(It.IsAny<Uri>())).Returns(_mockBlobClient.Object);
 
             _mockBlobClient.Setup(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(mockResponse.Object);
 
-            var response = await _blobService.DeleteBlobAsync(containerName, blobName);
+            var response = await _blobService.DeleteBlobAsync(containerName, blobName, role);
 
             _mockBlobClient.Verify(x => x.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()), Times.Once);
             Assert.False(response);
@@ -196,17 +218,23 @@ namespace BuildingManagementTool.Tests
         {
             var containerName = "test";
             var blobName = "property/category/test.txt";
-            var expectedUrl = "https://example.com/test/test.txt";
+            var blobUrl = "https://example.com/test/test.txt";
             var mockResponse = new Mock<Response<bool>>();
+            var role = "Manager";
             mockResponse.Setup(m => m.Value).Returns(true);
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
 
             _mockBlobClient.Setup(x => x.ExistsAsync(It.IsAny<CancellationToken>()))
            .ReturnsAsync(mockResponse.Object);
             _mockBlobClient.SetupGet(x => x.Uri)
-            .Returns(new Uri(expectedUrl));
+            .Returns(new Uri(blobUrl));
 
-            var result = await _blobService.GetBlobUrlAsync(containerName, blobName);
-            Assert.AreEqual(result, expectedUrl);
+            var expectedUrl = new Uri($"{ blobUrl }?{validSasToken}");
+
+            var result = await _blobService.GetBlobUrlAsync(containerName, blobName, role);
+            Assert.AreEqual(result, expectedUrl.ToString());
         }
 
         [Test]
@@ -216,14 +244,18 @@ namespace BuildingManagementTool.Tests
             var blobName = "property/category/test.txt";
             var expectedUrl = "https://example.com/test/test.txt";
             var mockResponse = new Mock<Response<bool>>();
+            var role = "Manager";
             mockResponse.Setup(m => m.Value).Returns(false);
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
 
             _mockBlobClient.Setup(x => x.ExistsAsync(It.IsAny<CancellationToken>()))
            .ReturnsAsync(mockResponse.Object);
             _mockBlobClient.SetupGet(x => x.Uri)
             .Returns(new Uri(expectedUrl));
 
-            var result = await _blobService.GetBlobUrlAsync(containerName, blobName);
+            var result = await _blobService.GetBlobUrlAsync(containerName, blobName, role);
             Assert.AreEqual(null, result);
         }
 
@@ -234,6 +266,12 @@ namespace BuildingManagementTool.Tests
             var blobName = "test-blob";
             var mockStream = new MemoryStream();
             var mockBlobDownloadInfo = BlobsModelFactory.BlobDownloadInfo(content: mockStream);
+            var role = "Manager";
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
+
+            _mockBlobClientFactory.Setup(b => b.CreateBlobClient(It.IsAny<Uri>())).Returns(_mockBlobClient.Object);
 
             _mockBlobClient
                 .Setup(blob => blob.ExistsAsync(It.IsAny<CancellationToken>()))
@@ -243,7 +281,7 @@ namespace BuildingManagementTool.Tests
                 .Setup(blob => blob.DownloadAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Response.FromValue(mockBlobDownloadInfo, null));
 
-            var result = await _blobService.DownloadBlobAsync(containerName, blobName);
+            var result = await _blobService.DownloadBlobAsync(containerName, blobName, role);
 
             Assert.IsNotNull(result);
             Assert.AreEqual(mockStream, result);
@@ -254,6 +292,7 @@ namespace BuildingManagementTool.Tests
         {
             var containerName = "test";
             var blobName = "property/category/test.txt";
+            var role = "Manager";
 
             _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(containerName))
                 .Returns(_mockBlobContainerClient.Object);
@@ -264,7 +303,7 @@ namespace BuildingManagementTool.Tests
             _mockBlobClient.Setup(client => client.ExistsAsync(default))
                 .ReturnsAsync(Response.FromValue(false, null));
 
-            var result = await _blobService.DownloadBlobAsync(containerName, blobName);
+            var result = await _blobService.DownloadBlobAsync(containerName, blobName, role);
 
             Assert.IsNull(result);
         }
@@ -274,11 +313,12 @@ namespace BuildingManagementTool.Tests
         {
             var containerName = "test";
             var blobName = "property/category/test.txt";
+            var role = "Manager";
 
             _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(containerName))
                 .Throws(new Exception("Test exception"));
 
-            var result = await _blobService.DownloadBlobAsync(containerName, blobName);
+            var result = await _blobService.DownloadBlobAsync(containerName, blobName, role);
 
             Assert.IsNull(result);
         }
@@ -295,9 +335,13 @@ namespace BuildingManagementTool.Tests
                 BlobsModelFactory.BlobItem(blobName1),
                 BlobsModelFactory.BlobItem(blobName2),
             };
+            var role = "Manager";
 
             Page<BlobItem> page = Page<BlobItem>.FromValues(blobList, null, Mock.Of<Response>());
             AsyncPageable<BlobItem> pageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { page });
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
 
             _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
                 .Returns(_mockBlobContainerClient.Object);
@@ -309,9 +353,11 @@ namespace BuildingManagementTool.Tests
                 .Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .Returns(pageableBlobList);
 
+            _mockBlobClientFactory.Setup(b => b.CreateBlobClient(It.IsAny<Uri>())).Returns(_mockBlobClient.Object);
+
             _mockBlobContainerClient.Setup(x => x.DeleteIfExistsAsync(It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>())).ReturnsAsync(Response.FromValue(true, null));
 
-            var result = await _blobService.DeleteByPrefix(containerName, prefix);
+            var result = await _blobService.DeleteByPrefix(containerName, prefix, role);
 
             _mockBlobContainerClient
                 .Verify(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -333,9 +379,13 @@ namespace BuildingManagementTool.Tests
                 BlobsModelFactory.BlobItem(blobName1),
                 BlobsModelFactory.BlobItem(blobName2),
             };
+            var role = "Manager";
 
             Page<BlobItem> page = Page<BlobItem>.FromValues(blobList, null, Mock.Of<Response>());
             AsyncPageable<BlobItem> pageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { page });
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
 
             _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
                 .Returns(_mockBlobContainerClient.Object);
@@ -343,11 +393,13 @@ namespace BuildingManagementTool.Tests
             _mockBlobContainerClient.Setup(container => container.GetBlobClient(It.IsAny<string>()))
                 .Returns(_mockBlobClient.Object);
 
+            _mockBlobClientFactory.Setup(b => b.CreateBlobClient(It.IsAny<Uri>())).Returns(_mockBlobClient.Object);
+
             _mockBlobContainerClient
                 .Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .Throws(new Exception("Simulated Exception"));
 
-            var result = await _blobService.DeleteByPrefix(containerName, prefix);
+            var result = await _blobService.DeleteByPrefix(containerName, prefix, role);
 
             _mockBlobContainerClient
                 .Verify(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -369,8 +421,13 @@ namespace BuildingManagementTool.Tests
             var _mockOldBlobClient = new Mock<BlobClient>();
             var _mockNewBlobClient = new Mock<BlobClient>();
 
-            var oldBlobUri = new Uri($"https://example.com/{oldBlobName1}");
-            var newBlobUri = new Uri($"https://example.com/{newBlobName1}");
+            var oldBlobUri = new Uri($"http://127.0.0.1:10000/devstoreaccount1/{containerName}/{oldBlobName1}");
+            var newBlobUri = new Uri($"http://127.0.0.1:10000/devstoreaccount1/{containerName}/{newBlobName1}");
+
+            var role = "Manager";
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
 
             _mockOldBlobClient.SetupGet(client => client.Uri).Returns(oldBlobUri);
             _mockNewBlobClient.SetupGet(client => client.Uri).Returns(newBlobUri);
@@ -390,10 +447,9 @@ namespace BuildingManagementTool.Tests
             _mockBlobContainerClient.Setup(container => container.GetBlobClient(newBlobName1)).Returns(_mockNewBlobClient.Object);
 
             _mockBlobContainerClient.Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(),
-        It.IsAny<BlobStates>(),
-        It.Is<string>(prefix => prefix == oldDirectory), 
-        It.IsAny<CancellationToken>())).Returns(pageableBlobList);
-
+            It.IsAny<BlobStates>(),
+            It.Is<string>(prefix => prefix == oldDirectory), 
+            It.IsAny<CancellationToken>())).Returns(pageableBlobList);
 
             var properties = BlobsModelFactory.BlobProperties(
                     lastModified: default,
@@ -442,7 +498,15 @@ namespace BuildingManagementTool.Tests
                     hasLegalHold: false
                 );
 
-            _mockNewBlobClient.Setup(client => client.GetPropertiesAsync(null, It.IsAny<CancellationToken>()))
+            _mockBlobClientFactory
+                .Setup(factory => factory.CreateBlobClientWithSAS(oldBlobUri, It.IsAny<string>()))
+                .Returns(_mockOldBlobClient.Object);
+
+            _mockBlobClientFactory
+                .Setup(factory => factory.CreateBlobClientWithSAS(newBlobUri, It.IsAny<string>()))
+                .Returns(_mockNewBlobClient.Object);
+
+            _mockNewBlobClient.Setup(client => client.GetPropertiesAsync(It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Response.FromValue(properties, Mock.Of<Response>()));
 
             var mockCopyOperation = new Mock<CopyFromUriOperation>();
@@ -460,7 +524,7 @@ namespace BuildingManagementTool.Tests
             _mockOldBlobClient.Setup(client => client.DeleteIfExistsAsync(It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
 
-            await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory);
+            await _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory, role);
             _mockNewBlobClient.Verify(client => client.StartCopyFromUriAsync(It.IsAny<Uri>(),
                 null,
                 null,
@@ -486,6 +550,11 @@ namespace BuildingManagementTool.Tests
 
             var oldBlobUri = new Uri($"https://example.com/{oldBlobName1}");
             var newBlobUri = new Uri($"https://example.com/{newBlobName1}");
+
+            var role = "Manager";
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
 
             _mockOldBlobClient.SetupGet(client => client.Uri).Returns(oldBlobUri);
             _mockNewBlobClient.SetupGet(client => client.Uri).Returns(newBlobUri);
@@ -525,7 +594,7 @@ namespace BuildingManagementTool.Tests
         .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
 
             var exception = Assert.ThrowsAsync<ArgumentNullException>(
-                () => _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory));
+                () => _blobService.RenameBlobDirectory(containerName, oldDirectory, newDirectory, role));
 
             Assert.That(exception.Message, Does.Contain("Value cannot be null. (Parameter 'oldValue')"));
             _mockNewBlobClient.Verify(client => client.StartCopyFromUriAsync(It.IsAny<Uri>(),
@@ -546,14 +615,20 @@ namespace BuildingManagementTool.Tests
             var prefix = "property/images/";
             var blobName1 = "property/images/test.jpg";
             var blobName2 = "property/images/test2.jpg";
+            var blob1Uri = new Uri("https://testaccount.blob.core.windows.net/property/images/test.jpg");
+            var blob2Uri = new Uri("https://testaccount.blob.core.windows.net/property/images/test2.jpg");
             var blobList = new BlobItem[]
             {
                 BlobsModelFactory.BlobItem(blobName1),
                 BlobsModelFactory.BlobItem(blobName2),
             };
+            var role = "Manager";
 
             Page<BlobItem> page = Page<BlobItem>.FromValues(blobList, null, Mock.Of<Response>());
             AsyncPageable<BlobItem> pageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { page });
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
 
             _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
                 .Returns(_mockBlobContainerClient.Object);
@@ -564,13 +639,13 @@ namespace BuildingManagementTool.Tests
 
             var mockBlobClient1 = new Mock<BlobClient>();
             mockBlobClient1.SetupGet(client => client.Uri)
-                .Returns(new Uri("https://testaccount.blob.core.windows.net/property/images/test.jpg"));
+                .Returns(blob1Uri);
             mockBlobClient1.SetupGet(client => client.Name)
                 .Returns(blobName1);
 
             var mockBlobClient2 = new Mock<BlobClient>();
             mockBlobClient2.SetupGet(client => client.Uri)
-                .Returns(new Uri("https://testaccount.blob.core.windows.net/property/images/test2.jpg"));
+                .Returns(blob2Uri);
             mockBlobClient2.SetupGet(client => client.Name)
                 .Returns(blobName2);
 
@@ -580,10 +655,10 @@ namespace BuildingManagementTool.Tests
             _mockBlobContainerClient.Setup(container => container.GetBlobClient(blobName2))
                 .Returns(mockBlobClient2.Object);
 
-            var returnedList = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+            var returnedList = await _blobService.GetBlobUrisByPrefix(containerName, prefix, role);
             Assert.That(returnedList.Count(), Is.EqualTo(2));
-            Assert.That(returnedList[0], Is.EqualTo(new List<string> { "test.jpg", "https://testaccount.blob.core.windows.net/property/images/test.jpg" }));
-            Assert.That(returnedList[1], Is.EqualTo(new List<string> { "test2.jpg", "https://testaccount.blob.core.windows.net/property/images/test2.jpg" }));
+            Assert.That(returnedList[0][1], Is.EqualTo( $"{ blob1Uri.ToString()}?{ validSasToken}" ));
+            Assert.That(returnedList[1][1], Is.EqualTo($"{blob2Uri.ToString()}?{validSasToken}"));
         }
 
         [Test]
@@ -591,10 +666,14 @@ namespace BuildingManagementTool.Tests
         {
             var containerName = "user";
             var prefix = "property/images/";
+            var role = "Manager";
 
             var emptyBlobList = new BlobItem[0];
             Page<BlobItem> emptyPage = Page<BlobItem>.FromValues(emptyBlobList, null, Mock.Of<Response>());
             AsyncPageable<BlobItem> emptyPageableBlobList = AsyncPageable<BlobItem>.FromPages(new[] { emptyPage });
+
+            var validSasToken = "sv=2018-03-28&st=2024-10-15T15%3A51%3A48Z&se=2024-10-16T15%3A51%3A48Z&sr=c&sp=rl&sig=nCXd7ENudz1Ohr8muwLFNp1a8WVxHAhIaydCfcjGeZ8%3D";
+            _mockSasTokenHandler.Setup(s => s.GetContainerSasTokenFromSession(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(validSasToken);
 
             _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
                 .Returns(_mockBlobContainerClient.Object);
@@ -603,9 +682,8 @@ namespace BuildingManagementTool.Tests
                 .Setup(x => x.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .Returns(emptyPageableBlobList);
 
-            var returnedList = await _blobService.GetBlobUrisByPrefix(containerName, prefix);
+            var returnedList = await _blobService.GetBlobUrisByPrefix(containerName, prefix, role);
             Assert.IsEmpty(returnedList);
         }
-        */
     }
 }
