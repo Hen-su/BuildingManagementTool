@@ -19,17 +19,7 @@
     <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css" /> 
     <style>
 
-        body {
-            background-image: url('https://cdn.wallpapersafari.com/88/53/Mt4ZNK.jpg'); /* Light theme background */
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-attachment: fixed;
-        }
-
-        body.dark-theme {
-            background-image: url('https://wallpapercave.com/wp/wp3357397.jpg'); /* Dark theme background */
-        }
+      
 
         nav{
             opacity:0.6;
@@ -213,11 +203,9 @@
                 if (this.checked) {
                     themeStylesheet.href = '/css/darkTheme.css';  // Switch to darkTheme stylesheet
                     localStorage.setItem('theme', '/css/darkTheme.css');
-                    body.classList.add('dark-theme');  // Apply dark theme background change
                 } else {
                     themeStylesheet.href = '/css/site.css';  // Switch to light theme stylesheet
                     localStorage.setItem('theme', '/css/site.css');
-                    body.classList.remove('dark-theme');  // Remove dark theme background 
                 }
             });
         });
