@@ -13,7 +13,7 @@
                     <div id="documentShareUrlMessage">Fetching URL for @Model.Document.FileName...</div>
 
                     <div class="row align-items-center mb-3">
-                        <div class="col-10 p-1">
+                        <div class="col-10">
                             <input asp-for="Url" id="documentShareUrlLink" class="form-control text-truncate" title="Document URL" readonly />
                         </div>
                         <div class="col-auto">
@@ -79,7 +79,7 @@
 
      
         $("#copyUrlBtn").click(function () {
-            const url = $("#documentShareUrlLink").text(); 
+            const url = $("#documentShareUrlLink").val(); 
             navigator.clipboard.writeText(url).then(function () {
                
                 $("#urlCopiedAlert").show().delay(2000).fadeOut();
