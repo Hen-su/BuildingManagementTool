@@ -267,7 +267,7 @@ namespace BuildingManagementTool.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ManagePropertyFormSubmit(int id, ManagePropertyFormViewModel formViewModel, string? selectedFileName, string[] filesToRemove)
+        public async Task<IActionResult> ManagePropertyFormSubmit(int id, ManagePropertyFormViewModel formViewModel, string? selectedFileName, List<string> filesToRemove)
         {
             var authorizationResult = await CheckAuthorizationByPropertyId(id);
             if (!authorizationResult.Succeeded)
@@ -386,14 +386,16 @@ namespace BuildingManagementTool.Controllers
             //Delete image if it was removed from gallery
             if (filesToRemove != null && filesToRemove.Count() > 0)
             {
+
                 var imagesList = await _propertyImageRepository.GetByPropertyId(currentProperty.PropertyId);
-                foreach ( var image in imagesList)
+                foreach ( var file in filesToRemove)
                 {
-                    if (filesToRemove.Contains(image.FileName))
+                    var imageToDelete = imagesList.FirstOrDefault(i => i.FileName == file);
+                    if (imageToDelete != null)
                     {
-                        await _blobService.DeleteBlobAsync(containerName ,image.BlobName, role);
-                        await _propertyImageRepository.DeletePropertyImage(image);
-                        break;
+                        await _blobService.DeleteBlobAsync(containerName ,imageToDelete.BlobName, role);
+                        await _propertyImageRepository.DeletePropertyImage(imageToDelete);
+                        continue;
                     }
                 }
             }
