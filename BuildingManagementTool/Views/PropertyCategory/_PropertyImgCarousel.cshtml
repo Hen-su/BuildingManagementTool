@@ -117,8 +117,8 @@
                 }
             }
         }
-        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
-        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+        <a class="prev">&#10094;</a>
+        <a class="next">&#10095;</a>
     }
 
     else
@@ -140,8 +140,18 @@
 </div>
 
 <script>
+    $(document).ready(function () {
         let slideIndex = 1;
         showSlides(slideIndex);
+
+        // Bind the click event for the previous and next buttons
+        $('.prev').click(function () {
+            plusSlides(-1);
+        });
+
+        $('.next').click(function () {
+            plusSlides(1);
+        });
 
         // Next/previous controls
         function plusSlides(n) {
@@ -168,4 +178,6 @@
             slides[slideIndex - 1].style.display = "block";
             dots[slideIndex - 1].className += " active";
         }
+    });
+        
 </script>
