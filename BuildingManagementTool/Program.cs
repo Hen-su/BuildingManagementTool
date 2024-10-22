@@ -77,20 +77,8 @@ builder.Services.AddAuthentication()
         context.Response.Redirect(context.RedirectUri + "&prompt=consent");
         return Task.CompletedTask;
     };
-})
-.AddFacebook(options =>
-{
-    IConfigurationSection FBAuthNSection =
-    config.GetSection("Authentication:FB");
-    options.ClientId = FBAuthNSection["ClientId"];
-    options.ClientSecret = FBAuthNSection["ClientSecret"];
-})
-.AddTwitter(twitterOptions =>
-{
-    twitterOptions.ConsumerKey = config["Authentication:Twitter:ConsumerAPIKey"];
-    twitterOptions.ConsumerSecret = config["Authentication:Twitter:ConsumerSecret"];
-    twitterOptions.RetrieveUserDetails = true;
 });
+
 // Add custom role authorization
 builder.Services.AddAuthorization(options =>
 {

@@ -106,7 +106,9 @@ namespace BuildingManagementTool.Tests
                 ContentType = "text/plain",
                 FileSize = 1,
                 UploadDate = DateTime.UtcNow,
-                FileImageUrl = "/imgs/text.svg"
+                FileImageUrl = "/imgs/text.svg",
+                PropertyCategory = new PropertyCategory()
+                
             };
 
             var document2 = new Document
@@ -117,12 +119,13 @@ namespace BuildingManagementTool.Tests
                 ContentType = "text/plain",
                 FileSize = 1,
                 UploadDate = DateTime.UtcNow,
-                FileImageUrl = "/imgs/text.svg"
+                FileImageUrl = "/imgs/text.svg",
+                PropertyCategory = new PropertyCategory()
             };
 
             await _documentRepository.AddDocumentData(document);
             await _documentRepository.AddDocumentData(document2);
-
+            var test = await _dbContext.Documents.FindAsync(1);
             var savedDocument = await _documentRepository.GetById(1);
             Assert.That(savedDocument != null);
             Assert.That(savedDocument.DocumentId.Equals(1), "DocumentId should be 1");

@@ -474,7 +474,7 @@ namespace BuildingManagementTool.Controllers
             if (!string.IsNullOrEmpty(keyword))
             {
                 var filterKeyword = keyword.ToLower();
-                var matchList = propertyList.Where(p => p.Property.PropertyName.ToLower() == filterKeyword);
+                var matchList = propertyList.Where(p => p.Property.PropertyName.ToLower().Contains(filterKeyword));
                 foreach (var property in matchList)
                 {
                     var managerId = await _userPropertyRepository.GetManagerUserIdByPropertyId(property.PropertyId);

@@ -154,22 +154,24 @@ namespace BuildingManagementTool.Tests
         }
 
         [Test]
-        public async Task AddProperty_NullName_ReturnSuccess()
+        public async Task AddProperty_EmptyName_ReturnPartial()
         {
             var userId = Guid.NewGuid().ToString();
             var email = "example@example.com";
             var user = new ApplicationUser() { Id = userId, Email = email, UserName = email };
-            string name = null;
+            string name = "";
             var viewModel = new PropertyFormViewModel { PropertyName = name };
 
             _mockUserStore.Setup(us => us.FindByIdAsync(It.IsAny<string>(), default)).ReturnsAsync(user);
             _mockUserManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockRoleManager.Setup(r => r.FindByNameAsync(It.IsAny<string>())).ReturnsAsync(new IdentityRole { Id = "1" });
+            _userPropertyController.ModelState.AddModelError("PropertyName", "Property Name is required");
 
             var result = await _userPropertyController.AddProperty(viewModel);
+            var partial = result as PartialViewResult;
 
-            var objectResult = result as ObjectResult;
-            Assert.IsNotNull(objectResult);
-            Assert.That(objectResult.StatusCode.Equals(StatusCodes.Status400BadRequest));
+            Assert.IsNotNull(result);
+            Assert.That(partial.ViewName.Equals("_PropertyForm"));
         }
 
         [Test]
